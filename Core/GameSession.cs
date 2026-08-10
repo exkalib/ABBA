@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Security.Cryptography;
 using System.Runtime.InteropServices;
 
 namespace NRftWManagerUI.Core;
@@ -22,6 +23,7 @@ internal sealed class GameSession : IDisposable
     public int ProcessId { get; private set; }
     public long GameAssemblyBase { get; private set; }
     public int GameAssemblySize { get; private set; }
+    public string GameAssemblyPath { get; private set; } = string.Empty;
 
     public string Attach()
     {
@@ -67,7 +69,31 @@ internal sealed class GameSession : IDisposable
         ProcessId = process.Id;
         GameAssemblyBase = assembly.BaseAddress.ToInt64();
         GameAssemblySize = assembly.ModuleMemorySize;
+        GameAssemblyPath = assembly.FileName;
         return $"已连接 {ProcessName}（PID {ProcessId}），GameAssembly.dll：0x{GameAssemblyBase:X}";
+    }
+
+    public bool HasGameAssemblyHash(string expectedHash)
+    {
+        if (string.IsNullOrWhiteSpace(GameAssemblyPath) || !File.Exists(GameAssemblyPath))
+        {
+            return false;
+        }
+
+        try
+        {
+            using var stream = File.OpenRead(GameAssemblyPath);
+            var actualHash = Convert.ToHexString(SHA256.HashData(stream));
+            return string.Equals(actualHash, expectedHash, StringComparison.OrdinalIgnoreCase);
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
     }
 
     public IReadOnlyList<long> ScanGameAssembly(AobPattern pattern)
@@ -276,6 +302,7 @@ internal sealed class GameSession : IDisposable
         ProcessId = 0;
         GameAssemblyBase = 0;
         GameAssemblySize = 0;
+        GameAssemblyPath = string.Empty;
     }
 
     private void ScanRegionForInt32(long regionBase, long regionSize, int value, List<long> results, int maximumResults)

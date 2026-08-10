@@ -11,7 +11,10 @@ namespace NRftWManagerUI;
 public partial class MainWindow : Window
 {
     private const string ItemQuantityPattern = "89 3B 0F 94 C0 EB ??";
-    private const string CurrencyPattern = "45 01 75 04 45 33 C9";
+    private const string WalletContextPattern = "48 89 5C 24 08 56 57 41 56 48 83 EC 70 0F 29 74 24 60 49 8B D9 49 8B F0 4C 8B F2 48 8B F9";
+    private const string WalletContextEntry = "48 89 5C 24 08 56 57 41 56 48 83 EC 70 0F 29 74 24 60 49 8B D9 49 8B F0 4C 8B F2 48 8B F9";
+    private const string CurrentGameAssemblySha256 = "5B00EE90833B1BE2EA73E01CB83E710E09E86199D12AC769BE3C0E82ADD8B4BB";
+    private const int GetInventoryComponentRva = 0x5D7F970;
 
     private readonly Dictionary<string, FrameworkElement> _views;
     private readonly Dictionary<string, (string Title, string Subtitle)> _pageText = new()
@@ -19,7 +22,7 @@ public partial class MainWindow : Window
         ["overview"] = ("概览", "连接游戏后核对已验证特征码，再逐项启用。"),
         ["items"] = ("物品数量", "捕获最后一次变化的可堆叠材料，再写入该堆数量。"),
         ["equipment"] = ("装备与词条", "品质与词条地址尚待定位；请用字段探测器逐项验证。"),
-        ["character"] = ("角色", "货币有已验证定位；属性需要先探测实际字段。"),
+        ["character"] = ("角色", "当前版本的钱包可自动定位；属性仍需要先探测实际字段。"),
         ["detector"] = ("字段探测器", "用游戏内的一次确定数值变化筛选候选内存字段。"),
         ["loadouts"] = ("配置与快照", "等待物品实例结构定位后再实现外置创建与复制。"),
         ["logs"] = ("活动记录", "记录连接、扫描、捕获和写入动作。")
@@ -27,12 +30,12 @@ public partial class MainWindow : Window
 
     private GameSession? _session;
     private RemoteCaptureHook? _itemCapture;
-    private RemoteCaptureHook? _currencyCapture;
+    private RemoteWalletContextHook? _currencyCapture;
     private ValueChangeDetector? _detector;
     private long? _itemQuantityAddress;
     private long? _currencyAddress;
     private long? _itemQuantitySite;
-    private long? _currencySite;
+    private long? _walletContextSite;
     private string _selectedCurrency = "Gold";
 
     public MainWindow()
@@ -103,28 +106,30 @@ public partial class MainWindow : Window
 
         try
         {
-            SetStatus("正在扫描 GameAssembly.dll 中已验证的数量与货币特征码…");
+            SetStatus("正在扫描 GameAssembly.dll 中已验证的数量与自动钱包定位入口…");
             var itemMatches = _session!.ScanGameAssembly(AobPattern.Parse(ItemQuantityPattern));
-            var currencyMatches = _session.ScanGameAssembly(AobPattern.Parse(CurrencyPattern));
+            var walletProfileMatches = _session.HasGameAssemblyHash(CurrentGameAssemblySha256)
+                ? _session.ScanGameAssembly(AobPattern.Parse(WalletContextPattern))
+                : Array.Empty<long>();
 
             _itemQuantitySite = itemMatches.Count == 1 ? itemMatches[0] : null;
-            _currencySite = currencyMatches.Count == 1 ? currencyMatches[0] : null;
+            _walletContextSite = walletProfileMatches.Count == 1 ? walletProfileMatches[0] : null;
 
-            var summary = $"材料数量：{itemMatches.Count} 个匹配；货币：{currencyMatches.Count} 个匹配。";
-            SignatureStateText.Text = _itemQuantitySite.HasValue && _currencySite.HasValue ? "已验证" : "不匹配";
+            var summary = $"材料数量：{itemMatches.Count} 个匹配；自动钱包入口：{walletProfileMatches.Count} 个匹配。";
+            SignatureStateText.Text = _itemQuantitySite.HasValue && _walletContextSite.HasValue ? "已验证" : "不匹配";
             SignatureDetailText.Text = summary;
 
-            if (_itemQuantitySite.HasValue && _currencySite.HasValue)
+            if (_itemQuantitySite.HasValue && _walletContextSite.HasValue)
             {
                 WriteStateText.Text = "可捕获";
-                WriteStateDetailText.Text = "可先捕获目标地址；捕获后开启该项写入。";
-                SetStatus($"{summary} 当前游戏版本可验证。先从材料数量开始。", true);
+                WriteStateDetailText.Text = "材料需捕获；钱包可自动定位后直接写入。";
+                SetStatus($"{summary} 当前游戏版本可验证。钱包无需先让货币变化。", true);
             }
             else
             {
                 WriteStateText.Text = "已锁定";
-                WriteStateDetailText.Text = "游戏更新后特征码可能已变化；请不要尝试写入。";
-                SetStatus($"{summary} 未通过唯一匹配检查，因此本程序不会写入游戏。", false);
+                WriteStateDetailText.Text = "游戏更新或文件不匹配；请不要尝试写入。";
+                SetStatus($"{summary} 未通过当前版本的唯一匹配检查，因此本程序不会写入游戏。", false);
             }
         }
         catch (Exception exception)
@@ -214,50 +219,88 @@ public partial class MainWindow : Window
         if (sender is Button { Tag: string currency })
         {
             _selectedCurrency = currency;
-            CurrencyCaptureText.Text = $"已选择 {currency}。开始捕获后，请在游戏内让该货币增减一次。";
+            CurrencyCaptureText.Text = currency == "Gloamseed"
+                ? "Gloamseed 使用单独的地牢货币 API；当前自动钱包定位不写入它。"
+                : $"已选择 {currency}。自动定位后可直接写入；无需让货币变化。";
             SetStatus(CurrencyCaptureText.Text);
         }
     }
 
     private void OnStartCurrencyCapture(object sender, RoutedEventArgs e)
     {
-        if (!RequireKnownSite(_currencySite, "货币"))
+        if (_selectedCurrency == "Gloamseed")
+        {
+            SetStatus("Gloamseed 不是普通钱包字段，当前版本暂不写入它。", false);
+            return;
+        }
+
+        if (!RequireKnownSite(_walletContextSite, "自动钱包"))
         {
             return;
         }
 
         _currencyCapture?.Dispose();
         _currencyAddress = null;
-        _currencyCapture = new RemoteCaptureHook(_session!, _currencySite!.Value, 7, CaptureRegister.R13, 4);
-        var result = _currencyCapture.Arm();
-        CurrencyCaptureText.Text = $"{_selectedCurrency} 自动定位：{result}";
-        SetStatus(CurrencyCaptureText.Text);
+        try
+        {
+            _currencyCapture = new RemoteWalletContextHook(
+                _session!,
+                _walletContextSite!.Value,
+                _session.GameAssemblyBase + GetInventoryComponentRva,
+                AobPattern.Parse(WalletContextEntry).Bytes);
+            var result = _currencyCapture.Arm();
+            CurrencyCaptureText.Text = $"{_selectedCurrency} 自动定位：{result}";
+            SetStatus(CurrencyCaptureText.Text);
+        }
+        catch (Exception exception)
+        {
+            _currencyCapture = null;
+            SetStatus($"无法开始自动钱包定位：{exception.Message}", false);
+        }
     }
 
     private void OnReadCurrencyCapture(object sender, RoutedEventArgs e)
     {
-        if (_currencyCapture is null || !_currencyCapture.TryReadCapturedAddress(out var address))
+        if (_currencyCapture is null || !_currencyCapture.TryReadWalletAddress(out var address))
         {
-            SetStatus("尚未捕获货币地址。开始捕获后，在游戏里让所选货币增减一次，再重试。", false);
+            SetStatus("自动钱包定位尚未取得有效组件。请进入已加载的角色画面，停留约 1 秒后重试；无需让货币变化。", false);
             return;
         }
 
         _currencyAddress = address;
         var valueText = _session!.TryReadInt32(address, out var current) ? current.ToString() : "读取失败";
-        _currencyCapture.Dispose();
-        _currencyCapture = null;
-        CurrencyCaptureText.Text = $"已捕获 {_selectedCurrency} 地址：0x{address:X}，当前值：{valueText}。";
+        CurrencyCaptureText.Text = $"已自动定位 {_selectedCurrency} 钱包：0x{address:X}，内部基数：{valueText}。定位保持开启，以跟随当前游戏帧。";
         SetStatus(CurrencyCaptureText.Text, true);
     }
 
     private void OnWriteCurrency(object sender, RoutedEventArgs e)
     {
+        if (_selectedCurrency == "Gloamseed")
+        {
+            SetStatus("Gloamseed 不是普通钱包字段，当前版本暂不写入它。", false);
+            return;
+        }
+
         if (!TryGetWriteTarget(_currencyAddress, CurrencyValueBox.Text, 0, 9_999_999, out var address, out var value))
         {
             return;
         }
 
-        WriteValue(address, value, _selectedCurrency);
+        var multiplier = _selectedCurrency switch
+        {
+            "Copper" => 1,
+            "Silver" => 100,
+            "Gold" => 10_000,
+            _ => 1
+        };
+
+        if ((long)value * multiplier > int.MaxValue)
+        {
+            SetStatus($"{_selectedCurrency} 数值过大，换算为内部基数后超出游戏允许范围。", false);
+            return;
+        }
+
+        WriteValue(address, value * multiplier, _selectedCurrency);
     }
 
     private async void OnStartDetector(object sender, RoutedEventArgs e)
