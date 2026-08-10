@@ -17,17 +17,18 @@
             <TextBlock Text="Item Manager" FontSize="13" Foreground="{StaticResource MutedBrush}" />
           </StackPanel>
           <Button Style="{StaticResource NavButton}" Tag="overview" Click="OnNavigate" Content="概览" />
-          <Button Style="{StaticResource NavButton}" Tag="items" Click="OnNavigate" Content="物品生成" />
+          <Button Style="{StaticResource NavButton}" Tag="items" Click="OnNavigate" Content="物品数量" />
           <Button Style="{StaticResource NavButton}" Tag="equipment" Click="OnNavigate" Content="装备与词条" />
           <Button Style="{StaticResource NavButton}" Tag="character" Click="OnNavigate" Content="角色" />
+          <Button Style="{StaticResource NavButton}" Tag="detector" Click="OnNavigate" Content="字段探测器" />
           <Button Style="{StaticResource NavButton}" Tag="loadouts" Click="OnNavigate" Content="配置与快照" />
           <Button Style="{StaticResource NavButton}" Tag="logs" Click="OnNavigate" Content="活动记录" />
         </StackPanel>
 
         <Border DockPanel.Dock="Bottom" Background="#172235" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10">
           <StackPanel>
-            <TextBlock Text="安全模式" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" />
-            <TextBlock Text="当前界面不连接游戏。" Foreground="{StaticResource MutedBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0" />
+            <TextBlock Text="外置模式" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" />
+            <TextBlock Text="不安装模组；仅在你点击连接后访问游戏进程。" Foreground="{StaticResource MutedBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0" />
           </StackPanel>
         </Border>
       </DockPanel>
@@ -43,7 +44,7 @@
       <Grid Grid.Row="0" Margin="0,0,0,20">
         <StackPanel>
           <TextBlock x:Name="PageTitle" Text="概览" FontSize="28" FontWeight="SemiBold" />
-          <TextBlock x:Name="PageSubtitle" Text="先验证连接与版本；功能尚未写入游戏。" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0" />
+          <TextBlock x:Name="PageSubtitle" Text="连接游戏后核对已验证特征码，再逐项启用。" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0" />
         </StackPanel>
         <Border HorizontalAlignment="Right" Background="#263247" BorderBrush="#43536C" BorderThickness="1" CornerRadius="16" Padding="12,6">
           <StackPanel Orientation="Horizontal">
@@ -62,31 +63,34 @@
                   <Border Style="{StaticResource Card}" Margin="0,0,12,0">
                     <StackPanel>
                       <TextBlock Text="运行时" Foreground="{StaticResource MutedBrush}" />
-                      <TextBlock Text="等待检测" FontSize="21" FontWeight="SemiBold" Margin="0,8,0,0" />
-                      <TextBlock Text="尚未绑定游戏进程" Foreground="{StaticResource MutedBrush}" Margin="0,5,0,0" />
+                      <TextBlock x:Name="RuntimeStateText" Text="未连接" FontSize="21" FontWeight="SemiBold" Margin="0,8,0,0" />
+                      <TextBlock x:Name="RuntimeDetailText" Text="尚未绑定游戏进程" Foreground="{StaticResource MutedBrush}" Margin="0,5,0,0" />
                     </StackPanel>
                   </Border>
                   <Border Style="{StaticResource Card}" Margin="0,0,12,0">
                     <StackPanel>
                       <TextBlock Text="物品目录" Foreground="{StaticResource MutedBrush}" />
-                      <TextBlock Text="等待读取" FontSize="21" FontWeight="SemiBold" Margin="0,8,0,0" />
-                      <TextBlock Text="目标：游戏内资产目录" Foreground="{StaticResource MutedBrush}" Margin="0,5,0,0" />
+                      <TextBlock x:Name="SignatureStateText" Text="等待扫描" FontSize="21" FontWeight="SemiBold" Margin="0,8,0,0" />
+                      <TextBlock x:Name="SignatureDetailText" Text="目标：当前游戏版本的特征码" Foreground="{StaticResource MutedBrush}" Margin="0,5,0,0" />
                     </StackPanel>
                   </Border>
                   <Border Style="{StaticResource Card}">
                     <StackPanel>
                       <TextBlock Text="写入权限" Foreground="{StaticResource MutedBrush}" />
-                      <TextBlock Text="已锁定" FontSize="21" FontWeight="SemiBold" Margin="0,8,0,0" />
-                      <TextBlock Text="完成逐项验证后再启用" Foreground="{StaticResource MutedBrush}" Margin="0,5,0,0" />
+                      <TextBlock x:Name="WriteStateText" Text="已锁定" FontSize="21" FontWeight="SemiBold" Margin="0,8,0,0" />
+                      <TextBlock x:Name="WriteStateDetailText" Text="先捕获目标地址，再允许单项写入" Foreground="{StaticResource MutedBrush}" Margin="0,5,0,0" />
                     </StackPanel>
                   </Border>
                 </UniformGrid>
 
                 <Border Style="{StaticResource Card}">
                   <StackPanel>
-                    <TextBlock Text="建议的验证顺序" FontSize="17" FontWeight="SemiBold" />
-                    <TextBlock Text="1. 兼容检查   2. 普通材料生成   3. 金币增减   4. 白装生成   5. 蓝装/瘟疫装   6. 词条品质   7. 指定词条与宝石   8. 快照生成   9. 属性" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0" />
-                    <Button Style="{StaticResource ActionButton}" Content="模拟兼容检查" Tag="兼容检查" Click="OnPreviewAction" HorizontalAlignment="Left" Margin="0,16,0,0" />
+                    <TextBlock Text="已验证的首批功能" FontSize="17" FontWeight="SemiBold" />
+                    <TextBlock Text="物品数量与货币已经有旧版本的特征码。先连接游戏并扫描；只有两个特征码均唯一匹配时，才开启捕获与写入。装备品质、词条与属性请使用“字段探测器”逐项定位。" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0" />
+                    <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                      <Button Style="{StaticResource ActionButton}" Content="连接游戏" Click="OnConnectGame" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="检查已知定位" Click="OnScanKnownSignatures" Margin="10,0,0,0" />
+                    </StackPanel>
                   </StackPanel>
                 </Border>
               </StackPanel>
@@ -113,12 +117,15 @@
                 </Border>
                 <Border Style="{StaticResource Card}" Margin="0,16,0,0">
                   <StackPanel>
-                    <TextBlock Text="创建预览" FontSize="17" FontWeight="SemiBold" />
-                    <TextBlock Text="此功能会创建新的物品或材料；不会直接改写现有堆叠数量。" Foreground="{StaticResource MutedBrush}" Margin="0,8,0,0" />
+                    <TextBlock Text="当前可堆叠物品数量（已验证特征码）" FontSize="17" FontWeight="SemiBold" />
+                    <TextBlock Text="点击开始捕获后，在游戏里卖出/使用目标材料 1 个。程序将自动记住那一堆材料的数量地址；捕获完成后才可读写。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0" />
                     <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
-                      <Button Style="{StaticResource ActionButton}" Content="预览生成" Tag="物品生成" Click="OnPreviewAction" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="清空预览" Tag="清空物品预览" Click="OnPreviewAction" Margin="10,0,0,0" />
+                      <Button Style="{StaticResource ActionButton}" Content="开始捕获材料" Click="OnStartItemCapture" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="读取捕获结果" Click="OnReadItemCapture" Margin="10,0,0,0" />
+                      <TextBox x:Name="ItemQuantityBox" Width="110" Height="34" Padding="9,5" Text="20" Margin="18,0,0,0" />
+                      <Button Style="{StaticResource ActionButton}" Content="写入数量" Click="OnWriteItemQuantity" Margin="10,0,0,0" />
                     </StackPanel>
+                    <TextBlock x:Name="ItemCaptureText" Text="尚未捕获任何物品。" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0" />
                   </StackPanel>
                 </Border>
               </StackPanel>
@@ -145,7 +152,7 @@
                       <TextBlock Text="词条" FontSize="17" FontWeight="SemiBold" />
                       <TextBlock Text="瘟疫装规则：4 正面 + 1 负面。" Foreground="{StaticResource MutedBrush}" Margin="0,9,0,0" />
                       <ComboBox Margin="0,14,0,0" Height="34"><ComboBoxItem Content="词条 1：待加载目录" /></ComboBox>
-                      <Button Style="{StaticResource ActionButton}" Content="预览词条配置" Tag="词条配置" Click="OnPreviewAction" Margin="0,14,0,0" />
+                      <Button Style="{StaticResource ActionButton}" Content="用字段探测器定位词条" Click="OnOpenDetector" Margin="0,14,0,0" />
                     </StackPanel>
                   </Border>
                   <Border Grid.Column="1" Style="{StaticResource Card}" Margin="8,0,0,0">
@@ -153,7 +160,7 @@
                       <TextBlock Text="词条品质与宝石" FontSize="17" FontWeight="SemiBold" />
                       <TextBlock Text="词条品质：10% - 100%；宝石须与装备类型匹配。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,9,0,0" />
                       <Slider Minimum="10" Maximum="100" Value="100" TickFrequency="10" IsSnapToTickEnabled="True" Margin="0,12,0,0" />
-                      <Button Style="{StaticResource ActionButton}" Content="预览满值词条" Tag="满值词条" Click="OnPreviewAction" Margin="0,9,0,0" />
+                      <Button Style="{StaticResource ActionButton}" Content="用字段探测器定位品质" Click="OnOpenDetector" Margin="0,9,0,0" />
                     </StackPanel>
                   </Border>
                 </Grid>
@@ -172,10 +179,12 @@
                       <Button Style="{StaticResource SecondaryButton}" Content="Gloamseed" Tag="Gloamseed" Click="OnCurrencyClick" Margin="0,0,8,8" />
                     </WrapPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                      <TextBox Width="130" Height="34" Padding="9,5" Text="10" />
-                      <Button Style="{StaticResource ActionButton}" Content="预览增加" Tag="货币增加" Click="OnPreviewAction" Margin="10,0,0,0" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="预览减少" Tag="货币减少" Click="OnPreviewAction" Margin="10,0,0,0" />
+                      <Button Style="{StaticResource ActionButton}" Content="开始捕获货币" Click="OnStartCurrencyCapture" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="读取捕获结果" Click="OnReadCurrencyCapture" Margin="10,0,0,0" />
+                      <TextBox x:Name="CurrencyValueBox" Width="130" Height="34" Padding="9,5" Text="1000" Margin="18,0,0,0" />
+                      <Button Style="{StaticResource ActionButton}" Content="写入当前货币" Click="OnWriteCurrency" Margin="10,0,0,0" />
                     </StackPanel>
+                    <TextBlock x:Name="CurrencyCaptureText" Text="尚未捕获货币地址。请选择一种货币后，开始捕获并在游戏内让它增减一次。" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0" />
                   </StackPanel>
                 </Border>
                 <Border Style="{StaticResource Card}" Margin="0,16,0,0">
@@ -184,9 +193,43 @@
                     <UniformGrid Columns="4" Margin="0,12,0,0">
                       <TextBlock Text="力量  10" /><TextBlock Text="敏捷  10" /><TextBlock Text="智力  10" /><TextBlock Text="信仰  10" />
                     </UniformGrid>
-                    <TextBlock Text="属性写入将在单点持久化验证成功后才启用。" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0" />
-                    <Button Style="{StaticResource ActionButton}" Content="预览属性申请" Tag="属性申请" Click="OnPreviewAction" HorizontalAlignment="Left" Margin="0,14,0,0" />
+                    <TextBlock Text="属性地址尚未验证。请使用字段探测器，以当前属性值为初始值；升级或洗点后再筛选。" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0" />
+                    <Button Style="{StaticResource ActionButton}" Content="打开属性探测器" Click="OnOpenDetector" HorizontalAlignment="Left" Margin="0,14,0,0" />
                   </StackPanel>
+                </Border>
+              </StackPanel>
+            </Grid>
+
+            <Grid x:Name="DetectorView" Visibility="Collapsed">
+              <StackPanel>
+                <Border Style="{StaticResource Card}">
+                  <StackPanel>
+                    <TextBlock Text="4 Bytes 数值变化探测器" FontSize="17" FontWeight="SemiBold" />
+                    <TextBlock Text="适合属性点、装备等级、词条数或其它能明确看到整数变化的字段。它不修改游戏：先按初始值扫描，再让游戏内目标变化一次，最后按新值筛选。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0" />
+                    <Grid Margin="0,16,0,0">
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="150" /><ColumnDefinition Width="150" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                      <StackPanel Grid.Column="0">
+                        <TextBlock Text="变化前" Foreground="{StaticResource MutedBrush}" />
+                        <TextBox x:Name="DetectorBeforeBox" Height="34" Padding="9,5" Text="10" Margin="0,7,0,0" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                        <TextBlock Text="变化后" Foreground="{StaticResource MutedBrush}" />
+                        <TextBox x:Name="DetectorAfterBox" Height="34" Padding="9,5" Text="11" Margin="0,7,0,0" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="18,0,0,0">
+                        <Button Style="{StaticResource ActionButton}" Content="1. 初始扫描" Click="OnStartDetector" />
+                        <Button Style="{StaticResource SecondaryButton}" Content="2. 按新值筛选" Click="OnFilterDetector" Margin="10,0,0,0" />
+                        <Button Style="{StaticResource SecondaryButton}" Content="复制结果" Click="OnCopyDetectorReport" Margin="10,0,0,0" />
+                      </StackPanel>
+                    </Grid>
+                    <TextBlock x:Name="DetectorStatusText" Text="先连接游戏，再填入游戏里当前可见的整数。" Foreground="{StaticResource MutedBrush}" Margin="0,14,0,0" />
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                  <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="候选地址（最多展示 100 个）" FontSize="17" FontWeight="SemiBold" Margin="0,0,0,12" />
+                    <ListBox x:Name="DetectorResults" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextBrush}" MinHeight="260" />
+                  </DockPanel>
                 </Border>
               </StackPanel>
             </Grid>
@@ -198,7 +241,7 @@
                     <TextBlock Text="快照生成" FontSize="17" FontWeight="SemiBold" />
                     <TextBlock Text="根据 Build/Planner 数据生成等价新装备；不是复制现有物品 GUID。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,9,0,0" />
                     <TextBox Height="34" Padding="9,5" Margin="0,14,0,0" Text="https://www.norestforthewicked.gg/planner/..." />
-                    <Button Style="{StaticResource ActionButton}" Content="预览快照导入" Tag="快照导入" Click="OnPreviewAction" HorizontalAlignment="Left" Margin="0,14,0,0" />
+                    <TextBlock Text="外置版暂不写入快照；先完成物品实例结构探测后再实现。" Foreground="{StaticResource MutedBrush}" Margin="0,14,0,0" />
                   </StackPanel>
                 </Border>
                 <Border Style="{StaticResource Card}" Margin="0,16,0,0">
@@ -231,7 +274,7 @@
       <Border Grid.Row="2" Margin="0,18,0,0" Background="#121A28" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12,8">
         <StackPanel Orientation="Horizontal">
           <Ellipse Width="7" Height="7" Fill="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
-          <TextBlock x:Name="ActionStatusText" Text="界面已就绪：所有按钮均为预览，不会读取或修改游戏。" Foreground="{StaticResource MutedBrush}" />
+          <TextBlock x:Name="ActionStatusText" Text="界面已就绪：尚未连接游戏。" Foreground="{StaticResource MutedBrush}" />
         </StackPanel>
       </Border>
     </Grid>
