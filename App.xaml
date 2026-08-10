@@ -1,0 +1,76 @@
+<Application x:Class="NRftWManagerUI.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="MainWindow.xaml">
+  <Application.Resources>
+    <SolidColorBrush x:Key="BackgroundBrush" Color="#0B101A" />
+    <SolidColorBrush x:Key="PanelBrush" Color="#151D2B" />
+    <SolidColorBrush x:Key="PanelAltBrush" Color="#1B2638" />
+    <SolidColorBrush x:Key="BorderBrush" Color="#2D3B52" />
+    <SolidColorBrush x:Key="MutedBrush" Color="#92A4BD" />
+    <SolidColorBrush x:Key="TextBrush" Color="#F4F7FB" />
+    <SolidColorBrush x:Key="AccentBrush" Color="#74D6B5" />
+    <SolidColorBrush x:Key="AccentDarkBrush" Color="#275D50" />
+    <SolidColorBrush x:Key="WarningBrush" Color="#F5C86D" />
+
+    <Style TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="Segoe UI" />
+      <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+    </Style>
+
+    <Style x:Key="Card" TargetType="Border">
+      <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+      <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="Padding" Value="18" />
+    </Style>
+
+    <Style x:Key="NavButton" TargetType="Button">
+      <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="Padding" Value="14,11" />
+      <Setter Property="Margin" Value="0,2" />
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Background" Value="#1F2B3F" />
+          <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+
+    <Style x:Key="ActionButton" TargetType="Button">
+      <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+      <Setter Property="Foreground" Value="#102018" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="14,9" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border Background="{TemplateBinding Background}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#A1E6CD" /></Trigger>
+        <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.45" /></Trigger>
+      </Style.Triggers>
+    </Style>
+
+    <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+      <Setter Property="Background" Value="#293951" />
+      <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#364C69" /></Trigger>
+      </Style.Triggers>
+    </Style>
+  </Application.Resources>
+</Application>

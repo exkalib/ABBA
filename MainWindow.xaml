@@ -1,0 +1,239 @@
+<Window x:Class="NRftWManagerUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="NRftW Manager" Height="860" Width="1380" MinHeight="700" MinWidth="1100"
+        WindowStartupLocation="CenterScreen" Background="{StaticResource BackgroundBrush}">
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="218" />
+      <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+
+    <Border Grid.Column="0" Background="#101824" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
+      <DockPanel Margin="14">
+        <StackPanel DockPanel.Dock="Top">
+          <StackPanel Margin="6,8,6,24">
+            <TextBlock Text="NRftW" FontSize="23" FontWeight="Bold" />
+            <TextBlock Text="Item Manager" FontSize="13" Foreground="{StaticResource MutedBrush}" />
+          </StackPanel>
+          <Button Style="{StaticResource NavButton}" Tag="overview" Click="OnNavigate" Content="概览" />
+          <Button Style="{StaticResource NavButton}" Tag="items" Click="OnNavigate" Content="物品生成" />
+          <Button Style="{StaticResource NavButton}" Tag="equipment" Click="OnNavigate" Content="装备与词条" />
+          <Button Style="{StaticResource NavButton}" Tag="character" Click="OnNavigate" Content="角色" />
+          <Button Style="{StaticResource NavButton}" Tag="loadouts" Click="OnNavigate" Content="配置与快照" />
+          <Button Style="{StaticResource NavButton}" Tag="logs" Click="OnNavigate" Content="活动记录" />
+        </StackPanel>
+
+        <Border DockPanel.Dock="Bottom" Background="#172235" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10">
+          <StackPanel>
+            <TextBlock Text="安全模式" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" />
+            <TextBlock Text="当前界面不连接游戏。" Foreground="{StaticResource MutedBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0" />
+          </StackPanel>
+        </Border>
+      </DockPanel>
+    </Border>
+
+    <Grid Grid.Column="1" Margin="28,24,28,22">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <Grid Grid.Row="0" Margin="0,0,0,20">
+        <StackPanel>
+          <TextBlock x:Name="PageTitle" Text="概览" FontSize="28" FontWeight="SemiBold" />
+          <TextBlock x:Name="PageSubtitle" Text="先验证连接与版本；功能尚未写入游戏。" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0" />
+        </StackPanel>
+        <Border HorizontalAlignment="Right" Background="#263247" BorderBrush="#43536C" BorderThickness="1" CornerRadius="16" Padding="12,6">
+          <StackPanel Orientation="Horizontal">
+            <Ellipse Width="8" Height="8" Fill="{StaticResource WarningBrush}" VerticalAlignment="Center" Margin="0,0,7,0" />
+            <TextBlock x:Name="ConnectionText" Text="未连接游戏" Foreground="{StaticResource WarningBrush}" FontWeight="SemiBold" />
+          </StackPanel>
+        </Border>
+      </Grid>
+
+      <Grid Grid.Row="1">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <Grid>
+            <Grid x:Name="OverviewView">
+              <StackPanel>
+                <UniformGrid Columns="3" Margin="0,0,0,18">
+                  <Border Style="{StaticResource Card}" Margin="0,0,12,0">
+                    <StackPanel>
+                      <TextBlock Text="运行时" Foreground="{StaticResource MutedBrush}" />
+                      <TextBlock Text="等待检测" FontSize="21" FontWeight="SemiBold" Margin="0,8,0,0" />
+                      <TextBlock Text="尚未绑定游戏进程" Foreground="{StaticResource MutedBrush}" Margin="0,5,0,0" />
+                    </StackPanel>
+                  </Border>
+                  <Border Style="{StaticResource Card}" Margin="0,0,12,0">
+                    <StackPanel>
+                      <TextBlock Text="物品目录" Foreground="{StaticResource MutedBrush}" />
+                      <TextBlock Text="等待读取" FontSize="21" FontWeight="SemiBold" Margin="0,8,0,0" />
+                      <TextBlock Text="目标：游戏内资产目录" Foreground="{StaticResource MutedBrush}" Margin="0,5,0,0" />
+                    </StackPanel>
+                  </Border>
+                  <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                      <TextBlock Text="写入权限" Foreground="{StaticResource MutedBrush}" />
+                      <TextBlock Text="已锁定" FontSize="21" FontWeight="SemiBold" Margin="0,8,0,0" />
+                      <TextBlock Text="完成逐项验证后再启用" Foreground="{StaticResource MutedBrush}" Margin="0,5,0,0" />
+                    </StackPanel>
+                  </Border>
+                </UniformGrid>
+
+                <Border Style="{StaticResource Card}">
+                  <StackPanel>
+                    <TextBlock Text="建议的验证顺序" FontSize="17" FontWeight="SemiBold" />
+                    <TextBlock Text="1. 兼容检查   2. 普通材料生成   3. 金币增减   4. 白装生成   5. 蓝装/瘟疫装   6. 词条品质   7. 指定词条与宝石   8. 快照生成   9. 属性" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0" />
+                    <Button Style="{StaticResource ActionButton}" Content="模拟兼容检查" Tag="兼容检查" Click="OnPreviewAction" HorizontalAlignment="Left" Margin="0,16,0,0" />
+                  </StackPanel>
+                </Border>
+              </StackPanel>
+            </Grid>
+
+            <Grid x:Name="ItemsView" Visibility="Collapsed">
+              <StackPanel>
+                <Border Style="{StaticResource Card}">
+                  <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="2*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="120" /></Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                      <TextBlock Text="物品名称或 GUID" Foreground="{StaticResource MutedBrush}" />
+                      <TextBox Margin="0,7,0,0" Height="34" Padding="9,5" Text="例如：修理粉末" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                      <TextBlock Text="分类" Foreground="{StaticResource MutedBrush}" />
+                      <ComboBox Margin="0,7,0,0" Height="34" SelectedIndex="0"><ComboBoxItem Content="全部物品" /><ComboBoxItem Content="材料" /><ComboBoxItem Content="装备" /><ComboBoxItem Content="余烬" /></ComboBox>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                      <TextBlock Text="数量" Foreground="{StaticResource MutedBrush}" />
+                      <TextBox Margin="0,7,0,0" Height="34" Padding="9,5" Text="5" />
+                    </StackPanel>
+                  </Grid>
+                </Border>
+                <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                  <StackPanel>
+                    <TextBlock Text="创建预览" FontSize="17" FontWeight="SemiBold" />
+                    <TextBlock Text="此功能会创建新的物品或材料；不会直接改写现有堆叠数量。" Foreground="{StaticResource MutedBrush}" Margin="0,8,0,0" />
+                    <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                      <Button Style="{StaticResource ActionButton}" Content="预览生成" Tag="物品生成" Click="OnPreviewAction" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="清空预览" Tag="清空物品预览" Click="OnPreviewAction" Margin="10,0,0,0" />
+                    </StackPanel>
+                  </StackPanel>
+                </Border>
+              </StackPanel>
+            </Grid>
+
+            <Grid x:Name="EquipmentView" Visibility="Collapsed">
+              <StackPanel>
+                <Border Style="{StaticResource Card}">
+                  <StackPanel>
+                    <TextBlock Text="装备品质" FontSize="17" FontWeight="SemiBold" />
+                    <WrapPanel Margin="0,12,0,0">
+                      <Button Style="{StaticResource SecondaryButton}" Content="Common（白）" Tag="Common" Click="OnRarityClick" Margin="0,0,8,8" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="Magical（蓝）" Tag="Magical" Click="OnRarityClick" Margin="0,0,8,8" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="Plagued（瘟疫）" Tag="Plagued" Click="OnRarityClick" Margin="0,0,8,8" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="Gold（仅目录武器）" Tag="Gold" Click="OnRarityClick" Margin="0,0,8,8" />
+                    </WrapPanel>
+                    <TextBlock x:Name="RarityHint" Text="尚未选择品质。Gold 不进入通用自定义生成流程。" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0" />
+                  </StackPanel>
+                </Border>
+                <Grid Margin="0,16,0,0">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                  <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,8,0">
+                    <StackPanel>
+                      <TextBlock Text="词条" FontSize="17" FontWeight="SemiBold" />
+                      <TextBlock Text="瘟疫装规则：4 正面 + 1 负面。" Foreground="{StaticResource MutedBrush}" Margin="0,9,0,0" />
+                      <ComboBox Margin="0,14,0,0" Height="34"><ComboBoxItem Content="词条 1：待加载目录" /></ComboBox>
+                      <Button Style="{StaticResource ActionButton}" Content="预览词条配置" Tag="词条配置" Click="OnPreviewAction" Margin="0,14,0,0" />
+                    </StackPanel>
+                  </Border>
+                  <Border Grid.Column="1" Style="{StaticResource Card}" Margin="8,0,0,0">
+                    <StackPanel>
+                      <TextBlock Text="词条品质与宝石" FontSize="17" FontWeight="SemiBold" />
+                      <TextBlock Text="词条品质：10% - 100%；宝石须与装备类型匹配。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,9,0,0" />
+                      <Slider Minimum="10" Maximum="100" Value="100" TickFrequency="10" IsSnapToTickEnabled="True" Margin="0,12,0,0" />
+                      <Button Style="{StaticResource ActionButton}" Content="预览满值词条" Tag="满值词条" Click="OnPreviewAction" Margin="0,9,0,0" />
+                    </StackPanel>
+                  </Border>
+                </Grid>
+              </StackPanel>
+            </Grid>
+
+            <Grid x:Name="CharacterView" Visibility="Collapsed">
+              <StackPanel>
+                <Border Style="{StaticResource Card}">
+                  <StackPanel>
+                    <TextBlock Text="货币" FontSize="17" FontWeight="SemiBold" />
+                    <WrapPanel Margin="0,12,0,0">
+                      <Button Style="{StaticResource SecondaryButton}" Content="铜币" Tag="Copper" Click="OnCurrencyClick" Margin="0,0,8,8" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="银币" Tag="Silver" Click="OnCurrencyClick" Margin="0,0,8,8" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="金币" Tag="Gold" Click="OnCurrencyClick" Margin="0,0,8,8" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="Gloamseed" Tag="Gloamseed" Click="OnCurrencyClick" Margin="0,0,8,8" />
+                    </WrapPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                      <TextBox Width="130" Height="34" Padding="9,5" Text="10" />
+                      <Button Style="{StaticResource ActionButton}" Content="预览增加" Tag="货币增加" Click="OnPreviewAction" Margin="10,0,0,0" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="预览减少" Tag="货币减少" Click="OnPreviewAction" Margin="10,0,0,0" />
+                    </StackPanel>
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                  <StackPanel>
+                    <TextBlock Text="属性与洗点" FontSize="17" FontWeight="SemiBold" />
+                    <UniformGrid Columns="4" Margin="0,12,0,0">
+                      <TextBlock Text="力量  10" /><TextBlock Text="敏捷  10" /><TextBlock Text="智力  10" /><TextBlock Text="信仰  10" />
+                    </UniformGrid>
+                    <TextBlock Text="属性写入将在单点持久化验证成功后才启用。" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0" />
+                    <Button Style="{StaticResource ActionButton}" Content="预览属性申请" Tag="属性申请" Click="OnPreviewAction" HorizontalAlignment="Left" Margin="0,14,0,0" />
+                  </StackPanel>
+                </Border>
+              </StackPanel>
+            </Grid>
+
+            <Grid x:Name="LoadoutsView" Visibility="Collapsed">
+              <StackPanel>
+                <Border Style="{StaticResource Card}">
+                  <StackPanel>
+                    <TextBlock Text="快照生成" FontSize="17" FontWeight="SemiBold" />
+                    <TextBlock Text="根据 Build/Planner 数据生成等价新装备；不是复制现有物品 GUID。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,9,0,0" />
+                    <TextBox Height="34" Padding="9,5" Margin="0,14,0,0" Text="https://www.norestforthewicked.gg/planner/..." />
+                    <Button Style="{StaticResource ActionButton}" Content="预览快照导入" Tag="快照导入" Click="OnPreviewAction" HorizontalAlignment="Left" Margin="0,14,0,0" />
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                  <StackPanel>
+                    <TextBlock Text="配置槽位" FontSize="17" FontWeight="SemiBold" />
+                    <UniformGrid Columns="5" Margin="0,12,0,0">
+                      <Button Style="{StaticResource SecondaryButton}" Content="配置 1&#x0a;空" Tag="配置 1" Click="OnPreviewAction" Margin="0,0,8,0" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="配置 2&#x0a;空" Tag="配置 2" Click="OnPreviewAction" Margin="0,0,8,0" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="配置 3&#x0a;空" Tag="配置 3" Click="OnPreviewAction" Margin="0,0,8,0" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="配置 4&#x0a;空" Tag="配置 4" Click="OnPreviewAction" Margin="0,0,8,0" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="配置 5&#x0a;空" Tag="配置 5" Click="OnPreviewAction" />
+                    </UniformGrid>
+                  </StackPanel>
+                </Border>
+              </StackPanel>
+            </Grid>
+
+            <Grid x:Name="LogsView" Visibility="Collapsed">
+              <Border Style="{StaticResource Card}">
+                <DockPanel>
+                  <TextBlock DockPanel.Dock="Top" Text="本次界面操作" FontSize="17" FontWeight="SemiBold" Margin="0,0,0,12" />
+                  <ListBox x:Name="ActivityLog" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextBrush}" />
+                </DockPanel>
+              </Border>
+            </Grid>
+          </Grid>
+        </ScrollViewer>
+      </Grid>
+
+      <Border Grid.Row="2" Margin="0,18,0,0" Background="#121A28" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12,8">
+        <StackPanel Orientation="Horizontal">
+          <Ellipse Width="7" Height="7" Fill="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+          <TextBlock x:Name="ActionStatusText" Text="界面已就绪：所有按钮均为预览，不会读取或修改游戏。" Foreground="{StaticResource MutedBrush}" />
+        </StackPanel>
+      </Border>
+    </Grid>
+  </Grid>
+</Window>
