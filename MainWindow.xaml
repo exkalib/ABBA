@@ -21,7 +21,7 @@
           <Button Style="{StaticResource NavButton}" Tag="equipment" Click="OnNavigate" Content="装备与词条" />
           <Button Style="{StaticResource NavButton}" Tag="character" Click="OnNavigate" Content="角色" />
           <Button Style="{StaticResource NavButton}" Tag="detector" Click="OnNavigate" Content="字段探测器" />
-          <Button Style="{StaticResource NavButton}" Tag="loadouts" Click="OnNavigate" Content="配置与快照" />
+          <Button Style="{StaticResource NavButton}" Tag="loadouts" Click="OnNavigate" Content="版本与验证" />
           <Button Style="{StaticResource NavButton}" Tag="logs" Click="OnNavigate" Content="活动记录" />
         </StackPanel>
 
@@ -86,7 +86,7 @@
                 <Border Style="{StaticResource Card}">
                   <StackPanel>
                     <TextBlock Text="已验证的首批功能" FontSize="17" FontWeight="SemiBold" />
-                    <TextBlock Text="物品数量与当前版本钱包均有已验证入口。连接后先扫描：材料仍需捕获目标堆；钱包会自动定位，不需要先让货币变化。装备品质、词条与属性请使用“字段探测器”逐项定位。" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0" />
+                    <TextBlock Text="当前构建已接入材料数量、角色上下文、货币、生命/耐力/专注、原生等级/属性、装备品质、随机词条、修复、复制和按选中物品模板创建。连接后先扫描，再依照“版本与验证”顺序逐项试用。" TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0" />
                     <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
                       <Button Style="{StaticResource ActionButton}" Content="连接游戏" Click="OnConnectGame" />
                       <Button Style="{StaticResource SecondaryButton}" Content="检查已知定位" Click="OnScanKnownSignatures" Margin="10,0,0,0" />
@@ -137,32 +137,53 @@
               <StackPanel>
                 <Border Style="{StaticResource Card}">
                   <StackPanel>
-                    <TextBlock Text="装备品质" FontSize="17" FontWeight="SemiBold" />
-                    <WrapPanel Margin="0,12,0,0">
-                      <Button Style="{StaticResource SecondaryButton}" Content="Common（白）" Tag="Common" Click="OnRarityClick" Margin="0,0,8,8" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="Magical（蓝）" Tag="Magical" Click="OnRarityClick" Margin="0,0,8,8" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="Plagued（瘟疫）" Tag="Plagued" Click="OnRarityClick" Margin="0,0,8,8" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="Gold（仅目录武器）" Tag="Gold" Click="OnRarityClick" Margin="0,0,8,8" />
-                    </WrapPanel>
-                    <TextBlock x:Name="RarityHint" Text="尚未选择品质。Gold 不进入通用自定义生成流程。" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0" />
+                    <TextBlock Text="选中目标物品" FontSize="17" FontWeight="SemiBold" />
+                    <TextBlock Text="先在“角色”页开启并读取角色上下文；再点“开启物品捕获”，回游戏打开背包并点击目标物品详情，立刻返回读取。该捕获只记录当前详情请求的物品，不会修改它。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,9,0,0" />
+                    <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                      <Button Style="{StaticResource ActionButton}" Content="开启物品捕获" Click="OnStartItemSelection" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="读取选中物品" Click="OnReadItemSelection" Margin="10,0,0,0" />
+                    </StackPanel>
+                    <TextBlock x:Name="SelectedItemText" Text="尚未选择物品。" Foreground="{StaticResource MutedBrush}" Margin="0,11,0,0" TextWrapping="Wrap" />
                   </StackPanel>
                 </Border>
                 <Grid Margin="0,16,0,0">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                   <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,8,0">
                     <StackPanel>
-                      <TextBlock Text="词条" FontSize="17" FontWeight="SemiBold" />
-                      <TextBlock Text="瘟疫装规则：4 正面 + 1 负面。" Foreground="{StaticResource MutedBrush}" Margin="0,9,0,0" />
-                      <ComboBox Margin="0,14,0,0" Height="34"><ComboBoxItem Content="词条 1：待加载目录" /></ComboBox>
-                      <Button Style="{StaticResource ActionButton}" Content="用字段探测器定位词条" Click="OnOpenDetector" Margin="0,14,0,0" />
+                      <TextBlock Text="原生品质与词条" FontSize="17" FontWeight="SemiBold" />
+                      <TextBlock Text="使用游戏的原生物品 API，而不是直接改颜色。每次点击只排队执行一次；游戏加载场景后约 1 秒内完成。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,9,0,0" />
+                      <WrapPanel Margin="0,13,0,0">
+                        <Button Style="{StaticResource SecondaryButton}" Content="Common（白）" Tag="Common" Click="OnQueueRarity" Margin="0,0,8,8" />
+                        <Button Style="{StaticResource SecondaryButton}" Content="Magical（蓝）" Tag="Magical" Click="OnQueueRarity" Margin="0,0,8,8" />
+                        <Button Style="{StaticResource SecondaryButton}" Content="Plagued（紫）" Tag="Plagued" Click="OnQueueRarity" Margin="0,0,8,8" />
+                        <Button Style="{StaticResource SecondaryButton}" Content="Gold（金）" Tag="Gold" Click="OnQueueRarity" Margin="0,0,8,8" />
+                      </WrapPanel>
+                      <WrapPanel>
+                        <Button Style="{StaticResource ActionButton}" Content="随机新增词条" Click="OnAddSelectedItemEnchantment" Margin="0,0,8,8" />
+                        <Button Style="{StaticResource SecondaryButton}" Content="修满耐久" Click="OnRepairSelectedItem" Margin="0,0,8,8" />
+                        <Button Style="{StaticResource SecondaryButton}" Content="复制当前物品" Click="OnDuplicateSelectedItem" Margin="0,0,8,8" />
+                      </WrapPanel>
                     </StackPanel>
                   </Border>
                   <Border Grid.Column="1" Style="{StaticResource Card}" Margin="8,0,0,0">
                     <StackPanel>
-                      <TextBlock Text="词条品质与宝石" FontSize="17" FontWeight="SemiBold" />
-                      <TextBlock Text="词条品质：10% - 100%；宝石须与装备类型匹配。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,9,0,0" />
-                      <Slider Minimum="10" Maximum="100" Value="100" TickFrequency="10" IsSnapToTickEnabled="True" Margin="0,12,0,0" />
-                      <Button Style="{StaticResource ActionButton}" Content="用字段探测器定位品质" Click="OnOpenDetector" Margin="0,9,0,0" />
+                      <TextBlock Text="创建与等级" FontSize="17" FontWeight="SemiBold" />
+                      <TextBlock Text="以当前选中物品的数据为模板创建新物品；这不会修改原物品。品质下拉项依次为白、蓝、紫、金。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,9,0,0" />
+                      <StackPanel Orientation="Horizontal" Margin="0,13,0,0">
+                        <TextBox x:Name="CreateItemCountBox" Width="92" Height="34" Padding="9,5" Text="1" />
+                        <ComboBox x:Name="CreateItemRarityBox" Width="126" Height="34" SelectedIndex="0" Margin="9,0,0,0">
+                          <ComboBoxItem Content="Common（白）" />
+                          <ComboBoxItem Content="Magical（蓝）" />
+                          <ComboBoxItem Content="Plagued（紫）" />
+                          <ComboBoxItem Content="Gold（金）" />
+                        </ComboBox>
+                        <Button Style="{StaticResource ActionButton}" Content="创建" Click="OnCreateSelectedItem" Margin="9,0,0,0" />
+                      </StackPanel>
+                      <TextBlock Text="物品等级（1–100）" Foreground="{StaticResource MutedBrush}" Margin="0,14,0,0" />
+                      <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
+                        <TextBox x:Name="ItemLevelBox" Width="112" Height="34" Padding="9,5" Text="30" />
+                        <Button Style="{StaticResource SecondaryButton}" Content="设置选中物品等级" Click="OnSetSelectedItemLevel" Margin="9,0,0,0" />
+                      </StackPanel>
                     </StackPanel>
                   </Border>
                 </Grid>
@@ -173,6 +194,43 @@
               <StackPanel>
                 <Border Style="{StaticResource Card}">
                   <StackPanel>
+                    <TextBlock Text="角色上下文（先做这一步）" FontSize="17" FontWeight="SemiBold" />
+                    <TextBlock Text="连接并通过“检查已知定位”后，进入已加载的角色画面，点击开启并等约 1 秒，再读取。角色与物品操作都依赖这一步。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,9,0,0" />
+                    <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                      <Button Style="{StaticResource ActionButton}" Content="开启角色上下文" Click="OnStartCurrencyCapture" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="读取角色状态" Click="OnReadCurrencyCapture" Margin="10,0,0,0" />
+                    </StackPanel>
+                    <TextBlock x:Name="CurrencyCaptureText" Text="角色上下文尚未开启。" Foreground="{StaticResource MutedBrush}" Margin="0,11,0,0" TextWrapping="Wrap" />
+                  </StackPanel>
+                </Border>
+                <Grid Margin="0,16,0,0">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                  <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,8,0">
+                    <StackPanel>
+                      <TextBlock Text="生命与战斗" FontSize="17" FontWeight="SemiBold" />
+                      <WrapPanel Margin="0,12,0,0">
+                        <CheckBox Content="无限生命" Tag="health" Click="OnTogglePlayerFlag" Margin="0,0,18,10" />
+                        <CheckBox Content="无限耐力" Tag="stamina" Click="OnTogglePlayerFlag" Margin="0,0,18,10" />
+                        <CheckBox Content="无限专注" Tag="focus" Click="OnTogglePlayerFlag" Margin="0,0,18,10" />
+                        <CheckBox Content="一击必杀" Tag="instagib" Click="OnTogglePlayerFlag" Margin="0,0,18,10" />
+                      </WrapPanel>
+                      <TextBlock Text="这些开关对应当前版本角色组件中的原生状态/调试标志。切换场景或重进游戏后请重新开启。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,3,0,0" />
+                    </StackPanel>
+                  </Border>
+                  <Border Grid.Column="1" Style="{StaticResource Card}" Margin="8,0,0,0">
+                    <StackPanel>
+                      <TextBlock Text="商店与装备限制" FontSize="17" FontWeight="SemiBold" />
+                      <WrapPanel Margin="0,12,0,0">
+                        <CheckBox Content="免费商店" Tag="vendorCheat" Click="OnTogglePlayerFlag" Margin="0,0,18,10" />
+                        <CheckBox Content="忽略装备需求" Tag="ignoreRequirements" Click="OnTogglePlayerFlag" Margin="0,0,18,10" />
+                        <Button Style="{StaticResource SecondaryButton}" Content="解锁快速旅行" Click="OnUnlockFastTravel" Margin="0,0,18,8" />
+                      </WrapPanel>
+                      <TextBlock Text="“免费商店”和快速旅行均调用当前构建内置入口；免费制作仍没有安全的统一外置入口。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,3,0,0" />
+                    </StackPanel>
+                  </Border>
+                </Grid>
+                <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                  <StackPanel>
                     <TextBlock Text="货币" FontSize="17" FontWeight="SemiBold" />
                     <WrapPanel Margin="0,12,0,0">
                       <Button Style="{StaticResource SecondaryButton}" Content="铜币" Tag="Copper" Click="OnCurrencyClick" Margin="0,0,8,8" />
@@ -181,22 +239,37 @@
                       <Button Style="{StaticResource SecondaryButton}" Content="Gloamseed" Tag="Gloamseed" Click="OnCurrencyClick" Margin="0,0,8,8" />
                     </WrapPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                      <Button Style="{StaticResource ActionButton}" Content="自动定位当前钱包" Click="OnStartCurrencyCapture" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="读取自动定位结果" Click="OnReadCurrencyCapture" Margin="10,0,0,0" />
                       <TextBox x:Name="CurrencyValueBox" Width="130" Height="34" Padding="9,5" Text="1000" Margin="18,0,0,0" />
                       <Button Style="{StaticResource ActionButton}" Content="写入当前货币" Click="OnWriteCurrency" Margin="10,0,0,0" />
                     </StackPanel>
-                    <TextBlock x:Name="CurrencyCaptureText" Text="当前版本的钱包会在角色更新时自动定位。进入已加载的角色画面后停留约 1 秒即可；不需要先花钱或捡钱。铜=1、银=100、金=10,000 内部基数。" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0" TextWrapping="Wrap" />
+                    <TextBlock Text="铜=1、银=100、金=10,000 内部基数。Gloamseed 走游戏原生“增加永久地牢货币”接口，输入的数值为增加量。" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0" TextWrapping="Wrap" />
                   </StackPanel>
                 </Border>
                 <Border Style="{StaticResource Card}" Margin="0,16,0,0">
                   <StackPanel>
-                    <TextBlock Text="属性与洗点" FontSize="17" FontWeight="SemiBold" />
-                    <UniformGrid Columns="4" Margin="0,12,0,0">
-                      <TextBlock Text="力量  10" /><TextBlock Text="敏捷  10" /><TextBlock Text="智力  10" /><TextBlock Text="信仰  10" />
-                    </UniformGrid>
-                    <TextBlock Text="属性地址尚未验证。请使用字段探测器，以当前属性值为初始值；升级或洗点后再筛选。" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0" />
-                    <Button Style="{StaticResource ActionButton}" Content="打开属性探测器" Click="OnOpenDetector" HorizontalAlignment="Left" Margin="0,14,0,0" />
+                    <TextBlock Text="移动、经验、等级与属性点" FontSize="17" FontWeight="SemiBold" />
+                    <WrapPanel Margin="0,12,0,0">
+                      <StackPanel Margin="0,0,14,10">
+                        <TextBlock Text="移动倍率（0.1–5）" Foreground="{StaticResource MutedBrush}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0"><TextBox x:Name="MoveSpeedBox" Width="82" Height="34" Padding="9,5" Text="1.5" /><Button Style="{StaticResource SecondaryButton}" Content="应用" Tag="movement" Click="OnWriteHeroMultiplier" Margin="7,0,0,0" /></StackPanel>
+                      </StackPanel>
+                      <StackPanel Margin="0,0,14,10">
+                        <TextBlock Text="经验倍率（0.1–100）" Foreground="{StaticResource MutedBrush}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0"><TextBox x:Name="ExperienceMultiplierBox" Width="82" Height="34" Padding="9,5" Text="3" /><Button Style="{StaticResource SecondaryButton}" Content="应用" Tag="experience" Click="OnWriteHeroMultiplier" Margin="7,0,0,0" /></StackPanel>
+                      </StackPanel>
+                      <StackPanel Margin="0,0,14,10">
+                        <TextBlock Text="未分配属性点（0–9999）" Foreground="{StaticResource MutedBrush}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0"><TextBox x:Name="AttributePointsBox" Width="82" Height="34" Padding="9,5" Text="10" /><Button Style="{StaticResource SecondaryButton}" Content="应用" Click="OnWriteAttributePoints" Margin="7,0,0,0" /></StackPanel>
+                      </StackPanel>
+                      <StackPanel Margin="0,0,14,10">
+                        <TextBlock Text="目标等级（仅提升，1–100）" Foreground="{StaticResource MutedBrush}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0"><TextBox x:Name="LevelBox" Width="82" Height="34" Padding="9,5" Text="30" /><Button Style="{StaticResource SecondaryButton}" Content="升级" Click="OnSetLevel" Margin="7,0,0,0" /></StackPanel>
+                      </StackPanel>
+                      <StackPanel Margin="0,0,0,10">
+                        <TextBlock Text="原生最大属性等级（1–100）" Foreground="{StaticResource MutedBrush}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0"><TextBox x:Name="MaxStatsLevelBox" Width="82" Height="34" Padding="9,5" Text="30" /><Button Style="{StaticResource ActionButton}" Content="设置" Click="OnGiveMaxStats" Margin="7,0,0,0" /></StackPanel>
+                      </StackPanel>
+                    </WrapPanel>
                   </StackPanel>
                 </Border>
               </StackPanel>
@@ -240,22 +313,15 @@
               <StackPanel>
                 <Border Style="{StaticResource Card}">
                   <StackPanel>
-                    <TextBlock Text="快照生成" FontSize="17" FontWeight="SemiBold" />
-                    <TextBlock Text="根据 Build/Planner 数据生成等价新装备；不是复制现有物品 GUID。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,9,0,0" />
-                    <TextBox Height="34" Padding="9,5" Margin="0,14,0,0" Text="https://www.norestforthewicked.gg/planner/..." />
-                    <TextBlock Text="外置版暂不写入快照；先完成物品实例结构探测后再实现。" Foreground="{StaticResource MutedBrush}" Margin="0,14,0,0" />
+                    <TextBlock Text="本次版本的验证顺序" FontSize="17" FontWeight="SemiBold" />
+                    <TextBlock Text="1. 备份存档并进入离线角色。  2. 概览页连接游戏，点击“检查已知定位”，必须显示三个入口均唯一匹配。  3. 角色页开启并读取角色上下文。  4. 先验证无限生命与货币。  5. 使用不重要的装备，开启物品捕获、在游戏详情页点它、读取后依次验证修满耐久、复制、改品质、加词条和模板创建。每一步都确认成功后再做下一步。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,10,0,0" />
                   </StackPanel>
                 </Border>
                 <Border Style="{StaticResource Card}" Margin="0,16,0,0">
                   <StackPanel>
-                    <TextBlock Text="配置槽位" FontSize="17" FontWeight="SemiBold" />
-                    <UniformGrid Columns="5" Margin="0,12,0,0">
-                      <Button Style="{StaticResource SecondaryButton}" Content="配置 1&#x0a;空" Tag="配置 1" Click="OnPreviewAction" Margin="0,0,8,0" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="配置 2&#x0a;空" Tag="配置 2" Click="OnPreviewAction" Margin="0,0,8,0" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="配置 3&#x0a;空" Tag="配置 3" Click="OnPreviewAction" Margin="0,0,8,0" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="配置 4&#x0a;空" Tag="配置 4" Click="OnPreviewAction" Margin="0,0,8,0" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="配置 5&#x0a;空" Tag="配置 5" Click="OnPreviewAction" />
-                    </UniformGrid>
+                    <TextBlock Text="当前版本保护" FontSize="17" FontWeight="SemiBold" />
+                    <TextBlock Text="程序只接受当前 GameAssembly.dll 的 SHA-256 和三个唯一入口的组合校验；任一项不符就锁定所有写入。物品命令由游戏自己的 API 在角色更新线程上执行，不保存跨场景的地址。退出或断开时，所有临时入口补丁都会恢复。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,10,0,0" />
+                    <TextBlock Text="未放入界面的功能：免费制作、无坠落伤害、全局攻速/伤害倍数。这些在当前构建中没有找到可安全验证的统一入口，因此没有做成可能误写的按钮。" Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" Margin="0,12,0,0" />
                   </StackPanel>
                 </Border>
               </StackPanel>

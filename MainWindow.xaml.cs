@@ -11,31 +11,51 @@ namespace NRftWManagerUI;
 public partial class MainWindow : Window
 {
     private const string ItemQuantityPattern = "89 3B 0F 94 C0 EB ??";
-    private const string WalletContextPattern = "48 89 5C 24 08 56 57 41 56 48 83 EC 70 0F 29 74 24 60 49 8B D9 49 8B F0 4C 8B F2 48 8B F9";
-    private const string WalletContextEntry = "48 89 5C 24 08 56 57 41 56 48 83 EC 70 0F 29 74 24 60 49 8B D9 49 8B F0 4C 8B F2 48 8B F9";
+    private const string PlayerContextPattern = "48 89 5C 24 08 56 57 41 56 48 83 EC 70 0F 29 74 24 60 49 8B D9 49 8B F0 4C 8B F2 48 8B F9";
+    private const string PlayerContextEntry = "48 89 5C 24 08 56 57 41 56 48 83 EC 70 0F 29 74 24 60 49 8B D9 49 8B F0 4C 8B F2 48 8B F9";
+    private const string ItemSelectionPattern = "40 53 48 83 EC 20 48 8B D9 48 85 C9";
+    private const string ItemSelectionEntry = "40 53 48 83 EC 20 48 8B D9 48 85 C9";
     private const string CurrentGameAssemblySha256 = "5B00EE90833B1BE2EA73E01CB83E710E09E86199D12AC769BE3C0E82ADD8B4BB";
     private const int GetInventoryComponentRva = 0x5D7F970;
+    private const int GetHeroComponentRva = 0x5B32560;
+    private const int GetHeroStatsRva = 0x5E02EC0;
+    private const int LevelUpRva = 0x5DF50C0;
+    private const int ChangeItemRarityRva = 0x5D66CF0;
+    private const int AddItemEnchantmentRva = 0x5D6B250;
+    private const int DuplicateItemRva = 0x5D884D0;
+    private const int AddItemToInventoryRva = 0x5D792F0;
+    private const int RepairItemRva = 0x5D617E0;
+    private const int GetItemDataRva = 0x5D874F0;
+    private const int CreateItemRva = 0x5D863B0;
+    private const int SetItemLevelRva = 0x5D87920;
+    private const int AwardGloamseedRva = 0x5F4BE60;
+    private const int GiveMaxStatsRva = 0x5E00240;
+    private const int UnlockFastTravelRva = 0x5F48E60;
 
     private readonly Dictionary<string, FrameworkElement> _views;
     private readonly Dictionary<string, (string Title, string Subtitle)> _pageText = new()
     {
         ["overview"] = ("概览", "连接游戏后核对已验证特征码，再逐项启用。"),
         ["items"] = ("物品数量", "捕获最后一次变化的可堆叠材料，再写入该堆数量。"),
-        ["equipment"] = ("装备与词条", "品质与词条地址尚待定位；请用字段探测器逐项验证。"),
-        ["character"] = ("角色", "当前版本的钱包可自动定位；属性仍需要先探测实际字段。"),
+        ["equipment"] = ("装备与词条", "捕获背包详情中的目标物品，再调用当前版本的原生物品 API。"),
+        ["character"] = ("角色", "先建立角色上下文；随后可使用当前版本已校验的角色组件。"),
         ["detector"] = ("字段探测器", "用游戏内的一次确定数值变化筛选候选内存字段。"),
-        ["loadouts"] = ("配置与快照", "等待物品实例结构定位后再实现外置创建与复制。"),
+        ["loadouts"] = ("版本与验证", "按安全顺序验证当前游戏构建；只有唯一匹配才会允许写入。"),
         ["logs"] = ("活动记录", "记录连接、扫描、捕获和写入动作。")
     };
 
     private GameSession? _session;
     private RemoteCaptureHook? _itemCapture;
-    private RemoteWalletContextHook? _currencyCapture;
+    private RemotePlayerContextHook? _playerContextHook;
+    private RemoteItemSelectionHook? _itemSelectionHook;
     private ValueChangeDetector? _detector;
+    private PlayerRuntimeContext? _playerContext;
     private long? _itemQuantityAddress;
     private long? _currencyAddress;
     private long? _itemQuantitySite;
-    private long? _walletContextSite;
+    private long? _playerContextSite;
+    private long? _itemSelectionSite;
+    private long? _selectedItemEntity;
     private string _selectedCurrency = "Gold";
 
     public MainWindow()
@@ -106,24 +126,28 @@ public partial class MainWindow : Window
 
         try
         {
-            SetStatus("正在扫描 GameAssembly.dll 中已验证的数量与自动钱包定位入口…");
+            SetStatus("正在扫描 GameAssembly.dll 中已验证的材料、角色上下文与物品详情入口…");
             var itemMatches = _session!.ScanGameAssembly(AobPattern.Parse(ItemQuantityPattern));
-            var walletProfileMatches = _session.HasGameAssemblyHash(CurrentGameAssemblySha256)
-                ? _session.ScanGameAssembly(AobPattern.Parse(WalletContextPattern))
+            var profileMatches = _session.HasGameAssemblyHash(CurrentGameAssemblySha256)
+                ? _session.ScanGameAssembly(AobPattern.Parse(PlayerContextPattern))
+                : Array.Empty<long>();
+            var itemSelectionMatches = _session.HasGameAssemblyHash(CurrentGameAssemblySha256)
+                ? _session.ScanGameAssembly(AobPattern.Parse(ItemSelectionPattern))
                 : Array.Empty<long>();
 
             _itemQuantitySite = itemMatches.Count == 1 ? itemMatches[0] : null;
-            _walletContextSite = walletProfileMatches.Count == 1 ? walletProfileMatches[0] : null;
+            _playerContextSite = profileMatches.Count == 1 ? profileMatches[0] : null;
+            _itemSelectionSite = itemSelectionMatches.Count == 1 ? itemSelectionMatches[0] : null;
 
-            var summary = $"材料数量：{itemMatches.Count} 个匹配；自动钱包入口：{walletProfileMatches.Count} 个匹配。";
-            SignatureStateText.Text = _itemQuantitySite.HasValue && _walletContextSite.HasValue ? "已验证" : "不匹配";
+            var summary = $"材料数量：{itemMatches.Count} 个匹配；角色入口：{profileMatches.Count} 个匹配；物品详情：{itemSelectionMatches.Count} 个匹配。";
+            SignatureStateText.Text = _itemQuantitySite.HasValue && _playerContextSite.HasValue && _itemSelectionSite.HasValue ? "已验证" : "不匹配";
             SignatureDetailText.Text = summary;
 
-            if (_itemQuantitySite.HasValue && _walletContextSite.HasValue)
+            if (_itemQuantitySite.HasValue && _playerContextSite.HasValue && _itemSelectionSite.HasValue)
             {
                 WriteStateText.Text = "可捕获";
-                WriteStateDetailText.Text = "材料需捕获；钱包可自动定位后直接写入。";
-                SetStatus($"{summary} 当前游戏版本可验证。钱包无需先让货币变化。", true);
+                WriteStateDetailText.Text = "角色、钱包和物品均通过当前版本入口校验。";
+                SetStatus($"{summary} 当前游戏版本可验证。钱包和角色字段无需先让数值变化。", true);
             }
             else
             {
@@ -220,7 +244,7 @@ public partial class MainWindow : Window
         {
             _selectedCurrency = currency;
             CurrencyCaptureText.Text = currency == "Gloamseed"
-                ? "Gloamseed 使用单独的地牢货币 API；当前自动钱包定位不写入它。"
+                ? "Gloamseed 使用单独的地牢货币 API。完成角色上下文定位后可按“写入当前货币”增加它。"
                 : $"已选择 {currency}。自动定位后可直接写入；无需让货币变化。";
             SetStatus(CurrencyCaptureText.Text);
         }
@@ -228,48 +252,57 @@ public partial class MainWindow : Window
 
     private void OnStartCurrencyCapture(object sender, RoutedEventArgs e)
     {
-        if (_selectedCurrency == "Gloamseed")
-        {
-            SetStatus("Gloamseed 不是普通钱包字段，当前版本暂不写入它。", false);
-            return;
-        }
-
-        if (!RequireKnownSite(_walletContextSite, "自动钱包"))
+        if (!RequireKnownSite(_playerContextSite, "角色上下文"))
         {
             return;
         }
 
-        _currencyCapture?.Dispose();
+        _playerContextHook?.Dispose();
+        _playerContext = null;
         _currencyAddress = null;
         try
         {
-            _currencyCapture = new RemoteWalletContextHook(
+            _playerContextHook = new RemotePlayerContextHook(
                 _session!,
-                _walletContextSite!.Value,
+                _playerContextSite!.Value,
+                AobPattern.Parse(PlayerContextEntry).Bytes,
                 _session.GameAssemblyBase + GetInventoryComponentRva,
-                AobPattern.Parse(WalletContextEntry).Bytes);
-            var result = _currencyCapture.Arm();
-            CurrencyCaptureText.Text = $"{_selectedCurrency} 自动定位：{result}";
+                _session.GameAssemblyBase + GetHeroComponentRva,
+                _session.GameAssemblyBase + GetHeroStatsRva,
+                _session.GameAssemblyBase + LevelUpRva,
+                _session.GameAssemblyBase + ChangeItemRarityRva,
+                _session.GameAssemblyBase + AddItemEnchantmentRva,
+                _session.GameAssemblyBase + DuplicateItemRva,
+                _session.GameAssemblyBase + AddItemToInventoryRva,
+                _session.GameAssemblyBase + RepairItemRva,
+                _session.GameAssemblyBase + GetItemDataRva,
+                _session.GameAssemblyBase + CreateItemRva,
+                _session.GameAssemblyBase + SetItemLevelRva,
+                _session.GameAssemblyBase + AwardGloamseedRva,
+                _session.GameAssemblyBase + GiveMaxStatsRva,
+                _session.GameAssemblyBase + UnlockFastTravelRva);
+            var result = _playerContextHook.Arm();
+            CurrencyCaptureText.Text = result;
             SetStatus(CurrencyCaptureText.Text);
         }
         catch (Exception exception)
         {
-            _currencyCapture = null;
-            SetStatus($"无法开始自动钱包定位：{exception.Message}", false);
+            _playerContextHook = null;
+            SetStatus($"无法开始角色上下文定位：{exception.Message}", false);
         }
     }
 
     private void OnReadCurrencyCapture(object sender, RoutedEventArgs e)
     {
-        if (_currencyCapture is null || !_currencyCapture.TryReadWalletAddress(out var address))
+        if (!TryRefreshPlayerContext(out var context))
         {
-            SetStatus("自动钱包定位尚未取得有效组件。请进入已加载的角色画面，停留约 1 秒后重试；无需让货币变化。", false);
+            SetStatus("角色上下文尚未取得有效组件。请进入已加载的角色画面，停留约 1 秒后重试；无需让货币变化。", false);
             return;
         }
 
-        _currencyAddress = address;
-        var valueText = _session!.TryReadInt32(address, out var current) ? current.ToString() : "读取失败";
-        CurrencyCaptureText.Text = $"已自动定位 {_selectedCurrency} 钱包：0x{address:X}，内部基数：{valueText}。定位保持开启，以跟随当前游戏帧。";
+        _currencyAddress = context.InventoryComponent + sizeof(int);
+        var valueText = _session!.TryReadInt32(_currencyAddress.Value, out var current) ? current.ToString() : "读取失败";
+        CurrencyCaptureText.Text = $"已定位角色组件：生命 0x{context.HealthComponent:X}、耐力 0x{context.StaminaComponent:X}、专注 0x{context.FocusComponent:X}、属性 0x{context.AttributeComponent:X}。{_selectedCurrency} 钱包：0x{_currencyAddress:X}，内部基数：{valueText}。";
         SetStatus(CurrencyCaptureText.Text, true);
     }
 
@@ -277,11 +310,19 @@ public partial class MainWindow : Window
     {
         if (_selectedCurrency == "Gloamseed")
         {
-            SetStatus("Gloamseed 不是普通钱包字段，当前版本暂不写入它。", false);
+            if (!TryParseInt32(CurrencyValueBox.Text, out var gloamseed) || gloamseed is < 1 or > 9_999_999 ||
+                _playerContextHook is null || !TryRefreshPlayerContext(out _))
+            {
+                SetStatus("Gloamseed 请输入 1 至 9,999,999，并先完成角色上下文定位。", false);
+                return;
+            }
+
+            QueuePlayerCommand(PlayerCommand.AwardGloamseed, gloamseed, 0, "Gloamseed");
             return;
         }
 
-        if (!TryGetWriteTarget(_currencyAddress, CurrencyValueBox.Text, 0, 9_999_999, out var address, out var value))
+        if (!TryRefreshPlayerContext(out var context) ||
+            !TryGetWriteTarget(context.InventoryComponent + sizeof(int), CurrencyValueBox.Text, 0, 9_999_999, out var address, out var value))
         {
             return;
         }
@@ -301,6 +342,223 @@ public partial class MainWindow : Window
         }
 
         WriteValue(address, value * multiplier, _selectedCurrency);
+    }
+
+    private void OnStartItemSelection(object sender, RoutedEventArgs e)
+    {
+        if (!RequireKnownSite(_itemSelectionSite, "物品详情"))
+        {
+            return;
+        }
+
+        _itemSelectionHook?.Dispose();
+        _selectedItemEntity = null;
+        try
+        {
+            _itemSelectionHook = new RemoteItemSelectionHook(
+                _session!,
+                _itemSelectionSite!.Value,
+                AobPattern.Parse(ItemSelectionEntry).Bytes);
+            var result = _itemSelectionHook.Arm();
+            SelectedItemText.Text = result;
+            SetStatus(result);
+        }
+        catch (Exception exception)
+        {
+            _itemSelectionHook = null;
+            SetStatus($"无法开始物品选择捕获：{exception.Message}", false);
+        }
+    }
+
+    private void OnReadItemSelection(object sender, RoutedEventArgs e)
+    {
+        if (_itemSelectionHook is null || !_itemSelectionHook.TryReadSelection(out _, out var itemEntity))
+        {
+            SetStatus("尚未捕获物品。请先开启物品选择捕获，再回游戏打开背包并点击目标物品详情。", false);
+            return;
+        }
+
+        _selectedItemEntity = itemEntity;
+        var linked = _playerContextHook?.SetSelectedItem(itemEntity) == true;
+        SelectedItemText.Text = linked
+            ? $"已选中当前物品：0x{itemEntity:X}。可执行原生改品质、加词条、耐久修复、复制或按该物品模板创建。"
+            : $"已捕获物品：0x{itemEntity:X}。请先在“角色”页开启角色上下文定位，再执行物品操作。";
+        SetStatus(SelectedItemText.Text, linked);
+    }
+
+    private void OnQueueRarity(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string rarity } || !TryMapRarity(rarity, out var value) || !RequireSelectedItem())
+        {
+            return;
+        }
+
+        QueuePlayerCommand(PlayerCommand.ChangeSelectedItemRarity, value, 0, $"{rarity} 品质");
+    }
+
+    private void OnAddSelectedItemEnchantment(object sender, RoutedEventArgs e)
+    {
+        if (RequireSelectedItem())
+        {
+            QueuePlayerCommand(PlayerCommand.AddSelectedItemEnchantment, 0, 0, "随机新增词条");
+        }
+    }
+
+    private void OnRepairSelectedItem(object sender, RoutedEventArgs e)
+    {
+        if (RequireSelectedItem())
+        {
+            QueuePlayerCommand(PlayerCommand.RepairSelectedItem, 0, 0, "修满选中物品耐久");
+        }
+    }
+
+    private void OnDuplicateSelectedItem(object sender, RoutedEventArgs e)
+    {
+        if (RequireSelectedItem())
+        {
+            QueuePlayerCommand(PlayerCommand.DuplicateSelectedItem, 0, 0, "复制选中物品");
+        }
+    }
+
+    private void OnCreateSelectedItem(object sender, RoutedEventArgs e)
+    {
+        if (!RequireSelectedItem())
+        {
+            return;
+        }
+
+        if (!TryParseInt32(CreateItemCountBox.Text, out var count) || count is < 1 or > 9999)
+        {
+            SetStatus("创建数量请输入 1 至 9,999。", false);
+            return;
+        }
+
+        QueuePlayerCommand(PlayerCommand.CreateSelectedItem, count, CreateItemRarityBox.SelectedIndex, "以选中物品模板创建");
+    }
+
+    private void OnSetSelectedItemLevel(object sender, RoutedEventArgs e)
+    {
+        if (!RequireSelectedItem())
+        {
+            return;
+        }
+
+        if (!TryParseInt32(ItemLevelBox.Text, out var level) || level is < 1 or > 100)
+        {
+            SetStatus("物品等级请输入 1 至 100。", false);
+            return;
+        }
+
+        QueuePlayerCommand(PlayerCommand.SetSelectedItemLevel, level, 0, "选中物品等级");
+    }
+
+    private void OnTogglePlayerFlag(object sender, RoutedEventArgs e)
+    {
+        if (sender is not CheckBox { Tag: string feature, IsChecked: bool enabled } || !TryRefreshPlayerContext(out var context))
+        {
+            return;
+        }
+
+        switch (feature)
+        {
+            case "health":
+                WriteRuntimeFlag(context.HealthComponent + 4, enabled, "无限生命");
+                break;
+            case "stamina":
+                WriteRuntimeFlag(context.StaminaComponent, enabled, "无限耐力");
+                break;
+            case "focus":
+                WriteRuntimeFlag(context.FocusComponent, enabled, "无限专注");
+                break;
+            case "instagib":
+                WriteHeroDebugFlag(context, 8, enabled, "一击必杀");
+                break;
+            case "vendorCheat":
+                WriteHeroDebugFlag(context, 1, enabled, "免费商店（游戏原生 VendorCheat）");
+                break;
+            case "ignoreRequirements":
+                WriteHeroDebugFlag(context, 32, enabled, "忽略装备需求");
+                break;
+        }
+    }
+
+    private void OnWriteHeroMultiplier(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string feature } || !TryRefreshPlayerContext(out var context))
+        {
+            return;
+        }
+
+        var input = feature == "movement" ? MoveSpeedBox.Text : ExperienceMultiplierBox.Text;
+        var maximum = feature == "movement" ? 5d : 100d;
+        if (!double.TryParse(input, out var multiplier) || multiplier < 0.1d || multiplier > maximum)
+        {
+            SetStatus($"{(feature == "movement" ? "移动" : "经验")}倍率请输入 0.1 至 {maximum:0}。", false);
+            return;
+        }
+
+        var address = context.HeroComponent + (feature == "movement" ? 0x60 : 0x40);
+        var raw = checked((long)Math.Round(multiplier * 65_536d));
+        if (!_session!.WriteInt64(address, raw))
+        {
+            SetStatus("写入角色倍率失败；游戏可能已切换场景。", false);
+            return;
+        }
+
+        SetStatus($"已写入{(feature == "movement" ? "移动" : "经验")}倍率 {multiplier:0.##}。切换一次场景或获得经验后确认。", true);
+    }
+
+    private void OnWriteAttributePoints(object sender, RoutedEventArgs e)
+    {
+        if (!TryRefreshPlayerContext(out var context) || !TryParseInt32(AttributePointsBox.Text, out var points) || points is < 0 or > 9_999)
+        {
+            SetStatus("属性点请输入 0 至 9,999，并先完成角色上下文定位。", false);
+            return;
+        }
+
+        WriteValue(context.AttributeComponent + 0x20, points, "未分配属性点");
+    }
+
+    private void OnSetLevel(object sender, RoutedEventArgs e)
+    {
+        if (!TryRefreshPlayerContext(out var context) || !TryParseInt32(LevelBox.Text, out var targetLevel) || targetLevel is < 1 or > 100)
+        {
+            SetStatus("目标等级请输入 1 至 100，并先完成角色上下文定位。", false);
+            return;
+        }
+
+        if (!_session!.TryReadInt32(context.LevelComponent, out var currentLevel))
+        {
+            SetStatus("无法读取当前等级。请重新定位角色上下文。", false);
+            return;
+        }
+
+        if (targetLevel <= currentLevel)
+        {
+            SetStatus($"当前等级为 {currentLevel}。为保护等级/经验一致性，此版本只通过原生 LevelUp 提升等级。", false);
+            return;
+        }
+
+        QueuePlayerCommand(PlayerCommand.LevelUp, targetLevel - currentLevel, 0, $"升级到 {targetLevel}");
+    }
+
+    private void OnGiveMaxStats(object sender, RoutedEventArgs e)
+    {
+        if (!TryParseInt32(MaxStatsLevelBox.Text, out var level) || level is < 1 or > 100 || !TryRefreshPlayerContext(out _))
+        {
+            SetStatus("满属性等级请输入 1 至 100，并先完成角色上下文定位。", false);
+            return;
+        }
+
+        QueuePlayerCommand(PlayerCommand.GiveMaxStats, level, 0, $"按等级 {level} 设置游戏原生最大属性");
+    }
+
+    private void OnUnlockFastTravel(object sender, RoutedEventArgs e)
+    {
+        if (TryRefreshPlayerContext(out _))
+        {
+            QueuePlayerCommand(PlayerCommand.UnlockFastTravel, 0, 0, "解锁快速旅行");
+        }
     }
 
     private async void OnStartDetector(object sender, RoutedEventArgs e)
@@ -378,27 +636,97 @@ public partial class MainWindow : Window
         ShowPage("detector");
     }
 
-    private void OnRarityClick(object sender, RoutedEventArgs e)
+    private bool TryRefreshPlayerContext(out PlayerRuntimeContext context)
     {
-        if (sender is not Button { Tag: string rarity })
+        context = default;
+        if (_playerContextHook is null || !_playerContextHook.TryReadContext(out context))
         {
+            SetStatus("请先在“角色”页开启并读取角色上下文定位。", false);
+            return false;
+        }
+
+        _playerContext = context;
+        _currencyAddress = context.InventoryComponent + sizeof(int);
+        return true;
+    }
+
+    private bool RequireSelectedItem()
+    {
+        if (_selectedItemEntity is not { } selectedItem || selectedItem == 0)
+        {
+            SetStatus("请先开启物品选择捕获，在游戏背包里点击目标物品详情后读取结果。", false);
+            return false;
+        }
+
+        if (!TryRefreshPlayerContext(out _))
+        {
+            return false;
+        }
+
+        if (_playerContextHook!.SetSelectedItem(selectedItem))
+        {
+            return true;
+        }
+
+        SetStatus("无法把选中物品交给当前角色上下文；请重新定位角色后重试。", false);
+        return false;
+    }
+
+    private async void QueuePlayerCommand(PlayerCommand command, int argument, int option, string feature)
+    {
+        if (_playerContextHook is null || !_playerContextHook.QueueCommand(command, argument, option))
+        {
+            SetStatus($"无法排队执行{feature}；角色上下文可能已失效。", false);
             return;
         }
 
-        RarityHint.Text = rarity switch
+        SetStatus($"已排队{feature}。回到游戏停留约 1 秒后检查结果；本次操作只执行一次。", true);
+        await Task.Delay(800);
+        if (_playerContextHook?.WasCommandCompleted(command) == true)
         {
-            "Common" => "Common：先用字段探测器确认稀有度整数值。",
-            "Magical" => "Magical：请对一件不重要蓝装做字段探测。",
-            "Plagued" => "Plagued：先定位品质字段及附魔数量字段，不能只改颜色。",
-            "Gold" => "Gold：仅作为原生目录武器的验证目标。",
-            _ => "尚未选择品质。"
-        };
-        SetStatus($"已选择 {rarity} 作为下一项字段探测目标。");
+            SetStatus($"{feature}已由游戏原生接口执行。请在游戏内确认结果。", true);
+        }
+        else
+        {
+            SetStatus($"{feature}尚未收到游戏线程完成确认。请确认角色已加载、未切场景后重试。", false);
+        }
     }
 
-    private void OnPreviewAction(object sender, RoutedEventArgs e)
+    private void WriteRuntimeFlag(long address, bool enabled, string feature)
     {
-        SetStatus("这个功能尚未完成字段定位，因此不会执行写入。请先用字段探测器取得候选结果。", false);
+        if (_session!.WriteInt32(address, enabled ? 1 : 0))
+        {
+            SetStatus($"{feature}已{(enabled ? "开启" : "关闭")}。", true);
+            return;
+        }
+
+        SetStatus($"写入{feature}失败；请重新定位角色。", false);
+    }
+
+    private void WriteHeroDebugFlag(PlayerRuntimeContext context, int flag, bool enabled, string feature)
+    {
+        var address = context.HeroComponent + 4;
+        if (!_session!.TryReadInt32(address, out var existing))
+        {
+            SetStatus($"无法读取{feature}标志；请重新定位角色。", false);
+            return;
+        }
+
+        var updated = enabled ? existing | flag : existing & ~flag;
+        WriteValue(address, updated, feature);
+    }
+
+    private static bool TryMapRarity(string rarity, out int value)
+    {
+        value = rarity switch
+        {
+            "Common" => 0,
+            "Magical" => 1,
+            "Plagued" => 2,
+            "Gold" => 3,
+            _ => -1
+        };
+        return value >= 0;
     }
 
     private bool RequireSession()
@@ -474,9 +802,13 @@ public partial class MainWindow : Window
     private void Disconnect()
     {
         _itemCapture?.Dispose();
-        _currencyCapture?.Dispose();
+        _itemSelectionHook?.Dispose();
+        _playerContextHook?.Dispose();
         _itemCapture = null;
-        _currencyCapture = null;
+        _itemSelectionHook = null;
+        _playerContextHook = null;
+        _playerContext = null;
+        _selectedItemEntity = null;
         _session?.Dispose();
         _session = null;
     }

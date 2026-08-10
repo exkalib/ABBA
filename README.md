@@ -2,16 +2,32 @@
 
 Windows-only external trainer for the current No Rest for the Wicked workflow. It does not install, load, or depend on a game mod.
 
-The first implemented features are:
+This profile is locked to the supplied current `GameAssembly.dll` SHA-256 and requires exactly one match for every one of these entries before it permits writes:
 
 - stackable item quantity: `89 3B 0F 94 C0 EB ??`
-- automatic wallet context: `PlayerControllerView.OnUpdate` → `InventoryAPI.GetInventoryComponent` → `InventoryComponent.Gold` (`+0x4`)
+- player update: `PlayerControllerView.OnUpdate`
+- item-detail lookup: `ItemsAPI.GetOldData`
 
-The program requires exactly one match before enabling a feature. Material quantity uses a temporary external capture hook to remember the stack you deliberately change once in game. It can also keep a final stack of one from reaching zero while enabled.
+Implemented current-build actions:
 
-The automatic wallet profile is locked to the `GameAssembly.dll` SHA-256 captured for the current build. It hooks the player's regular update only long enough to obtain the active inventory component; you do not need to gain or spend currency first. The hook is removed when the program disconnects. Copper, silver, and gold inputs are converted to the game's base units (`1`, `100`, and `10,000` respectively). Gloamseed is a separate dungeon currency and is deliberately not written by this profile.
+- captured stack quantity and optional “keep the last one” protection
+- copper / silver / gold, plus Gloamseed through the game's own award API
+- infinite health, stamina and focus; one-hit kill; native free-shop and ignore-requirements flags
+- movement / experience multipliers, unspent attribute points, native level-up, native maximum stats and fast-travel unlock
+- selected-item capture from its backpack detail view
+- item rarity (Common / Magical / Plagued / Gold), add an enchantment, full repair, duplicate, set item level, and create a new item from the selected item's data
 
-For unverified fields (equipment rarity, enchantments, attributes), use the 4-byte value-change detector. Enter the visible value, run an initial scan, change that value once in game, enter the new value, filter, and copy the candidate report for follow-up analysis.
+All item commands use the game's original APIs from its player-update thread. The hooks are temporary and restore the original instructions whenever the program disconnects or closes. This is intentionally an external tool: it does not install, load, or require a mod.
+
+## First test sequence
+
+1. Back up your save and use an offline character.
+2. Connect, then click **检查已知定位**. It must report one match for all three entries.
+3. On **角色**, enable and read the player context while the loaded character is standing still.
+4. Test unlimited health and a small currency change first.
+5. On **装备与词条**, enable item capture, click one unimportant backpack item in the game, return and read it. Test repair, duplicate, rarity, enchantment and template-create one at a time.
+
+The UI intentionally does not expose free crafting, fall-damage prevention, or a global attack/damage multiplier. This build did not provide a safely verifiable shared entry for them, so they are kept out rather than risking an unknown write.
 
 ## Build on Windows
 
@@ -22,4 +38,4 @@ dotnet build
 dotnet run
 ```
 
-Do not write values until the in-game capture shows the expected current value. Back up your save before testing unverified fields.
+Do not test on a character you cannot restore. Re-run the three-entry check after every game update.

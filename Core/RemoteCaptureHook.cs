@@ -76,6 +76,7 @@ internal sealed class RemoteCaptureHook : IDisposable
             Dispose();
             return "写入临时捕获区失败；未修改游戏指令。";
         }
+        _session.Flush(trampolineAddress, code.Count);
 
         var jmpOffset = checked((int)(trampolineAddress - (_site + 5)));
         var patch = new byte[_replacedBytes.Length];

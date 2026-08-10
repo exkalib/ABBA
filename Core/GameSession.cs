@@ -198,7 +198,25 @@ internal sealed class GameSession : IDisposable
         return true;
     }
 
+    public bool TryReadInt64(long address, out long value)
+    {
+        var bytes = Read(address, sizeof(long));
+        if (bytes.Length != sizeof(long))
+        {
+            value = default;
+            return false;
+        }
+
+        value = BitConverter.ToInt64(bytes);
+        return true;
+    }
+
     public bool WriteInt32(long address, int value)
+    {
+        return Write(address, BitConverter.GetBytes(value));
+    }
+
+    public bool WriteInt64(long address, long value)
     {
         return Write(address, BitConverter.GetBytes(value));
     }
