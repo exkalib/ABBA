@@ -142,10 +142,24 @@ public partial class MainWindow : Window
 
         _itemCapture?.Dispose();
         _itemQuantityAddress = null;
-        _itemCapture = new RemoteCaptureHook(_session!, _itemQuantitySite!.Value, 5, CaptureRegister.Rbx, 0);
-        var result = _itemCapture.Arm();
-        ItemCaptureText.Text = result;
-        SetStatus(result);
+        try
+        {
+            _itemCapture = new RemoteCaptureHook(
+                _session!,
+                _itemQuantitySite!.Value,
+                5,
+                CaptureRegister.Rbx,
+                0,
+                KeepLastItemCheck.IsChecked == true);
+            var result = _itemCapture.Arm();
+            ItemCaptureText.Text = result;
+            SetStatus(result);
+        }
+        catch (Exception exception)
+        {
+            _itemCapture = null;
+            SetStatus($"无法开始材料捕获：{exception.Message}", false);
+        }
     }
 
     private void OnReadItemCapture(object sender, RoutedEventArgs e)
@@ -158,9 +172,30 @@ public partial class MainWindow : Window
 
         _itemQuantityAddress = address;
         var valueText = _session!.TryReadInt32(address, out var current) ? current.ToString() : "读取失败";
+        if (_itemCapture.PreventsZeroQuantity)
+        {
+            ItemCaptureText.Text = $"已捕获材料数量地址：0x{address:X}，当前值：{valueText}。最后 1 个保留仍已开启；关闭程序或点“停止材料保护”才会恢复正常删除。";
+        }
+        else
+        {
+            _itemCapture.Dispose();
+            _itemCapture = null;
+            ItemCaptureText.Text = $"已捕获材料数量地址：0x{address:X}，当前值：{valueText}。";
+        }
+        SetStatus(ItemCaptureText.Text, true);
+    }
+
+    private void OnStopItemCapture(object sender, RoutedEventArgs e)
+    {
+        if (_itemCapture is null)
+        {
+            SetStatus("材料保护当前没有开启。", false);
+            return;
+        }
+
         _itemCapture.Dispose();
         _itemCapture = null;
-        ItemCaptureText.Text = $"已捕获材料数量地址：0x{address:X}，当前值：{valueText}。";
+        ItemCaptureText.Text = "材料保护已停止：游戏恢复正常删除逻辑。已捕获的数量地址仍可用于当前会话写入。";
         SetStatus(ItemCaptureText.Text, true);
     }
 
@@ -195,7 +230,7 @@ public partial class MainWindow : Window
         _currencyAddress = null;
         _currencyCapture = new RemoteCaptureHook(_session!, _currencySite!.Value, 7, CaptureRegister.R13, 4);
         var result = _currencyCapture.Arm();
-        CurrencyCaptureText.Text = $"{_selectedCurrency}：{result}";
+        CurrencyCaptureText.Text = $"{_selectedCurrency} 自动定位：{result}";
         SetStatus(CurrencyCaptureText.Text);
     }
 

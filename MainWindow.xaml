@@ -120,8 +120,10 @@
                     <TextBlock Text="当前可堆叠物品数量（已验证特征码）" FontSize="17" FontWeight="SemiBold" />
                     <TextBlock Text="点击开始捕获后，在游戏里卖出/使用目标材料 1 个。程序将自动记住那一堆材料的数量地址；捕获完成后才可读写。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0" />
                     <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                      <CheckBox x:Name="KeepLastItemCheck" Content="最后 1 个保留" IsChecked="True" VerticalAlignment="Center" Margin="0,0,14,0" />
                       <Button Style="{StaticResource ActionButton}" Content="开始捕获材料" Click="OnStartItemCapture" />
                       <Button Style="{StaticResource SecondaryButton}" Content="读取捕获结果" Click="OnReadItemCapture" Margin="10,0,0,0" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="停止材料保护" Click="OnStopItemCapture" Margin="10,0,0,0" />
                       <TextBox x:Name="ItemQuantityBox" Width="110" Height="34" Padding="9,5" Text="20" Margin="18,0,0,0" />
                       <Button Style="{StaticResource ActionButton}" Content="写入数量" Click="OnWriteItemQuantity" Margin="10,0,0,0" />
                     </StackPanel>
@@ -179,12 +181,12 @@
                       <Button Style="{StaticResource SecondaryButton}" Content="Gloamseed" Tag="Gloamseed" Click="OnCurrencyClick" Margin="0,0,8,8" />
                     </WrapPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                      <Button Style="{StaticResource ActionButton}" Content="开始捕获货币" Click="OnStartCurrencyCapture" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="读取捕获结果" Click="OnReadCurrencyCapture" Margin="10,0,0,0" />
+                      <Button Style="{StaticResource ActionButton}" Content="自动定位当前钱包" Click="OnStartCurrencyCapture" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="读取当前钱包" Click="OnReadCurrencyCapture" Margin="10,0,0,0" />
                       <TextBox x:Name="CurrencyValueBox" Width="130" Height="34" Padding="9,5" Text="1000" Margin="18,0,0,0" />
                       <Button Style="{StaticResource ActionButton}" Content="写入当前货币" Click="OnWriteCurrency" Margin="10,0,0,0" />
                     </StackPanel>
-                    <TextBlock x:Name="CurrencyCaptureText" Text="尚未捕获货币地址。请选择一种货币后，开始捕获并在游戏内让它增减一次。" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0" />
+                    <TextBlock x:Name="CurrencyCaptureText" Text="货币已有已验证定位。每次重启游戏后，只需让所选货币增减一次，程序即可自动定位本次的钱包地址。" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0" />
                   </StackPanel>
                 </Border>
                 <Border Style="{StaticResource Card}" Margin="0,16,0,0">
