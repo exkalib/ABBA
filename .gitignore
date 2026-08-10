@@ -1,0 +1,16 @@
+# .NET / WPF build outputs
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio and Rider local settings
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+
+# Local publish and packaging outputs
+[Pp]ublish/
+[Aa]rtifacts/
+*.pdb
