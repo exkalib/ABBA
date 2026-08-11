@@ -305,7 +305,8 @@ public partial class MainWindow : Window
         InventoryProbeButton.IsEnabled = false;
         AppendPlayerDiagnostic("InventoryProbe: Request=1, Completed=0, Result=0x0");
         SetStatus("已请求一次背包组件解析；正在等待游戏更新线程返回结果。");
-        for (var attempt = 0; attempt < 20; attempt++)
+        var requestConsumptionLogged = false;
+        for (var attempt = 0; attempt < 100; attempt++)
         {
             await Task.Delay(100);
             if (!ReferenceEquals(_playerContextHook, activeProbe))
@@ -313,7 +314,18 @@ public partial class MainWindow : Window
                 return;
             }
 
-            if (activeProbe.TryReadInventoryProbe(out var inventoryComponent, out var completed, out _) && completed)
+            if (!activeProbe.TryReadInventoryProbe(out var inventoryComponent, out var completed, out var pending))
+            {
+                continue;
+            }
+
+            if (!pending && !completed && !requestConsumptionLogged)
+            {
+                requestConsumptionLogged = true;
+                AppendPlayerDiagnostic("InventoryProbe: Request=0, Completed=0; call started, waiting for return.");
+            }
+
+            if (completed)
             {
                 AppendPlayerDiagnostic($"InventoryProbe: Request=0, Completed=1, Result=0x{inventoryComponent:X}");
                 if (inventoryComponent == 0)
