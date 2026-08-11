@@ -298,8 +298,16 @@ public partial class MainWindow : Window
                 return;
             }
 
-            if (activeProbe.TryReadInventoryProbe(out var inventoryComponent))
+            if (activeProbe.TryReadInventoryProbe(out var inventoryComponent, out var completed, out _) && completed)
             {
+                InventoryProbeButton.IsEnabled = true;
+                if (inventoryComponent == 0)
+                {
+                    CurrencyCaptureText.Text = "背包函数已执行一次，但返回了空组件。入口线程正常，下一步需要校正函数参数。";
+                    SetStatus(CurrencyCaptureText.Text, false);
+                    return;
+                }
+
                 var currencyAddress = inventoryComponent + sizeof(int);
                 var currencyText = _session!.TryReadInt32(currencyAddress, out var currencyBase)
                     ? currencyBase.ToString()
@@ -307,13 +315,23 @@ public partial class MainWindow : Window
                 _currencyAddress = currencyAddress;
                 CurrencyCaptureText.Text = $"背包组件成功 · 组件：0x{inventoryComponent:X} · 货币基数：{currencyText}";
                 SetStatus("一次性背包组件解析成功，游戏内部函数没有连续执行。", true);
-                InventoryProbeButton.IsEnabled = true;
                 return;
             }
         }
 
         InventoryProbeButton.IsEnabled = true;
-        CurrencyCaptureText.Text = "背包组件在 2 秒内没有返回结果；没有继续执行其它游戏函数。";
+        if (activeProbe.TryReadInventoryProbe(out _, out var completedAfterTimeout, out var pendingAfterTimeout))
+        {
+            CurrencyCaptureText.Text = pendingAfterTimeout
+                ? "背包测试请求未被游戏更新线程消费；捕获入口可能暂时没有运行。"
+                : completedAfterTimeout
+                    ? "背包函数已经执行，但返回值读取失败。"
+                    : "背包测试请求已被消费，但完成标记未写回；需要检查调用返回路径。";
+        }
+        else
+        {
+            CurrencyCaptureText.Text = "无法读取背包测试状态；当前捕获区可能已经失效。";
+        }
         SetStatus(CurrencyCaptureText.Text, false);
     }
 

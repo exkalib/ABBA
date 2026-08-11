@@ -12,6 +12,7 @@ internal sealed class RemotePlayerContextHook : IDisposable
     private const int HeroComponentOffset = 0x818;
     private const int HeroComponentSuccessOffset = 0x820;
     private const int InventoryProbeRequestOffset = 0x828;
+    private const int InventoryProbeCompletedOffset = 0x82C;
     private const int StatsGroupOffset = 0x840;
     private const int StatsGroupSuccessOffset = 0x880;
     private const int CommandOffset = 0x900;
@@ -118,6 +119,7 @@ internal sealed class RemotePlayerContextHook : IDisposable
         var inventoryProbeStart = code.Count;
         code.AddRange(new byte[] { 0x48, 0x83, 0xEC, 0x28 });
         AddCallGetInventoryComponent(code, trampolineAddress);
+        AddStoreInt32RipRelative(code, trampolineAddress, InventoryProbeCompletedOffset, 1);
         code.AddRange(new byte[] { 0x48, 0x83, 0xC4, 0x28 });
         code[skipInventoryProbeOffset] = checked((byte)(code.Count - inventoryProbeStart));
         code.AddRange(new byte[] { 0x41, 0x5B, 0x41, 0x5A, 0x41, 0x59, 0x41, 0x58, 0x5A, 0x59, 0x58, 0x9D });
@@ -171,15 +173,26 @@ internal sealed class RemotePlayerContextHook : IDisposable
 
         var root = _trampoline.ToInt64();
         return _session.WriteInt64(root + InventoryComponentOffset, 0) &&
+               _session.WriteInt32(root + InventoryProbeCompletedOffset, 0) &&
                _session.WriteInt32(root + InventoryProbeRequestOffset, 1);
     }
 
-    public bool TryReadInventoryProbe(out long inventoryComponent)
+    public bool TryReadInventoryProbe(out long inventoryComponent, out bool completed, out bool pending)
     {
         inventoryComponent = 0;
-        return IsArmed &&
-               TryReadInt64(InventoryComponentOffset, out inventoryComponent) &&
-               inventoryComponent != 0;
+        completed = false;
+        pending = false;
+        if (!IsArmed ||
+            !TryReadInt64(InventoryComponentOffset, out inventoryComponent) ||
+            !_session.TryReadInt32(_trampoline.ToInt64() + InventoryProbeCompletedOffset, out var completedValue) ||
+            !_session.TryReadInt32(_trampoline.ToInt64() + InventoryProbeRequestOffset, out var requestValue))
+        {
+            return false;
+        }
+
+        completed = completedValue == 1;
+        pending = requestValue == 1;
+        return true;
     }
 
     public bool TryReadContext(out PlayerRuntimeContext context)

@@ -77,7 +77,12 @@
       </Setter>
       <Style.Triggers>
         <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#A1E6CD" /></Trigger>
-        <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.45" /></Trigger>
+        <Trigger Property="IsEnabled" Value="False">
+          <Setter Property="Opacity" Value="1" />
+          <Setter Property="Background" Value="#202C40" />
+          <Setter Property="Foreground" Value="#8292A9" />
+          <Setter Property="Cursor" Value="Arrow" />
+        </Trigger>
       </Style.Triggers>
     </Style>
 
