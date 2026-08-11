@@ -98,6 +98,8 @@
                       <Button Style="{StaticResource SecondaryButton}" Content="立即读取" Click="OnReadItemSelection" Margin="10,0,0,0" />
                     </StackPanel>
                     <TextBlock x:Name="SelectedItemText" Text="尚未选择物品。" Foreground="{StaticResource MutedBrush}" Margin="0,11,0,0" TextWrapping="Wrap" />
+                    <TextBlock Text="最近 5 次不同的捕获值" Foreground="{StaticResource MutedBrush}" Margin="0,10,0,5" />
+                    <ListBox x:Name="SelectedItemHistoryList" Height="94" FontFamily="Consolas" FontSize="12" />
                   </StackPanel>
                 </Border>
                 <Grid Margin="0,16,0,0">

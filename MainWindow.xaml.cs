@@ -453,6 +453,7 @@ public partial class MainWindow : Window
 
         _itemSelectionHook?.Dispose();
         _selectedItemEntity = null;
+        SelectedItemHistoryList.Items.Clear();
         try
         {
             _itemSelectionHook = new RemoteItemSelectionHook(
@@ -473,6 +474,7 @@ public partial class MainWindow : Window
 
                 _selectedItemEntity = itemEntity;
                 activeHook.ClearSelection();
+                RecordSelectedItem(itemEntity);
                 SelectedItemText.Text = $"已自动选中最近物品：0x{itemEntity:X}。切换物品时这里会自动更新。";
                 SetStatus(SelectedItemText.Text, true);
             }
@@ -494,8 +496,18 @@ public partial class MainWindow : Window
 
         _selectedItemEntity = itemEntity;
         _itemSelectionHook.ClearSelection();
+        RecordSelectedItem(itemEntity);
         SelectedItemText.Text = $"已选中当前物品：0x{itemEntity:X}。切换物品时会继续自动更新。";
         SetStatus(SelectedItemText.Text, true);
+    }
+
+    private void RecordSelectedItem(long itemEntity)
+    {
+        SelectedItemHistoryList.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff}   0x{itemEntity:X16}");
+        while (SelectedItemHistoryList.Items.Count > 5)
+        {
+            SelectedItemHistoryList.Items.RemoveAt(SelectedItemHistoryList.Items.Count - 1);
+        }
     }
 
     private void OnQueueRarity(object sender, RoutedEventArgs e)
