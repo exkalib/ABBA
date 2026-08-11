@@ -87,7 +87,7 @@
               </StackPanel>
             </Grid>
 
-            <Grid x:Name="EquipmentView" Margin="0,0,0,12" IsEnabled="False">
+            <Grid x:Name="EquipmentView" Margin="0,0,0,12">
               <StackPanel>
                 <Border Style="{StaticResource Card}">
                   <StackPanel>
@@ -102,7 +102,7 @@
                     <ListBox x:Name="SelectedItemHistoryList" Height="94" FontFamily="Consolas" FontSize="12" />
                   </StackPanel>
                 </Border>
-                <Grid Margin="0,16,0,0">
+                <Grid Margin="0,16,0,0" IsHitTestVisible="False" Opacity="0.62">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                   <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,8,0">
                     <StackPanel>
