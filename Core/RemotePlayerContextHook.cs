@@ -137,6 +137,16 @@ internal sealed class RemotePlayerContextHook : IDisposable
         return "最小角色捕获已开启：只记录更新参数，不调用游戏 API，也不会执行修改命令。";
     }
 
+    public bool TryReadRawCapture(out long firstArgument, out long secondArgument)
+    {
+        firstArgument = 0;
+        secondArgument = 0;
+        return IsArmed &&
+               TryReadInt64(FrameOffset, out firstArgument) &&
+               TryReadInt64(HeroOffset, out secondArgument) &&
+               firstArgument != 0 && secondArgument != 0;
+    }
+
     public bool TryReadContext(out PlayerRuntimeContext context)
     {
         context = default;

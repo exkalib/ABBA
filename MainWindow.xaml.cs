@@ -211,7 +211,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnStartCurrencyCapture(object sender, RoutedEventArgs e)
+    private async void OnStartCurrencyCapture(object sender, RoutedEventArgs e)
     {
         if (!RequireKnownSite(_playerContextSite, "角色上下文"))
         {
@@ -223,7 +223,7 @@ public partial class MainWindow : Window
         _currencyAddress = null;
         try
         {
-            _playerContextHook = new RemotePlayerContextHook(
+            var activeProbe = new RemotePlayerContextHook(
                 _session!,
                 _playerContextSite!.Value,
                 AobPattern.Parse(PlayerContextEntry).Bytes.Select(value => value ?? throw new InvalidOperationException("角色入口签名不能包含通配符。")).ToArray(),
@@ -242,9 +242,33 @@ public partial class MainWindow : Window
                 _session.GameAssemblyBase + AwardGloamseedRva,
                 _session.GameAssemblyBase + GiveMaxStatsRva,
                 _session.GameAssemblyBase + UnlockFastTravelRva);
-            var result = _playerContextHook.Arm();
+            _playerContextHook = activeProbe;
+            var result = activeProbe.Arm();
             CurrencyCaptureText.Text = result;
             SetStatus(CurrencyCaptureText.Text);
+            if (!activeProbe.IsArmed)
+            {
+                return;
+            }
+
+            for (var attempt = 0; attempt < 20; attempt++)
+            {
+                await Task.Delay(500);
+                if (!ReferenceEquals(_playerContextHook, activeProbe))
+                {
+                    return;
+                }
+
+                if (activeProbe.TryReadRawCapture(out var firstArgument, out var secondArgument))
+                {
+                    CurrencyCaptureText.Text = $"捕获成功 · 参数 A：0x{firstArgument:X} · 参数 B：0x{secondArgument:X}";
+                    SetStatus("最小角色捕获成功。请把角色区域显示的两个参数发给我，用于验证下一层组件定位。", true);
+                    return;
+                }
+            }
+
+            CurrencyCaptureText.Text = "10 秒内没有捕获到角色更新参数。请确认角色已加载后重新测试。";
+            SetStatus(CurrencyCaptureText.Text, false);
         }
         catch (Exception exception)
         {

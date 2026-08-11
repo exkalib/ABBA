@@ -151,11 +151,11 @@
                     <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                     <StackPanel VerticalAlignment="Center">
                       <TextBlock Text="角色" FontSize="17" FontWeight="SemiBold" />
-                      <TextBlock Text="当前只验证最小捕获；角色修改会保持关闭，直到确认不再导致游戏崩溃。" Foreground="{StaticResource WarningBrush}" FontSize="12" Margin="0,3,0,0" />
+                      <TextBlock Text="最小捕获会自动等待角色更新并显示两个原始参数；当前不会调用游戏 API。" Foreground="{StaticResource WarningBrush}" FontSize="12" Margin="0,3,0,0" />
                       <TextBlock x:Name="CurrencyCaptureText" Text="尚未开启最小角色捕获。" Foreground="{StaticResource AccentBrush}" FontSize="12" Margin="0,7,0,0" TextTrimming="CharacterEllipsis" />
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0,0,0">
-                      <Button Style="{StaticResource SecondaryButton}" Content="测试最小捕获" Click="OnStartCurrencyCapture" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="捕获角色参数" Click="OnStartCurrencyCapture" />
                     </StackPanel>
                   </Grid>
                 </Border>
