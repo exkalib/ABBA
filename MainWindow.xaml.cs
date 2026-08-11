@@ -11,6 +11,7 @@ public partial class MainWindow : Window
 {
     private const string ItemQuantityPattern = "89 3B 0F 94 C0 EB ??";
     private const string PlayerContextPattern = "48 89 5C 24 08 56 57 41 56 48 83 EC 70 0F 29 74 24 60 49 8B D9 49 8B F0 4C 8B F2 48 8B F9";
+    private const string PlayerContextTailPattern = "56 57 41 56 48 83 EC 70 0F 29 74 24 60 49 8B D9 49 8B F0 4C 8B F2 48 8B F9";
     private const string PlayerContextEntry = "48 89 5C 24 08";
     private const string ItemSelectionPattern = "40 53 48 83 EC 20 48 8B D9 48 85 C9 74 5C";
     private const string ItemSelectionEntry = "40 53 48 83 EC 20 48 8B D9 48 85 C9";
@@ -42,6 +43,7 @@ public partial class MainWindow : Window
     private long? _playerContextSite;
     private long? _itemSelectionSite;
     private long? _selectedItemEntity;
+    private bool _stalePlayerContextHookDetected;
     private string _selectedCurrency = "Gold";
 
     public MainWindow()
@@ -98,6 +100,7 @@ public partial class MainWindow : Window
             _itemQuantitySite = itemMatches.Count == 1 ? itemMatches[0] : null;
             _playerContextSite = profileMatches.Count == 1 ? profileMatches[0] : null;
             _itemSelectionSite = itemSelectionMatches.Count == 1 ? itemSelectionMatches[0] : null;
+            _stalePlayerContextHookDetected = profileMatches.Count == 0 && HasStalePlayerContextHook();
 
             var summary = $"材料数量：{itemMatches.Count} 个匹配；角色入口：{profileMatches.Count} 个匹配；物品详情：{itemSelectionMatches.Count} 个匹配。";
             SignatureStateText.Text = _itemQuantitySite.HasValue && _playerContextSite.HasValue && _itemSelectionSite.HasValue ? "已验证" : "不匹配";
@@ -108,6 +111,12 @@ public partial class MainWindow : Window
                 WriteStateText.Text = "可捕获";
                 WriteStateDetailText.Text = "角色、钱包和物品均通过当前版本入口校验。";
                 SetStatus($"{summary} 当前游戏版本可验证。钱包和角色字段无需先让数值变化。", true);
+            }
+            else if (_stalePlayerContextHookDetected)
+            {
+                WriteStateText.Text = "需重启游戏";
+                WriteStateDetailText.Text = "检测到上次管理器异常退出后残留的角色捕获跳转。";
+                SetStatus("检测到本程序上次留下的角色捕获跳转。请完全退出并重新启动游戏，再点击“连接并检查”。", false);
             }
             else
             {
@@ -342,10 +351,15 @@ public partial class MainWindow : Window
         SetStatus(CurrencyCaptureText.Text, false);
     }
 
-    private void OnCopyPlayerDiagnostic(object sender, RoutedEventArgs e)
+    private async void OnCopyPlayerDiagnostic(object sender, RoutedEventArgs e)
     {
-        Clipboard.SetText(PlayerDiagnosticBox.Text);
-        SetStatus("角色诊断数据已复制到剪贴板。", true);
+        if (await TryCopyTextAsync(PlayerDiagnosticBox.Text))
+        {
+            SetStatus("角色诊断数据已复制到剪贴板。", true);
+            return;
+        }
+
+        SetStatus("剪贴板正被其他程序占用，复制失败；诊断内容仍保留在文本框中，可选中后按 Ctrl+C。", false);
     }
 
     private void AppendPlayerDiagnostic(string message)
@@ -681,7 +695,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnCopyDetectorReport(object sender, RoutedEventArgs e)
+    private async void OnCopyDetectorReport(object sender, RoutedEventArgs e)
     {
         if (_detector is null)
         {
@@ -689,8 +703,35 @@ public partial class MainWindow : Window
             return;
         }
 
-        Clipboard.SetText(_detector.BuildReport());
-        SetStatus("候选地址已复制。把这段内容发给我，我会判断下一轮怎么继续缩小范围。", true);
+        if (await TryCopyTextAsync(_detector.BuildReport()))
+        {
+            SetStatus("候选地址已复制。把这段内容发给我，我会判断下一轮怎么继续缩小范围。", true);
+            return;
+        }
+
+        SetStatus("剪贴板正被其他程序占用，候选地址复制失败；请稍后重试。", false);
+    }
+
+    private static async Task<bool> TryCopyTextAsync(string text)
+    {
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            try
+            {
+                Clipboard.SetDataObject(text, true);
+                return true;
+            }
+            catch (Exception) when (attempt < 4)
+            {
+                await Task.Delay(80);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        return false;
     }
 
     private bool TryRefreshPlayerContext(out PlayerRuntimeContext context)
@@ -806,11 +847,39 @@ public partial class MainWindow : Window
 
         if (!site.HasValue)
         {
+            if (feature == "角色上下文" && _stalePlayerContextHookDetected)
+            {
+                SetStatus("检测到上次异常退出残留的角色捕获跳转。请完全退出并重新启动游戏后再连接。", false);
+                return false;
+            }
+
             SetStatus($"{feature}特征码尚未唯一匹配。请先在概览页点击“检查已知定位”。", false);
             return false;
         }
 
         return true;
+    }
+
+    private bool HasStalePlayerContextHook()
+    {
+        var tailMatches = _session!.ScanGameAssembly(AobPattern.Parse(PlayerContextTailPattern));
+        if (tailMatches.Count != 1)
+        {
+            return false;
+        }
+
+        var site = tailMatches[0] - 5;
+        var entry = _session.Read(site, 5);
+        if (entry.Length != 5 || entry[0] != 0xE9)
+        {
+            return false;
+        }
+
+        var trampoline = site + 5 + BitConverter.ToInt32(entry, 1);
+        var marker = _session.Read(trampoline, 10);
+        return marker.Length == 10 &&
+               marker[0] == 0x4C && marker[1] == 0x89 && marker[2] == 0x05 &&
+               marker[7] == 0x4C && marker[8] == 0x89 && marker[9] == 0x0D;
     }
 
     private bool TryGetWriteTarget(long? storedAddress, string valueText, int minimum, int maximum, out long address, out int value)
@@ -866,6 +935,7 @@ public partial class MainWindow : Window
         _playerContextHook = null;
         _playerContext = null;
         _selectedItemEntity = null;
+        _stalePlayerContextHookDetected = false;
         _currencyAddress = null;
         _itemQuantitySite = null;
         _playerContextSite = null;
