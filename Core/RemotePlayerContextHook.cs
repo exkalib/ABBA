@@ -284,6 +284,10 @@ internal sealed class RemotePlayerContextHook : IDisposable
     {
         AddLoadRipRelative(code, trampolineAddress, FrameOffset, new byte[] { 0x48, 0x8B, 0x0D });
         AddLoadRipRelative(code, trampolineAddress, HeroOffset, new byte[] { 0x48, 0x8B, 0x15 });
+        // IL2CPP emits a hidden MethodInfo* argument in R8 for this static method. Every native
+        // call site in the supported build passes null; do the same instead of forwarding the
+        // intercepted function's unrelated R8 value.
+        code.AddRange(new byte[] { 0x45, 0x33, 0xC0 });
         AddCallAbsolute(code, _getInventoryComponent);
         AddStoreRipRelative(code, trampolineAddress, InventoryComponentOffset, new byte[] { 0x48, 0x89, 0x05 });
     }

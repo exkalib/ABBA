@@ -222,6 +222,7 @@ public partial class MainWindow : Window
         _playerContext = null;
         _currencyAddress = null;
         InventoryProbeButton.IsEnabled = false;
+        PlayerDiagnosticBox.Text = $"{DateTime.Now:HH:mm:ss}  开始新的角色捕获会话。";
         try
         {
             var activeProbe = new RemotePlayerContextHook(
@@ -263,6 +264,7 @@ public partial class MainWindow : Window
                 if (activeProbe.TryReadRawCapture(out var firstArgument, out var secondArgument))
                 {
                     CurrencyCaptureText.Text = $"捕获成功 · 参数 A：0x{firstArgument:X} · 参数 B：0x{secondArgument:X}";
+                    AppendPlayerDiagnostic($"RawCapture: A=0x{firstArgument:X}, B=0x{secondArgument:X}");
                     InventoryProbeButton.IsEnabled = true;
                     SetStatus("角色参数捕获成功。现在可以单独测试一次背包组件解析。", true);
                     return;
@@ -270,11 +272,13 @@ public partial class MainWindow : Window
             }
 
             CurrencyCaptureText.Text = "10 秒内没有捕获到角色更新参数。请确认角色已加载后重新测试。";
+            AppendPlayerDiagnostic("RawCapture: Timeout after 10 seconds.");
             SetStatus(CurrencyCaptureText.Text, false);
         }
         catch (Exception exception)
         {
             _playerContextHook = null;
+            AppendPlayerDiagnostic($"RawCapture: Error={exception.Message}");
             SetStatus($"无法开始角色上下文定位：{exception.Message}", false);
         }
     }
@@ -284,11 +288,13 @@ public partial class MainWindow : Window
         var activeProbe = _playerContextHook;
         if (activeProbe is null || !activeProbe.QueueInventoryProbe())
         {
+            AppendPlayerDiagnostic("InventoryProbe: Request rejected because raw capture is unavailable.");
             SetStatus("尚未取得有效角色参数，无法测试背包组件。", false);
             return;
         }
 
         InventoryProbeButton.IsEnabled = false;
+        AppendPlayerDiagnostic("InventoryProbe: Request=1, Completed=0, Result=0x0");
         SetStatus("已请求一次背包组件解析；正在等待游戏更新线程返回结果。");
         for (var attempt = 0; attempt < 20; attempt++)
         {
@@ -300,7 +306,7 @@ public partial class MainWindow : Window
 
             if (activeProbe.TryReadInventoryProbe(out var inventoryComponent, out var completed, out _) && completed)
             {
-                InventoryProbeButton.IsEnabled = true;
+                AppendPlayerDiagnostic($"InventoryProbe: Request=0, Completed=1, Result=0x{inventoryComponent:X}");
                 if (inventoryComponent == 0)
                 {
                     CurrencyCaptureText.Text = "背包函数已执行一次，但返回了空组件。入口线程正常，下一步需要校正函数参数。";
@@ -319,9 +325,9 @@ public partial class MainWindow : Window
             }
         }
 
-        InventoryProbeButton.IsEnabled = true;
-        if (activeProbe.TryReadInventoryProbe(out _, out var completedAfterTimeout, out var pendingAfterTimeout))
+        if (activeProbe.TryReadInventoryProbe(out var resultAfterTimeout, out var completedAfterTimeout, out var pendingAfterTimeout))
         {
+            AppendPlayerDiagnostic($"InventoryProbe: Request={(pendingAfterTimeout ? 1 : 0)}, Completed={(completedAfterTimeout ? 1 : 0)}, Result=0x{resultAfterTimeout:X}");
             CurrencyCaptureText.Text = pendingAfterTimeout
                 ? "背包测试请求未被游戏更新线程消费；捕获入口可能暂时没有运行。"
                 : completedAfterTimeout
@@ -330,9 +336,22 @@ public partial class MainWindow : Window
         }
         else
         {
+            AppendPlayerDiagnostic("InventoryProbe: Status read failed.");
             CurrencyCaptureText.Text = "无法读取背包测试状态；当前捕获区可能已经失效。";
         }
         SetStatus(CurrencyCaptureText.Text, false);
+    }
+
+    private void OnCopyPlayerDiagnostic(object sender, RoutedEventArgs e)
+    {
+        Clipboard.SetText(PlayerDiagnosticBox.Text);
+        SetStatus("角色诊断数据已复制到剪贴板。", true);
+    }
+
+    private void AppendPlayerDiagnostic(string message)
+    {
+        PlayerDiagnosticBox.AppendText($"{Environment.NewLine}{DateTime.Now:HH:mm:ss}  {message}");
+        PlayerDiagnosticBox.ScrollToEnd();
     }
 
     private void OnReadCurrencyCapture(object sender, RoutedEventArgs e)
