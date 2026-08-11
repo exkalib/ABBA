@@ -274,8 +274,8 @@ public partial class MainWindow : Window
                 {
                     CurrencyCaptureText.Text = $"捕获成功 · 参数 A：0x{firstArgument:X} · 参数 B：0x{secondArgument:X}";
                     AppendPlayerDiagnostic($"RawCapture: A=0x{firstArgument:X}, B=0x{secondArgument:X}");
-                    InventoryProbeButton.IsEnabled = true;
-                    SetStatus("角色参数捕获成功。现在可以单独测试一次背包组件解析。", true);
+                    InventoryProbeButton.IsEnabled = false;
+                    SetStatus("角色参数捕获成功。危险的主动背包调用已停用；不会再从此入口调用游戏 API。", true);
                     return;
                 }
             }

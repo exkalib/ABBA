@@ -152,12 +152,12 @@
                     <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                     <StackPanel VerticalAlignment="Center">
                       <TextBlock Text="角色" FontSize="17" FontWeight="SemiBold" />
-                      <TextBlock Text="先捕获角色参数；成功后可单独测试一次背包组件，不会连续调用游戏 API。" Foreground="{StaticResource WarningBrush}" FontSize="12" Margin="0,3,0,0" />
+                      <TextBlock Text="角色参数仅做旁路捕获；危险的主动背包 API 测试已停用。" Foreground="{StaticResource WarningBrush}" FontSize="12" Margin="0,3,0,0" />
                       <TextBlock x:Name="CurrencyCaptureText" Text="尚未开启最小角色捕获。" Foreground="{StaticResource AccentBrush}" FontSize="12" Margin="0,7,0,0" TextTrimming="CharacterEllipsis" />
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0,0,0">
                       <Button Style="{StaticResource SecondaryButton}" Content="捕获角色参数" Click="OnStartCurrencyCapture" />
-                      <Button x:Name="InventoryProbeButton" Style="{StaticResource SecondaryButton}" Content="测试背包组件" Click="OnProbeInventoryComponent" IsEnabled="False" Margin="8,0,0,0" />
+                      <Button x:Name="InventoryProbeButton" Style="{StaticResource SecondaryButton}" Content="背包旁路捕获开发中" Click="OnProbeInventoryComponent" IsEnabled="False" Margin="8,0,0,0" />
                       <Button Style="{StaticResource SecondaryButton}" Content="复制诊断" Click="OnCopyPlayerDiagnostic" Margin="8,0,0,0" />
                     </StackPanel>
                     <TextBox x:Name="PlayerDiagnosticBox" Grid.Row="1" Grid.ColumnSpan="2" Text="尚无角色诊断数据。" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Height="68" Padding="8,6" Margin="0,10,0,0" />

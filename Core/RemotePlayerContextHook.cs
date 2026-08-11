@@ -1,8 +1,7 @@
 namespace NRftWManagerUI.Core;
 
 /// <summary>
-/// Captures the two raw values arriving at the verified player-update entry.
-/// A separately requested inventory probe may call one verified game API once on the update thread.
+/// Captures the two raw values arriving at the verified player-update entry without calling game APIs.
 /// </summary>
 internal sealed class RemotePlayerContextHook : IDisposable
 {
@@ -109,20 +108,6 @@ internal sealed class RemotePlayerContextHook : IDisposable
         AddStoreRipRelative(code, trampolineAddress, FrameOffset, new byte[] { 0x4C, 0x89, 0x05 });
         AddStoreRipRelative(code, trampolineAddress, HeroOffset, new byte[] { 0x4C, 0x89, 0x0D });
 
-        // Preserve flags and volatile registers. The inventory resolver is called once only when the
-        // desktop app sets InventoryProbeRequestOffset; normal updates take the skip path.
-        code.AddRange(new byte[] { 0x9C, 0x50, 0x51, 0x52, 0x41, 0x50, 0x41, 0x51, 0x41, 0x52, 0x41, 0x53 });
-        code.AddRange(new byte[] { 0x31, 0xC0 });
-        AddLoadRipRelative(code, trampolineAddress, InventoryProbeRequestOffset, new byte[] { 0x87, 0x05 });
-        code.AddRange(new byte[] { 0x85, 0xC0, 0x74, 0x00 });
-        var skipInventoryProbeOffset = code.Count - 1;
-        var inventoryProbeStart = code.Count;
-        code.AddRange(new byte[] { 0x48, 0x83, 0xEC, 0x28 });
-        AddCallGetInventoryComponent(code, trampolineAddress);
-        AddStoreInt32RipRelative(code, trampolineAddress, InventoryProbeCompletedOffset, 1);
-        code.AddRange(new byte[] { 0x48, 0x83, 0xC4, 0x28 });
-        code[skipInventoryProbeOffset] = checked((byte)(code.Count - inventoryProbeStart));
-        code.AddRange(new byte[] { 0x41, 0x5B, 0x41, 0x5A, 0x41, 0x59, 0x41, 0x58, 0x5A, 0x59, 0x58, 0x9D });
         code.AddRange(_replacedBytes);
         code.Add(0xE9);
         var returnOffset = checked((int)((_site + _replacedBytes.Length) - (trampolineAddress + code.Count + sizeof(int))));
@@ -151,7 +136,7 @@ internal sealed class RemotePlayerContextHook : IDisposable
         }
 
         _session.Flush(_site, patch.Length);
-        return "最小角色捕获已开启：默认只记录更新参数；背包函数仅在单独请求时执行一次。";
+        return "最小角色捕获已开启：仅记录更新参数，不会从此入口调用游戏 API。";
     }
 
     public bool TryReadRawCapture(out long firstArgument, out long secondArgument)
@@ -166,15 +151,9 @@ internal sealed class RemotePlayerContextHook : IDisposable
 
     public bool QueueInventoryProbe()
     {
-        if (!IsArmed || !TryReadRawCapture(out _, out _))
-        {
-            return false;
-        }
-
-        var root = _trampoline.ToInt64();
-        return _session.WriteInt64(root + InventoryComponentOffset, 0) &&
-               _session.WriteInt32(root + InventoryProbeCompletedOffset, 0) &&
-               _session.WriteInt32(root + InventoryProbeRequestOffset, 1);
+        // Calling Quantum inventory APIs from the Unity view-update hook crashes the supported
+        // build. Inventory resolution must be observed at a native game call site instead.
+        return false;
     }
 
     public bool TryReadInventoryProbe(out long inventoryComponent, out bool completed, out bool pending)
@@ -278,18 +257,6 @@ internal sealed class RemotePlayerContextHook : IDisposable
         _session.Flush(_site, _replacedBytes.Length);
         _session.Free(_trampoline);
         _trampoline = IntPtr.Zero;
-    }
-
-    private void AddCallGetInventoryComponent(List<byte> code, long trampolineAddress)
-    {
-        AddLoadRipRelative(code, trampolineAddress, FrameOffset, new byte[] { 0x48, 0x8B, 0x0D });
-        AddLoadRipRelative(code, trampolineAddress, HeroOffset, new byte[] { 0x48, 0x8B, 0x15 });
-        // IL2CPP emits a hidden MethodInfo* argument in R8 for this static method. Every native
-        // call site in the supported build passes null; do the same instead of forwarding the
-        // intercepted function's unrelated R8 value.
-        code.AddRange(new byte[] { 0x45, 0x33, 0xC0 });
-        AddCallAbsolute(code, _getInventoryComponent);
-        AddStoreRipRelative(code, trampolineAddress, InventoryComponentOffset, new byte[] { 0x48, 0x89, 0x05 });
     }
 
     private void AddCallGetHeroComponent(List<byte> code, long trampolineAddress)
