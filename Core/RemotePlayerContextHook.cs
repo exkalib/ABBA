@@ -1,8 +1,8 @@
 namespace NRftWManagerUI.Core;
 
 /// <summary>
-/// Captures the local Quantum frame and the player's component pointers from the game's own update.
-/// It also runs one explicitly queued game API call on that same update thread.
+/// Stage-one probe that captures the two raw values arriving at the verified player-update entry.
+/// It deliberately makes no game API calls and executes no queued commands.
 /// </summary>
 internal sealed class RemotePlayerContextHook : IDisposable
 {
@@ -102,21 +102,10 @@ internal sealed class RemotePlayerContextHook : IDisposable
         var trampolineAddress = _trampoline.ToInt64();
         var code = new List<byte>();
 
-        // Preserve all volatile argument registers plus R12, which holds the queued command while game APIs run.
-        code.AddRange(new byte[] { 0x50, 0x51, 0x52, 0x41, 0x50, 0x41, 0x51, 0x41, 0x52, 0x41, 0x53, 0x41, 0x54 });
+        // Stage one intentionally captures only the two incoming values. MOV does not alter registers
+        // or flags, and no game API is called from this trampoline.
         AddStoreRipRelative(code, trampolineAddress, FrameOffset, new byte[] { 0x4C, 0x89, 0x05 });
         AddStoreRipRelative(code, trampolineAddress, HeroOffset, new byte[] { 0x4C, 0x89, 0x0D });
-
-        // Eight pushes leave RSP at 8 mod 16. 0x28 provides shadow space, a fifth argument slot,
-        // and the Windows x64 call-site alignment required by every invoked game method.
-        code.AddRange(new byte[] { 0x48, 0x83, 0xEC, 0x28 });
-
-        AddCallGetInventoryComponent(code, trampolineAddress);
-        AddCallGetHeroComponent(code, trampolineAddress);
-        AddCallGetHeroStats(code, trampolineAddress);
-        AddQueuedCommands(code, trampolineAddress);
-
-        code.AddRange(new byte[] { 0x48, 0x83, 0xC4, 0x28, 0x41, 0x5C, 0x41, 0x5B, 0x41, 0x5A, 0x41, 0x59, 0x41, 0x58, 0x5A, 0x59, 0x58 });
         code.AddRange(_replacedBytes);
         code.Add(0xE9);
         var returnOffset = checked((int)((_site + _replacedBytes.Length) - (trampolineAddress + code.Count + sizeof(int))));
@@ -145,7 +134,7 @@ internal sealed class RemotePlayerContextHook : IDisposable
         }
 
         _session.Flush(_site, patch.Length);
-        return "角色上下文定位已开启。进入已加载的角色画面后停留约 1 秒即可读取角色、钱包和属性组件。";
+        return "最小角色捕获已开启：只记录更新参数，不调用游戏 API，也不会执行修改命令。";
     }
 
     public bool TryReadContext(out PlayerRuntimeContext context)
