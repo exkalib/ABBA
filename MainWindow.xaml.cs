@@ -17,7 +17,7 @@ public partial class MainWindow : Window
     private const string ItemSelectionEntry = "40 53 48 83 EC 20 48 8B D9 48 85 C9";
     private const string CurrentGameAssemblySha256 = "5B00EE90833B1BE2EA73E01CB83E710E09E86199D12AC769BE3C0E82ADD8B4BB";
     private const int GetInventoryComponentRva = 0x5D7F970;
-    private const int InventoryComponentNaturalCallRva = 0x5D7BC6B;
+    private const int InventoryComponentNaturalCallRva = 0x5D7F8A2;
     private const int GetHeroComponentRva = 0x5B32560;
     private const int GetHeroStatsRva = 0x5E02EC0;
     private const int LevelUpRva = 0x5DF50C0;
@@ -307,11 +307,10 @@ public partial class MainWindow : Window
         {
             var activeProbe = new RemoteInventoryCallHook(
                 _session!,
-                _session!.GameAssemblyBase + InventoryComponentNaturalCallRva,
-                _session.GameAssemblyBase + GetInventoryComponentRva);
+                _session!.GameAssemblyBase + InventoryComponentNaturalCallRva);
             _inventoryCallHook = activeProbe;
             var result = activeProbe.Arm();
-            AppendPlayerDiagnostic("InventoryObserve: armed at native IsHeroInventoryFull call site.");
+            AppendPlayerDiagnostic("InventoryObserve: armed at native GetInventoryEntity result path.");
             SetStatus(result);
             if (!activeProbe.IsArmed)
             {
