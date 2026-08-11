@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -32,18 +31,6 @@ public partial class MainWindow : Window
     private const int GiveMaxStatsRva = 0x5E00240;
     private const int UnlockFastTravelRva = 0x5F48E60;
 
-    private readonly Dictionary<string, FrameworkElement> _views;
-    private readonly Dictionary<string, (string Title, string Subtitle)> _pageText = new()
-    {
-        ["overview"] = ("概览", "连接游戏后核对已验证特征码，再逐项启用。"),
-        ["items"] = ("物品数量", "捕获最后一次变化的可堆叠材料，再写入该堆数量。"),
-        ["equipment"] = ("装备与词条", "捕获背包详情中的目标物品，再调用当前版本的原生物品 API。"),
-        ["character"] = ("角色", "先建立角色上下文；随后可使用当前版本已校验的角色组件。"),
-        ["detector"] = ("字段探测器", "用游戏内的一次确定数值变化筛选候选内存字段。"),
-        ["loadouts"] = ("版本与验证", "按安全顺序验证当前游戏构建；只有唯一匹配才会允许写入。"),
-        ["logs"] = ("活动记录", "记录连接、扫描、捕获和写入动作。")
-    };
-
     private GameSession? _session;
     private RemoteCaptureHook? _itemCapture;
     private RemotePlayerContextHook? _playerContextHook;
@@ -61,39 +48,8 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        _views = new Dictionary<string, FrameworkElement>
-        {
-            ["overview"] = OverviewView,
-            ["items"] = ItemsView,
-            ["equipment"] = EquipmentView,
-            ["character"] = CharacterView,
-            ["detector"] = DetectorView,
-            ["loadouts"] = LoadoutsView,
-            ["logs"] = LogsView
-        };
-
         Closed += (_, _) => Disconnect();
         AddLog("界面启动：尚未连接游戏。不会安装或加载任何游戏模组。");
-    }
-
-    private void OnNavigate(object sender, RoutedEventArgs e)
-    {
-        if (sender is Button { Tag: string page })
-        {
-            ShowPage(page);
-        }
-    }
-
-    private void ShowPage(string page)
-    {
-        foreach (var view in _views)
-        {
-            view.Value.Visibility = view.Key == page ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        var text = _pageText[page];
-        PageTitle.Text = text.Title;
-        PageSubtitle.Text = text.Subtitle;
     }
 
     private void OnConnectGame(object sender, RoutedEventArgs e)
@@ -114,7 +70,13 @@ public partial class MainWindow : Window
         RuntimeDetailText.Text = result;
         ConnectionText.Text = "已连接游戏";
         SetStatus(result);
-        AddLog("请点击“检查已知定位”。特征码唯一匹配前，写入功能保持锁定。");
+        AddLog("已连接游戏，正在自动检查当前版本并定位角色。");
+        OnScanKnownSignatures(this, new RoutedEventArgs());
+
+        if (_playerContextSite.HasValue)
+        {
+            OnStartCurrencyCapture(this, new RoutedEventArgs());
+        }
     }
 
     private void OnScanKnownSignatures(object sender, RoutedEventArgs e)
@@ -629,11 +591,6 @@ public partial class MainWindow : Window
 
         Clipboard.SetText(_detector.BuildReport());
         SetStatus("候选地址已复制。把这段内容发给我，我会判断下一轮怎么继续缩小范围。", true);
-    }
-
-    private void OnOpenDetector(object sender, RoutedEventArgs e)
-    {
-        ShowPage("detector");
     }
 
     private bool TryRefreshPlayerContext(out PlayerRuntimeContext context)

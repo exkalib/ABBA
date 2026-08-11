@@ -3,34 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="NRftW Manager" Height="860" Width="1380" MinHeight="700" MinWidth="1100"
         WindowStartupLocation="CenterScreen" Background="{StaticResource BackgroundBrush}">
-  <Grid>
-    <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="218" />
-      <ColumnDefinition Width="*" />
-    </Grid.ColumnDefinitions>
-
-    <Border Grid.Column="0" Background="#101824" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
-      <DockPanel Margin="14">
-        <StackPanel DockPanel.Dock="Top">
-          <StackPanel Margin="6,8,6,28">
-            <TextBlock Text="NRftW" FontSize="23" FontWeight="Bold" />
-            <TextBlock Text="Item Manager" FontSize="13" Foreground="{StaticResource MutedBrush}" />
-          </StackPanel>
-          <Button Style="{StaticResource NavButton}" Tag="character" Click="OnNavigate" Content="角色" />
-          <Button Style="{StaticResource NavButton}" Tag="items" Click="OnNavigate" Content="物品" />
-          <Button Style="{StaticResource NavButton}" Tag="equipment" Click="OnNavigate" Content="装备" />
-        </StackPanel>
-
-        <Border DockPanel.Dock="Bottom" Background="#172235" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10">
-          <StackPanel>
-            <TextBlock Text="外置模式" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" />
-            <TextBlock Text="不安装模组；仅在你点击连接后访问游戏进程。" Foreground="{StaticResource MutedBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0" />
-          </StackPanel>
-        </Border>
-      </DockPanel>
-    </Border>
-
-    <Grid Grid.Column="1" Margin="28,24,28,22">
+  <Grid Margin="28,24,28,22">
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto" />
         <RowDefinition Height="*" />
@@ -39,8 +12,8 @@
 
       <Grid Grid.Row="0" Margin="0,0,0,20">
         <StackPanel>
-          <TextBlock x:Name="PageTitle" Text="角色" FontSize="28" FontWeight="SemiBold" />
-          <TextBlock x:Name="PageSubtitle" Text="先建立角色上下文；随后可使用当前版本已校验的角色组件。" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0" />
+          <TextBlock x:Name="PageTitle" Text="NRftW Manager" FontSize="28" FontWeight="SemiBold" />
+          <TextBlock x:Name="PageSubtitle" Text="连接游戏后，即可在这一页直接使用角色、物品和装备功能。" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0" />
         </StackPanel>
         <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
           <Border Background="#263247" BorderBrush="#43536C" BorderThickness="1" CornerRadius="16" Padding="12,6">
@@ -49,14 +22,13 @@
               <TextBlock x:Name="ConnectionText" Text="未连接游戏" Foreground="{StaticResource WarningBrush}" FontWeight="SemiBold" />
             </StackPanel>
           </Border>
-          <Button Style="{StaticResource ActionButton}" Content="连接游戏" Click="OnConnectGame" Margin="10,0,0,0" />
-          <Button Style="{StaticResource SecondaryButton}" Content="检查版本" Click="OnScanKnownSignatures" Margin="8,0,0,0" />
+          <Button Style="{StaticResource ActionButton}" Content="连接并检查" Click="OnConnectGame" Margin="10,0,0,0" />
         </StackPanel>
       </Grid>
 
       <Grid Grid.Row="1">
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-          <Grid>
+          <StackPanel>
             <Grid x:Name="OverviewView" Visibility="Collapsed">
               <StackPanel>
                 <UniformGrid Columns="3" Margin="0,0,0,18">
@@ -96,29 +68,12 @@
               </StackPanel>
             </Grid>
 
-            <Grid x:Name="ItemsView" Visibility="Collapsed">
+            <Grid x:Name="ItemsView" Margin="0,0,0,12">
               <StackPanel>
                 <Border Style="{StaticResource Card}">
-                  <Grid>
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="2*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="120" /></Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0" Margin="0,0,12,0">
-                      <TextBlock Text="物品名称或 GUID" Foreground="{StaticResource MutedBrush}" />
-                      <TextBox Margin="0,7,0,0" Height="34" Padding="9,5" Text="例如：修理粉末" />
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" Margin="0,0,12,0">
-                      <TextBlock Text="分类" Foreground="{StaticResource MutedBrush}" />
-                      <ComboBox Margin="0,7,0,0" Height="34" SelectedIndex="0"><ComboBoxItem Content="全部物品" /><ComboBoxItem Content="材料" /><ComboBoxItem Content="装备" /><ComboBoxItem Content="余烬" /></ComboBox>
-                    </StackPanel>
-                    <StackPanel Grid.Column="2">
-                      <TextBlock Text="数量" Foreground="{StaticResource MutedBrush}" />
-                      <TextBox Margin="0,7,0,0" Height="34" Padding="9,5" Text="5" />
-                    </StackPanel>
-                  </Grid>
-                </Border>
-                <Border Style="{StaticResource Card}" Margin="0,16,0,0">
                   <StackPanel>
-                    <TextBlock Text="当前可堆叠物品数量（已验证特征码）" FontSize="17" FontWeight="SemiBold" />
-                    <TextBlock Text="点击开始捕获后，在游戏里卖出/使用目标材料 1 个。程序将自动记住那一堆材料的数量地址；捕获完成后才可读写。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,8,0,0" />
+                    <TextBlock Text="物品数量" FontSize="17" FontWeight="SemiBold" />
+                    <TextBlock Text="首次使用：开始捕获后，在游戏里消耗或卖出目标材料 1 个。之后可直接写入。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,6,0,0" />
                     <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
                       <CheckBox x:Name="KeepLastItemCheck" Content="最后 1 个保留" IsChecked="True" VerticalAlignment="Center" Margin="0,0,14,0" />
                       <Button Style="{StaticResource ActionButton}" Content="开始捕获材料" Click="OnStartItemCapture" />
@@ -133,12 +88,12 @@
               </StackPanel>
             </Grid>
 
-            <Grid x:Name="EquipmentView" Visibility="Collapsed">
+            <Grid x:Name="EquipmentView" Margin="0,0,0,12">
               <StackPanel>
                 <Border Style="{StaticResource Card}">
                   <StackPanel>
                     <TextBlock Text="选中目标物品" FontSize="17" FontWeight="SemiBold" />
-                    <TextBlock Text="先在“角色”页开启并读取角色上下文；再点“开启物品捕获”，回游戏打开背包并点击目标物品详情，立刻返回读取。该捕获只记录当前详情请求的物品，不会修改它。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,9,0,0" />
+                    <TextBlock Text="连接后会自动定位角色。开启捕获后，在游戏背包中点开目标物品详情，再返回读取。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,6,0,0" />
                     <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
                       <Button Style="{StaticResource ActionButton}" Content="开启物品捕获" Click="OnStartItemSelection" />
                       <Button Style="{StaticResource SecondaryButton}" Content="读取选中物品" Click="OnReadItemSelection" Margin="10,0,0,0" />
@@ -190,19 +145,18 @@
               </StackPanel>
             </Grid>
 
-            <Grid x:Name="CharacterView">
+            <Grid x:Name="CharacterView" Margin="0,0,0,12">
               <StackPanel>
                 <Border Style="{StaticResource Card}" Padding="16,13" Margin="0,0,0,12">
                   <Grid>
                     <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                     <StackPanel VerticalAlignment="Center">
-                      <TextBlock Text="角色上下文" FontSize="17" FontWeight="SemiBold" />
-                      <TextBlock Text="先建立一次，随后所有角色与装备功能都能直接使用。" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,3,0,0" />
+                      <TextBlock Text="角色" FontSize="17" FontWeight="SemiBold" />
+                      <TextBlock Text="连接后自动定位；切换角色或场景后可手动重新定位。" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,3,0,0" />
                       <TextBlock x:Name="CurrencyCaptureText" Text="未建立角色上下文。" Foreground="{StaticResource AccentBrush}" FontSize="12" Margin="0,7,0,0" TextTrimming="CharacterEllipsis" />
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0,0,0">
-                      <Button Style="{StaticResource ActionButton}" Content="建立上下文" Click="OnStartCurrencyCapture" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="读取" Click="OnReadCurrencyCapture" Margin="8,0,0,0" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="重新定位" Click="OnStartCurrencyCapture" />
                     </StackPanel>
                   </Grid>
                 </Border>
@@ -322,7 +276,7 @@
                 </DockPanel>
               </Border>
             </Grid>
-          </Grid>
+          </StackPanel>
         </ScrollViewer>
       </Grid>
 
@@ -332,6 +286,5 @@
           <TextBlock x:Name="ActionStatusText" Text="界面已就绪：尚未连接游戏。" Foreground="{StaticResource MutedBrush}" />
         </StackPanel>
       </Border>
-    </Grid>
   </Grid>
 </Window>
