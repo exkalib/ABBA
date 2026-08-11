@@ -12,17 +12,13 @@
     <Border Grid.Column="0" Background="#101824" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
       <DockPanel Margin="14">
         <StackPanel DockPanel.Dock="Top">
-          <StackPanel Margin="6,8,6,24">
+          <StackPanel Margin="6,8,6,28">
             <TextBlock Text="NRftW" FontSize="23" FontWeight="Bold" />
             <TextBlock Text="Item Manager" FontSize="13" Foreground="{StaticResource MutedBrush}" />
           </StackPanel>
-          <Button Style="{StaticResource NavButton}" Tag="overview" Click="OnNavigate" Content="概览" />
-          <Button Style="{StaticResource NavButton}" Tag="items" Click="OnNavigate" Content="物品数量" />
-          <Button Style="{StaticResource NavButton}" Tag="equipment" Click="OnNavigate" Content="装备与词条" />
           <Button Style="{StaticResource NavButton}" Tag="character" Click="OnNavigate" Content="角色" />
-          <Button Style="{StaticResource NavButton}" Tag="detector" Click="OnNavigate" Content="字段探测器" />
-          <Button Style="{StaticResource NavButton}" Tag="loadouts" Click="OnNavigate" Content="版本与验证" />
-          <Button Style="{StaticResource NavButton}" Tag="logs" Click="OnNavigate" Content="活动记录" />
+          <Button Style="{StaticResource NavButton}" Tag="items" Click="OnNavigate" Content="物品" />
+          <Button Style="{StaticResource NavButton}" Tag="equipment" Click="OnNavigate" Content="装备" />
         </StackPanel>
 
         <Border DockPanel.Dock="Bottom" Background="#172235" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10">
@@ -43,21 +39,25 @@
 
       <Grid Grid.Row="0" Margin="0,0,0,20">
         <StackPanel>
-          <TextBlock x:Name="PageTitle" Text="概览" FontSize="28" FontWeight="SemiBold" />
-          <TextBlock x:Name="PageSubtitle" Text="连接游戏后核对已验证特征码，再逐项启用。" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0" />
+          <TextBlock x:Name="PageTitle" Text="角色" FontSize="28" FontWeight="SemiBold" />
+          <TextBlock x:Name="PageSubtitle" Text="先建立角色上下文；随后可使用当前版本已校验的角色组件。" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0" />
         </StackPanel>
-        <Border HorizontalAlignment="Right" Background="#263247" BorderBrush="#43536C" BorderThickness="1" CornerRadius="16" Padding="12,6">
-          <StackPanel Orientation="Horizontal">
-            <Ellipse Width="8" Height="8" Fill="{StaticResource WarningBrush}" VerticalAlignment="Center" Margin="0,0,7,0" />
-            <TextBlock x:Name="ConnectionText" Text="未连接游戏" Foreground="{StaticResource WarningBrush}" FontWeight="SemiBold" />
-          </StackPanel>
-        </Border>
+        <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
+          <Border Background="#263247" BorderBrush="#43536C" BorderThickness="1" CornerRadius="16" Padding="12,6">
+            <StackPanel Orientation="Horizontal">
+              <Ellipse Width="8" Height="8" Fill="{StaticResource WarningBrush}" VerticalAlignment="Center" Margin="0,0,7,0" />
+              <TextBlock x:Name="ConnectionText" Text="未连接游戏" Foreground="{StaticResource WarningBrush}" FontWeight="SemiBold" />
+            </StackPanel>
+          </Border>
+          <Button Style="{StaticResource ActionButton}" Content="连接游戏" Click="OnConnectGame" Margin="10,0,0,0" />
+          <Button Style="{StaticResource SecondaryButton}" Content="检查版本" Click="OnScanKnownSignatures" Margin="8,0,0,0" />
+        </StackPanel>
       </Grid>
 
       <Grid Grid.Row="1">
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
           <Grid>
-            <Grid x:Name="OverviewView">
+            <Grid x:Name="OverviewView" Visibility="Collapsed">
               <StackPanel>
                 <UniformGrid Columns="3" Margin="0,0,0,18">
                   <Border Style="{StaticResource Card}" Margin="0,0,12,0">
@@ -190,7 +190,7 @@
               </StackPanel>
             </Grid>
 
-            <Grid x:Name="CharacterView" Visibility="Collapsed">
+            <Grid x:Name="CharacterView">
               <StackPanel>
                 <Border Style="{StaticResource Card}" Padding="16,13" Margin="0,0,0,12">
                   <Grid>
