@@ -93,7 +93,7 @@
                 <Border Style="{StaticResource Card}">
                   <StackPanel>
                     <TextBlock Text="选中目标物品" FontSize="17" FontWeight="SemiBold" />
-                    <TextBlock Text="连接后会自动定位角色。开启捕获后，在游戏背包中点开目标物品详情，再返回读取。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,6,0,0" />
+                    <TextBlock Text="连接并检查后先定位角色；开启捕获后，在游戏背包中点开目标物品详情，再返回读取。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,6,0,0" />
                     <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
                       <Button Style="{StaticResource ActionButton}" Content="开启物品捕获" Click="OnStartItemSelection" />
                       <Button Style="{StaticResource SecondaryButton}" Content="读取选中物品" Click="OnReadItemSelection" Margin="10,0,0,0" />
@@ -152,7 +152,7 @@
                     <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                     <StackPanel VerticalAlignment="Center">
                       <TextBlock Text="角色" FontSize="17" FontWeight="SemiBold" />
-                      <TextBlock Text="连接后自动定位；切换角色或场景后可手动重新定位。" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,3,0,0" />
+                      <TextBlock Text="连接并检查后，再手动定位；切换角色或场景后需重新定位。" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,3,0,0" />
                       <TextBlock x:Name="CurrencyCaptureText" Text="未建立角色上下文。" Foreground="{StaticResource AccentBrush}" FontSize="12" Margin="0,7,0,0" TextTrimming="CharacterEllipsis" />
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0,0,0">

@@ -70,13 +70,8 @@ public partial class MainWindow : Window
         RuntimeDetailText.Text = result;
         ConnectionText.Text = "已连接游戏";
         SetStatus(result);
-        AddLog("已连接游戏，正在自动检查当前版本并定位角色。");
+        AddLog("已连接游戏，正在自动检查当前版本。角色定位仍需由你手动开启。");
         OnScanKnownSignatures(this, new RoutedEventArgs());
-
-        if (_playerContextSite.HasValue)
-        {
-            OnStartCurrencyCapture(this, new RoutedEventArgs());
-        }
     }
 
     private void OnScanKnownSignatures(object sender, RoutedEventArgs e)
