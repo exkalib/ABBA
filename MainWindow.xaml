@@ -192,84 +192,71 @@
 
             <Grid x:Name="CharacterView" Visibility="Collapsed">
               <StackPanel>
-                <Border Style="{StaticResource Card}">
-                  <StackPanel>
-                    <TextBlock Text="角色上下文（先做这一步）" FontSize="17" FontWeight="SemiBold" />
-                    <TextBlock Text="连接并通过“检查已知定位”后，进入已加载的角色画面，点击开启并等约 1 秒，再读取。角色与物品操作都依赖这一步。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,9,0,0" />
-                    <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
-                      <Button Style="{StaticResource ActionButton}" Content="开启角色上下文" Click="OnStartCurrencyCapture" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="读取角色状态" Click="OnReadCurrencyCapture" Margin="10,0,0,0" />
+                <Border Style="{StaticResource Card}" Padding="16,13" Margin="0,0,0,12">
+                  <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                      <TextBlock Text="角色上下文" FontSize="17" FontWeight="SemiBold" />
+                      <TextBlock Text="先建立一次，随后所有角色与装备功能都能直接使用。" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,3,0,0" />
+                      <TextBlock x:Name="CurrencyCaptureText" Text="未建立角色上下文。" Foreground="{StaticResource AccentBrush}" FontSize="12" Margin="0,7,0,0" TextTrimming="CharacterEllipsis" />
                     </StackPanel>
-                    <TextBlock x:Name="CurrencyCaptureText" Text="角色上下文尚未开启。" Foreground="{StaticResource MutedBrush}" Margin="0,11,0,0" TextWrapping="Wrap" />
-                  </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0,0,0">
+                      <Button Style="{StaticResource ActionButton}" Content="建立上下文" Click="OnStartCurrencyCapture" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="读取" Click="OnReadCurrencyCapture" Margin="8,0,0,0" />
+                    </StackPanel>
+                  </Grid>
                 </Border>
-                <Grid Margin="0,16,0,0">
+                <Grid Margin="0,0,0,12">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                  <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,8,0">
+                  <Border Grid.Column="0" Style="{StaticResource Card}" Padding="16,13" Margin="0,0,6,0">
                     <StackPanel>
                       <TextBlock Text="生命与战斗" FontSize="17" FontWeight="SemiBold" />
-                      <WrapPanel Margin="0,12,0,0">
-                        <CheckBox Content="无限生命" Tag="health" Click="OnTogglePlayerFlag" Margin="0,0,18,10" />
-                        <CheckBox Content="无限耐力" Tag="stamina" Click="OnTogglePlayerFlag" Margin="0,0,18,10" />
-                        <CheckBox Content="无限专注" Tag="focus" Click="OnTogglePlayerFlag" Margin="0,0,18,10" />
-                        <CheckBox Content="一击必杀" Tag="instagib" Click="OnTogglePlayerFlag" Margin="0,0,18,10" />
+                      <WrapPanel Margin="0,10,0,0">
+                        <CheckBox Content="无限生命" Tag="health" Click="OnTogglePlayerFlag" Margin="0,0,16,0" />
+                        <CheckBox Content="无限耐力" Tag="stamina" Click="OnTogglePlayerFlag" Margin="0,0,16,0" />
+                        <CheckBox Content="无限专注" Tag="focus" Click="OnTogglePlayerFlag" Margin="0,0,16,0" />
+                        <CheckBox Content="一击必杀" Tag="instagib" Click="OnTogglePlayerFlag" />
                       </WrapPanel>
-                      <TextBlock Text="这些开关对应当前版本角色组件中的原生状态/调试标志。切换场景或重进游戏后请重新开启。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,3,0,0" />
                     </StackPanel>
                   </Border>
-                  <Border Grid.Column="1" Style="{StaticResource Card}" Margin="8,0,0,0">
+                  <Border Grid.Column="1" Style="{StaticResource Card}" Padding="16,13" Margin="6,0,0,0">
                     <StackPanel>
-                      <TextBlock Text="商店与装备限制" FontSize="17" FontWeight="SemiBold" />
-                      <WrapPanel Margin="0,12,0,0">
-                        <CheckBox Content="免费商店" Tag="vendorCheat" Click="OnTogglePlayerFlag" Margin="0,0,18,10" />
-                        <CheckBox Content="忽略装备需求" Tag="ignoreRequirements" Click="OnTogglePlayerFlag" Margin="0,0,18,10" />
-                        <Button Style="{StaticResource SecondaryButton}" Content="解锁快速旅行" Click="OnUnlockFastTravel" Margin="0,0,18,8" />
+                      <TextBlock Text="商店与旅行" FontSize="17" FontWeight="SemiBold" />
+                      <WrapPanel Margin="0,10,0,0">
+                        <CheckBox Content="免费商店" Tag="vendorCheat" Click="OnTogglePlayerFlag" Margin="0,0,16,0" />
+                        <CheckBox Content="忽略装备需求" Tag="ignoreRequirements" Click="OnTogglePlayerFlag" Margin="0,0,16,0" />
+                        <Button Style="{StaticResource SecondaryButton}" Content="解锁快速旅行" Click="OnUnlockFastTravel" Padding="10,6" />
                       </WrapPanel>
-                      <TextBlock Text="“免费商店”和快速旅行均调用当前构建内置入口；免费制作仍没有安全的统一外置入口。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,3,0,0" />
                     </StackPanel>
                   </Border>
                 </Grid>
-                <Border Style="{StaticResource Card}" Margin="0,16,0,0">
-                  <StackPanel>
-                    <TextBlock Text="货币" FontSize="17" FontWeight="SemiBold" />
-                    <WrapPanel Margin="0,12,0,0">
-                      <Button Style="{StaticResource SecondaryButton}" Content="铜币" Tag="Copper" Click="OnCurrencyClick" Margin="0,0,8,8" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="银币" Tag="Silver" Click="OnCurrencyClick" Margin="0,0,8,8" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="金币" Tag="Gold" Click="OnCurrencyClick" Margin="0,0,8,8" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="Gloamseed" Tag="Gloamseed" Click="OnCurrencyClick" Margin="0,0,8,8" />
-                    </WrapPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                      <TextBox x:Name="CurrencyValueBox" Width="130" Height="34" Padding="9,5" Text="1000" Margin="18,0,0,0" />
-                      <Button Style="{StaticResource ActionButton}" Content="写入当前货币" Click="OnWriteCurrency" Margin="10,0,0,0" />
+                <Border Style="{StaticResource Card}" Padding="16,13" Margin="0,0,0,12">
+                  <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="92" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="货币" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                      <Button Style="{StaticResource SecondaryButton}" Content="铜币" Tag="Copper" Click="OnCurrencyClick" Padding="11,7" Margin="0,0,7,0" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="银币" Tag="Silver" Click="OnCurrencyClick" Padding="11,7" Margin="0,0,7,0" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="金币" Tag="Gold" Click="OnCurrencyClick" Padding="11,7" Margin="0,0,7,0" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="Gloamseed" Tag="Gloamseed" Click="OnCurrencyClick" Padding="11,7" />
                     </StackPanel>
-                    <TextBlock Text="铜=1、银=100、金=10,000 内部基数。Gloamseed 走游戏原生“增加永久地牢货币”接口，输入的数值为增加量。" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0" TextWrapping="Wrap" />
-                  </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0,0,0">
+                      <TextBox x:Name="CurrencyValueBox" Width="112" Height="34" Padding="9,5" Text="1000" />
+                      <Button Style="{StaticResource ActionButton}" Content="写入" Click="OnWriteCurrency" Margin="8,0,0,0" />
+                    </StackPanel>
+                  </Grid>
                 </Border>
-                <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                <Border Style="{StaticResource Card}" Padding="16,13">
                   <StackPanel>
-                    <TextBlock Text="移动、经验、等级与属性点" FontSize="17" FontWeight="SemiBold" />
-                    <WrapPanel Margin="0,12,0,0">
-                      <StackPanel Margin="0,0,14,10">
-                        <TextBlock Text="移动倍率（0.1–5）" Foreground="{StaticResource MutedBrush}" />
-                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0"><TextBox x:Name="MoveSpeedBox" Width="82" Height="34" Padding="9,5" Text="1.5" /><Button Style="{StaticResource SecondaryButton}" Content="应用" Tag="movement" Click="OnWriteHeroMultiplier" Margin="7,0,0,0" /></StackPanel>
-                      </StackPanel>
-                      <StackPanel Margin="0,0,14,10">
-                        <TextBlock Text="经验倍率（0.1–100）" Foreground="{StaticResource MutedBrush}" />
-                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0"><TextBox x:Name="ExperienceMultiplierBox" Width="82" Height="34" Padding="9,5" Text="3" /><Button Style="{StaticResource SecondaryButton}" Content="应用" Tag="experience" Click="OnWriteHeroMultiplier" Margin="7,0,0,0" /></StackPanel>
-                      </StackPanel>
-                      <StackPanel Margin="0,0,14,10">
-                        <TextBlock Text="未分配属性点（0–9999）" Foreground="{StaticResource MutedBrush}" />
-                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0"><TextBox x:Name="AttributePointsBox" Width="82" Height="34" Padding="9,5" Text="10" /><Button Style="{StaticResource SecondaryButton}" Content="应用" Click="OnWriteAttributePoints" Margin="7,0,0,0" /></StackPanel>
-                      </StackPanel>
-                      <StackPanel Margin="0,0,14,10">
-                        <TextBlock Text="目标等级（仅提升，1–100）" Foreground="{StaticResource MutedBrush}" />
-                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0"><TextBox x:Name="LevelBox" Width="82" Height="34" Padding="9,5" Text="30" /><Button Style="{StaticResource SecondaryButton}" Content="升级" Click="OnSetLevel" Margin="7,0,0,0" /></StackPanel>
-                      </StackPanel>
-                      <StackPanel Margin="0,0,0,10">
-                        <TextBlock Text="原生最大属性等级（1–100）" Foreground="{StaticResource MutedBrush}" />
-                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0"><TextBox x:Name="MaxStatsLevelBox" Width="82" Height="34" Padding="9,5" Text="30" /><Button Style="{StaticResource ActionButton}" Content="设置" Click="OnGiveMaxStats" Margin="7,0,0,0" /></StackPanel>
-                      </StackPanel>
-                    </WrapPanel>
+                    <TextBlock Text="倍率与成长" FontSize="17" FontWeight="SemiBold" />
+                    <Grid Margin="0,10,0,0">
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                      <StackPanel Grid.Column="0" Margin="0,0,8,0"><TextBlock Text="移动倍率" Foreground="{StaticResource MutedBrush}" FontSize="11" /><StackPanel Orientation="Horizontal" Margin="0,5,0,0"><TextBox x:Name="MoveSpeedBox" Width="58" Height="32" Padding="7,3" Text="1.5" /><Button Style="{StaticResource SecondaryButton}" Content="应用" Tag="movement" Click="OnWriteHeroMultiplier" Padding="8,6" Margin="5,0,0,0" /></StackPanel></StackPanel>
+                      <StackPanel Grid.Column="1" Margin="0,0,8,0"><TextBlock Text="经验倍率" Foreground="{StaticResource MutedBrush}" FontSize="11" /><StackPanel Orientation="Horizontal" Margin="0,5,0,0"><TextBox x:Name="ExperienceMultiplierBox" Width="58" Height="32" Padding="7,3" Text="3" /><Button Style="{StaticResource SecondaryButton}" Content="应用" Tag="experience" Click="OnWriteHeroMultiplier" Padding="8,6" Margin="5,0,0,0" /></StackPanel></StackPanel>
+                      <StackPanel Grid.Column="2" Margin="0,0,8,0"><TextBlock Text="属性点" Foreground="{StaticResource MutedBrush}" FontSize="11" /><StackPanel Orientation="Horizontal" Margin="0,5,0,0"><TextBox x:Name="AttributePointsBox" Width="58" Height="32" Padding="7,3" Text="10" /><Button Style="{StaticResource SecondaryButton}" Content="应用" Click="OnWriteAttributePoints" Padding="8,6" Margin="5,0,0,0" /></StackPanel></StackPanel>
+                      <StackPanel Grid.Column="3" Margin="0,0,8,0"><TextBlock Text="目标等级" Foreground="{StaticResource MutedBrush}" FontSize="11" /><StackPanel Orientation="Horizontal" Margin="0,5,0,0"><TextBox x:Name="LevelBox" Width="58" Height="32" Padding="7,3" Text="30" /><Button Style="{StaticResource SecondaryButton}" Content="升级" Click="OnSetLevel" Padding="8,6" Margin="5,0,0,0" /></StackPanel></StackPanel>
+                      <StackPanel Grid.Column="4"><TextBlock Text="最大属性等级" Foreground="{StaticResource MutedBrush}" FontSize="11" /><StackPanel Orientation="Horizontal" Margin="0,5,0,0"><TextBox x:Name="MaxStatsLevelBox" Width="58" Height="32" Padding="7,3" Text="30" /><Button Style="{StaticResource ActionButton}" Content="设置" Click="OnGiveMaxStats" Padding="8,6" Margin="5,0,0,0" /></StackPanel></StackPanel>
+                    </Grid>
                   </StackPanel>
                 </Border>
               </StackPanel>

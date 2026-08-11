@@ -244,8 +244,8 @@ public partial class MainWindow : Window
         {
             _selectedCurrency = currency;
             CurrencyCaptureText.Text = currency == "Gloamseed"
-                ? "Gloamseed 使用单独的地牢货币 API。完成角色上下文定位后可按“写入当前货币”增加它。"
-                : $"已选择 {currency}。自动定位后可直接写入；无需让货币变化。";
+                ? "已选择 Gloamseed（输入值为增加量）。"
+                : $"已选择 {currency}。";
             SetStatus(CurrencyCaptureText.Text);
         }
     }
@@ -302,7 +302,7 @@ public partial class MainWindow : Window
 
         _currencyAddress = context.InventoryComponent + sizeof(int);
         var valueText = _session!.TryReadInt32(_currencyAddress.Value, out var current) ? current.ToString() : "读取失败";
-        CurrencyCaptureText.Text = $"已定位角色组件：生命 0x{context.HealthComponent:X}、耐力 0x{context.StaminaComponent:X}、专注 0x{context.FocusComponent:X}、属性 0x{context.AttributeComponent:X}。{_selectedCurrency} 钱包：0x{_currencyAddress:X}，内部基数：{valueText}。";
+        CurrencyCaptureText.Text = $"角色上下文已就绪 · {_selectedCurrency} 当前基数：{valueText}";
         SetStatus(CurrencyCaptureText.Text, true);
     }
 

@@ -18,6 +18,22 @@
       <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
     </Style>
 
+    <Style TargetType="TextBox">
+      <Setter Property="Background" Value="#0E1624" />
+      <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+      <Setter Property="BorderBrush" Value="#3B4E6D" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <Style TargetType="ComboBox">
+      <Setter Property="Background" Value="#0E1624" />
+      <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+      <Setter Property="BorderBrush" Value="#3B4E6D" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
     <Style x:Key="Card" TargetType="Border">
       <Setter Property="Background" Value="{StaticResource PanelBrush}" />
       <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
