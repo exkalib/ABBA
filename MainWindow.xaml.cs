@@ -221,6 +221,7 @@ public partial class MainWindow : Window
         _playerContextHook?.Dispose();
         _playerContext = null;
         _currencyAddress = null;
+        InventoryProbeButton.IsEnabled = false;
         try
         {
             var activeProbe = new RemotePlayerContextHook(
@@ -262,7 +263,8 @@ public partial class MainWindow : Window
                 if (activeProbe.TryReadRawCapture(out var firstArgument, out var secondArgument))
                 {
                     CurrencyCaptureText.Text = $"捕获成功 · 参数 A：0x{firstArgument:X} · 参数 B：0x{secondArgument:X}";
-                    SetStatus("最小角色捕获成功。请把角色区域显示的两个参数发给我，用于验证下一层组件定位。", true);
+                    InventoryProbeButton.IsEnabled = true;
+                    SetStatus("角色参数捕获成功。现在可以单独测试一次背包组件解析。", true);
                     return;
                 }
             }
@@ -275,6 +277,44 @@ public partial class MainWindow : Window
             _playerContextHook = null;
             SetStatus($"无法开始角色上下文定位：{exception.Message}", false);
         }
+    }
+
+    private async void OnProbeInventoryComponent(object sender, RoutedEventArgs e)
+    {
+        var activeProbe = _playerContextHook;
+        if (activeProbe is null || !activeProbe.QueueInventoryProbe())
+        {
+            SetStatus("尚未取得有效角色参数，无法测试背包组件。", false);
+            return;
+        }
+
+        InventoryProbeButton.IsEnabled = false;
+        SetStatus("已请求一次背包组件解析；正在等待游戏更新线程返回结果。");
+        for (var attempt = 0; attempt < 20; attempt++)
+        {
+            await Task.Delay(100);
+            if (!ReferenceEquals(_playerContextHook, activeProbe))
+            {
+                return;
+            }
+
+            if (activeProbe.TryReadInventoryProbe(out var inventoryComponent))
+            {
+                var currencyAddress = inventoryComponent + sizeof(int);
+                var currencyText = _session!.TryReadInt32(currencyAddress, out var currencyBase)
+                    ? currencyBase.ToString()
+                    : "读取失败";
+                _currencyAddress = currencyAddress;
+                CurrencyCaptureText.Text = $"背包组件成功 · 组件：0x{inventoryComponent:X} · 货币基数：{currencyText}";
+                SetStatus("一次性背包组件解析成功，游戏内部函数没有连续执行。", true);
+                InventoryProbeButton.IsEnabled = true;
+                return;
+            }
+        }
+
+        InventoryProbeButton.IsEnabled = true;
+        CurrencyCaptureText.Text = "背包组件在 2 秒内没有返回结果；没有继续执行其它游戏函数。";
+        SetStatus(CurrencyCaptureText.Text, false);
     }
 
     private void OnReadCurrencyCapture(object sender, RoutedEventArgs e)

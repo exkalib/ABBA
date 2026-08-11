@@ -1,8 +1,8 @@
 namespace NRftWManagerUI.Core;
 
 /// <summary>
-/// Stage-one probe that captures the two raw values arriving at the verified player-update entry.
-/// It deliberately makes no game API calls and executes no queued commands.
+/// Captures the two raw values arriving at the verified player-update entry.
+/// A separately requested inventory probe may call one verified game API once on the update thread.
 /// </summary>
 internal sealed class RemotePlayerContextHook : IDisposable
 {
@@ -11,6 +11,7 @@ internal sealed class RemotePlayerContextHook : IDisposable
     private const int InventoryComponentOffset = 0x810;
     private const int HeroComponentOffset = 0x818;
     private const int HeroComponentSuccessOffset = 0x820;
+    private const int InventoryProbeRequestOffset = 0x828;
     private const int StatsGroupOffset = 0x840;
     private const int StatsGroupSuccessOffset = 0x880;
     private const int CommandOffset = 0x900;
@@ -106,6 +107,20 @@ internal sealed class RemotePlayerContextHook : IDisposable
         // or flags, and no game API is called from this trampoline.
         AddStoreRipRelative(code, trampolineAddress, FrameOffset, new byte[] { 0x4C, 0x89, 0x05 });
         AddStoreRipRelative(code, trampolineAddress, HeroOffset, new byte[] { 0x4C, 0x89, 0x0D });
+
+        // Preserve flags and volatile registers. The inventory resolver is called once only when the
+        // desktop app sets InventoryProbeRequestOffset; normal updates take the skip path.
+        code.AddRange(new byte[] { 0x9C, 0x50, 0x51, 0x52, 0x41, 0x50, 0x41, 0x51, 0x41, 0x52, 0x41, 0x53 });
+        code.AddRange(new byte[] { 0x31, 0xC0 });
+        AddLoadRipRelative(code, trampolineAddress, InventoryProbeRequestOffset, new byte[] { 0x87, 0x05 });
+        code.AddRange(new byte[] { 0x85, 0xC0, 0x74, 0x00 });
+        var skipInventoryProbeOffset = code.Count - 1;
+        var inventoryProbeStart = code.Count;
+        code.AddRange(new byte[] { 0x48, 0x83, 0xEC, 0x28 });
+        AddCallGetInventoryComponent(code, trampolineAddress);
+        code.AddRange(new byte[] { 0x48, 0x83, 0xC4, 0x28 });
+        code[skipInventoryProbeOffset] = checked((byte)(code.Count - inventoryProbeStart));
+        code.AddRange(new byte[] { 0x41, 0x5B, 0x41, 0x5A, 0x41, 0x59, 0x41, 0x58, 0x5A, 0x59, 0x58, 0x9D });
         code.AddRange(_replacedBytes);
         code.Add(0xE9);
         var returnOffset = checked((int)((_site + _replacedBytes.Length) - (trampolineAddress + code.Count + sizeof(int))));
@@ -134,7 +149,7 @@ internal sealed class RemotePlayerContextHook : IDisposable
         }
 
         _session.Flush(_site, patch.Length);
-        return "最小角色捕获已开启：只记录更新参数，不调用游戏 API，也不会执行修改命令。";
+        return "最小角色捕获已开启：默认只记录更新参数；背包函数仅在单独请求时执行一次。";
     }
 
     public bool TryReadRawCapture(out long firstArgument, out long secondArgument)
@@ -145,6 +160,26 @@ internal sealed class RemotePlayerContextHook : IDisposable
                TryReadInt64(FrameOffset, out firstArgument) &&
                TryReadInt64(HeroOffset, out secondArgument) &&
                firstArgument != 0 && secondArgument != 0;
+    }
+
+    public bool QueueInventoryProbe()
+    {
+        if (!IsArmed || !TryReadRawCapture(out _, out _))
+        {
+            return false;
+        }
+
+        var root = _trampoline.ToInt64();
+        return _session.WriteInt64(root + InventoryComponentOffset, 0) &&
+               _session.WriteInt32(root + InventoryProbeRequestOffset, 1);
+    }
+
+    public bool TryReadInventoryProbe(out long inventoryComponent)
+    {
+        inventoryComponent = 0;
+        return IsArmed &&
+               TryReadInt64(InventoryComponentOffset, out inventoryComponent) &&
+               inventoryComponent != 0;
     }
 
     public bool TryReadContext(out PlayerRuntimeContext context)
