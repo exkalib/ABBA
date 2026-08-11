@@ -32,12 +32,15 @@ public partial class MainWindow : Window
     private const int AwardGloamseedRva = 0x5F4BE60;
     private const int GiveMaxStatsRva = 0x5E00240;
     private const int UnlockFastTravelRva = 0x5F48E60;
+    private const int QuantumEntitySystemUpdateRva = 0x5C29310;
+    private const string QuantumEntitySystemUpdateEntry = "48 8B C4 48 89 58 08";
 
     private GameSession? _session;
     private RemoteCaptureHook? _itemCapture;
     private RemotePlayerContextHook? _playerContextHook;
     private RemoteInventoryCallHook? _inventoryCallHook;
     private RemoteItemSelectionHook? _itemSelectionHook;
+    private RemoteQuantumCommandHook? _quantumCommandHook;
     private ValueChangeDetector? _detector;
     private PlayerRuntimeContext? _playerContext;
     private long? _currencyAddress;
@@ -83,6 +86,7 @@ public partial class MainWindow : Window
         {
             OnStartItemSelection(this, new RoutedEventArgs());
         }
+        StartQuantumCommandHook();
     }
 
     private void OnScanKnownSignatures(object sender, RoutedEventArgs e)
@@ -512,12 +516,77 @@ public partial class MainWindow : Window
 
     private void OnQueueRarity(object sender, RoutedEventArgs e)
     {
-        if (sender is not Button { Tag: string rarity } || !TryMapRarity(rarity, out var value) || !RequireSelectedItem())
+        if (sender is not Button { Tag: string rarity } || !TryMapRarity(rarity, out var value) ||
+            _selectedItemEntity is not { } selectedItem || selectedItem == 0)
+        {
+            SetStatus("请先在游戏背包里点击要修改的物品。", false);
+            return;
+        }
+
+        QueueRarityChange(selectedItem, value, rarity);
+    }
+
+    private void StartQuantumCommandHook()
+    {
+        _quantumCommandHook?.Dispose();
+        _quantumCommandHook = null;
+        if (_session is not { IsAttached: true } || !_session.HasGameAssemblyHash(CurrentGameAssemblySha256))
         {
             return;
         }
 
-        QueuePlayerCommand(PlayerCommand.ChangeSelectedItemRarity, value, 0, $"{rarity} 品质");
+        try
+        {
+            var expected = AobPattern.Parse(QuantumEntitySystemUpdateEntry).Bytes
+                .Select(value => value ?? throw new InvalidOperationException("Quantum 入口签名不能包含通配符。"))
+                .ToArray();
+            var hook = new RemoteQuantumCommandHook(
+                _session,
+                _session.GameAssemblyBase + QuantumEntitySystemUpdateRva,
+                expected,
+                _session.GameAssemblyBase + ChangeItemRarityRva);
+            var result = hook.Arm();
+            if (hook.IsArmed)
+            {
+                _quantumCommandHook = hook;
+                SetStatus(result, true);
+            }
+            else
+            {
+                hook.Dispose();
+                SetStatus(result, false);
+            }
+        }
+        catch (Exception exception)
+        {
+            SetStatus($"无法启用品质命令入口：{exception.Message}", false);
+        }
+    }
+
+    private async void QueueRarityChange(long selectedItem, int rarityValue, string rarityName)
+    {
+        if (_quantumCommandHook is null || !_quantumCommandHook.QueueRarity(selectedItem, rarityValue))
+        {
+            SetStatus("品质命令无法排队；请重新点击“连接并检查”后重试。", false);
+            return;
+        }
+
+        SetStatus($"已排队把 0x{selectedItem:X} 改为 {rarityName}，等待游戏模拟线程执行。", true);
+        for (var attempt = 0; attempt < 20; attempt++)
+        {
+            await Task.Delay(100);
+            if (_quantumCommandHook?.TryReadCompletion(out var completed, out var succeeded) != true || !completed)
+            {
+                continue;
+            }
+
+            SetStatus(succeeded
+                ? $"{rarityName} 品质已由游戏原生接口执行。请关闭再打开物品详情确认。"
+                : $"游戏拒绝把当前物品改为 {rarityName}；该物品或品质转换可能不受支持。", succeeded);
+            return;
+        }
+
+        SetStatus("2 秒内没有收到品质命令完成确认；未重复执行，请保持角色在游戏中后重试。", false);
     }
 
     private void OnAddSelectedItemEnchantment(object sender, RoutedEventArgs e)
@@ -977,10 +1046,12 @@ public partial class MainWindow : Window
     {
         _itemCapture?.Dispose();
         _itemSelectionHook?.Dispose();
+        _quantumCommandHook?.Dispose();
         _inventoryCallHook?.Dispose();
         _playerContextHook?.Dispose();
         _itemCapture = null;
         _itemSelectionHook = null;
+        _quantumCommandHook = null;
         _inventoryCallHook = null;
         _playerContextHook = null;
         _playerContext = null;

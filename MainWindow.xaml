@@ -102,7 +102,7 @@
                     <ListBox x:Name="SelectedItemHistoryList" Height="94" FontFamily="Consolas" FontSize="12" />
                   </StackPanel>
                 </Border>
-                <Grid Margin="0,16,0,0" IsHitTestVisible="False" Opacity="0.62">
+                <Grid Margin="0,16,0,0">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                   <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,8,0">
                     <StackPanel>
@@ -114,14 +114,14 @@
                         <Button Style="{StaticResource SecondaryButton}" Content="Plagued（紫）" Tag="Plagued" Click="OnQueueRarity" Margin="0,0,8,8" />
                         <Button Style="{StaticResource SecondaryButton}" Content="Gold（金）" Tag="Gold" Click="OnQueueRarity" Margin="0,0,8,8" />
                       </WrapPanel>
-                      <WrapPanel>
+                      <WrapPanel IsHitTestVisible="False" Opacity="0.62">
                         <Button Style="{StaticResource ActionButton}" Content="随机新增词条" Click="OnAddSelectedItemEnchantment" Margin="0,0,8,8" />
                         <Button Style="{StaticResource SecondaryButton}" Content="修满耐久" Click="OnRepairSelectedItem" Margin="0,0,8,8" />
                         <Button Style="{StaticResource SecondaryButton}" Content="复制当前物品" Click="OnDuplicateSelectedItem" Margin="0,0,8,8" />
                       </WrapPanel>
                     </StackPanel>
                   </Border>
-                  <Border Grid.Column="1" Style="{StaticResource Card}" Margin="8,0,0,0">
+                  <Border Grid.Column="1" Style="{StaticResource Card}" Margin="8,0,0,0" IsHitTestVisible="False" Opacity="0.62">
                     <StackPanel>
                       <TextBlock Text="创建与等级" FontSize="17" FontWeight="SemiBold" />
                       <TextBlock Text="以当前选中物品的数据为模板创建新物品；这不会修改原物品。品质下拉项依次为白、蓝、紫、金。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,9,0,0" />
