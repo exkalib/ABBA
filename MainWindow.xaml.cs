@@ -13,8 +13,8 @@ public partial class MainWindow : Window
     private const string PlayerContextPattern = "48 89 5C 24 08 56 57 41 56 48 83 EC 70 0F 29 74 24 60 49 8B D9 49 8B F0 4C 8B F2 48 8B F9";
     private const string PlayerContextTailPattern = "56 57 41 56 48 83 EC 70 0F 29 74 24 60 49 8B D9 49 8B F0 4C 8B F2 48 8B F9";
     private const string PlayerContextEntry = "48 89 5C 24 08";
-    private const string ItemSelectionPattern = "40 53 48 83 EC 20 48 8B D9 48 85 C9 74 5C";
-    private const string ItemSelectionEntry = "40 53 48 83 EC 20 48 8B D9 48 85 C9";
+    private const string ItemSelectionPattern = "40 53 55 57 48 81 EC 70 04 00 00 80 3D 71 6D 57 03 00 48 8B DA 48 8B F9";
+    private const string ItemSelectionEntry = "40 53 55 57 48 81 EC 70 04 00 00";
     private const string CurrentGameAssemblySha256 = "5B00EE90833B1BE2EA73E01CB83E710E09E86199D12AC769BE3C0E82ADD8B4BB";
     private const int GetInventoryComponentRva = 0x5D7F970;
     private const int InventoryComponentNaturalCallRva = 0x5D7F8B5;
@@ -467,7 +467,7 @@ public partial class MainWindow : Window
             for (var attempt = 0; attempt < 18_000 && ReferenceEquals(_itemSelectionHook, activeHook); attempt++)
             {
                 await Task.Delay(100);
-                if (!activeHook.TryReadSelection(out _, out var itemEntity) || itemEntity == _selectedItemEntity)
+                if (!activeHook.TryReadSelection(out var itemEntity) || itemEntity == _selectedItemEntity)
                 {
                     continue;
                 }
@@ -488,7 +488,7 @@ public partial class MainWindow : Window
 
     private void OnReadItemSelection(object sender, RoutedEventArgs e)
     {
-        if (_itemSelectionHook is null || !_itemSelectionHook.TryReadSelection(out _, out var itemEntity))
+        if (_itemSelectionHook is null || !_itemSelectionHook.TryReadSelection(out var itemEntity))
         {
             SetStatus("尚未捕获物品。请先开启物品选择捕获，再回游戏打开背包并点击目标物品详情。", false);
             return;

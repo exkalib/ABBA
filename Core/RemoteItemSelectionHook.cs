@@ -1,10 +1,9 @@
 namespace NRftWManagerUI.Core;
 
-/// <summary>Records the item whose game data is currently being resolved by the inventory UI.</summary>
+/// <summary>Records ItemSlot.Item.Entity when the inventory UI selects a slot.</summary>
 internal sealed class RemoteItemSelectionHook : IDisposable
 {
-    private const int FrameOffset = 0x800;
-    private const int ItemOffset = 0x808;
+    private const int ItemOffset = 0x800;
 
     private readonly GameSession _session;
     private readonly long _site;
@@ -39,10 +38,10 @@ internal sealed class RemoteItemSelectionHook : IDisposable
 
         var trampolineAddress = _trampoline.ToInt64();
         var code = new List<byte>();
-        code.AddRange(new byte[] { 0x50, 0x51, 0x52, 0x41, 0x50, 0x41, 0x51, 0x41, 0x52, 0x41, 0x53 });
-        AddStoreRipRelative(code, trampolineAddress, FrameOffset, new byte[] { 0x48, 0x89, 0x0D });
-        AddStoreRipRelative(code, trampolineAddress, ItemOffset, new byte[] { 0x48, 0x89, 0x15 });
-        code.AddRange(new byte[] { 0x41, 0x5B, 0x41, 0x5A, 0x41, 0x59, 0x41, 0x58, 0x5A, 0x59, 0x58 });
+        code.Add(0x50); // push rax
+        code.AddRange(new byte[] { 0x48, 0x8B, 0x81, 0x00, 0x01, 0x00, 0x00 }); // mov rax,[rcx+0x100] ItemRef.Entity
+        AddStoreRipRelative(code, trampolineAddress, ItemOffset, new byte[] { 0x48, 0x89, 0x05 });
+        code.Add(0x58); // pop rax
         code.AddRange(_replacedBytes);
         code.Add(0xE9);
         var returnOffset = checked((int)((_site + _replacedBytes.Length) - (trampolineAddress + code.Count + sizeof(int))));
@@ -71,21 +70,18 @@ internal sealed class RemoteItemSelectionHook : IDisposable
         }
 
         _session.Flush(_site, patch.Length);
-        return "物品选择捕获已开启。回游戏打开背包并点击目标物品的详情，然后回到程序读取选择结果。";
+        return "物品选择捕获已开启。回游戏在背包中点击目标物品，地址会自动更新。";
     }
 
-    public bool TryReadSelection(out long frame, out long itemEntity)
+    public bool TryReadSelection(out long itemEntity)
     {
-        frame = 0;
         itemEntity = 0;
         if (!IsArmed)
         {
             return false;
         }
 
-        return _session.TryReadInt64(_trampoline.ToInt64() + FrameOffset, out frame) &&
-               _session.TryReadInt64(_trampoline.ToInt64() + ItemOffset, out itemEntity) &&
-               frame != 0 && itemEntity != 0;
+        return _session.TryReadInt64(_trampoline.ToInt64() + ItemOffset, out itemEntity) && itemEntity != 0;
     }
 
     public void ClearSelection()
@@ -95,7 +91,6 @@ internal sealed class RemoteItemSelectionHook : IDisposable
             return;
         }
 
-        _session.WriteInt64(_trampoline.ToInt64() + FrameOffset, 0);
         _session.WriteInt64(_trampoline.ToInt64() + ItemOffset, 0);
     }
 
