@@ -468,7 +468,8 @@ internal sealed class RemotePlayerContextHook : IDisposable
     private static void AddStoreInt32RipRelative(List<byte> code, long trampolineAddress, int targetOffset, int value)
     {
         code.AddRange(new byte[] { 0xC7, 0x05 });
-        var nextInstruction = trampolineAddress + code.Count + sizeof(int);
+        // C7 /0 uses RIP after the complete instruction: opcode + disp32 + imm32.
+        var nextInstruction = trampolineAddress + code.Count + sizeof(int) + sizeof(int);
         code.AddRange(BitConverter.GetBytes(checked((int)((trampolineAddress + targetOffset) - nextInstruction))));
         code.AddRange(BitConverter.GetBytes(value));
     }
