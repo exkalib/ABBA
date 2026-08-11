@@ -17,7 +17,7 @@ public partial class MainWindow : Window
     private const string ItemSelectionEntry = "40 53 48 83 EC 20 48 8B D9 48 85 C9";
     private const string CurrentGameAssemblySha256 = "5B00EE90833B1BE2EA73E01CB83E710E09E86199D12AC769BE3C0E82ADD8B4BB";
     private const int GetInventoryComponentRva = 0x5D7F970;
-    private const int InventoryComponentNaturalCallRva = 0x5D7F8A2;
+    private const int InventoryComponentNaturalCallRva = 0x5D7F8B5;
     private const int GetHeroComponentRva = 0x5B32560;
     private const int GetHeroStatsRva = 0x5E02EC0;
     private const int LevelUpRva = 0x5DF50C0;
@@ -307,10 +307,11 @@ public partial class MainWindow : Window
         {
             var activeProbe = new RemoteInventoryCallHook(
                 _session!,
-                _session!.GameAssemblyBase + InventoryComponentNaturalCallRva);
+                _session!.GameAssemblyBase + InventoryComponentNaturalCallRva,
+                _session.GameAssemblyBase + GetInventoryComponentRva);
             _inventoryCallHook = activeProbe;
             var result = activeProbe.Arm();
-            AppendPlayerDiagnostic("InventoryObserve: armed at native GetInventoryEntity result path.");
+            AppendPlayerDiagnostic("InventoryObserve: armed at GetInventoryEntity direct-inventory return path.");
             SetStatus(result);
             if (!activeProbe.IsArmed)
             {
@@ -327,9 +328,18 @@ public partial class MainWindow : Window
                     return;
                 }
 
-                if (!activeProbe.TryReadInventoryComponent(out var inventoryComponent))
+                if (!activeProbe.TryReadInventoryComponent(out var inventoryComponent, out var observed) || !observed)
                 {
                     continue;
+                }
+
+                if (inventoryComponent == 0)
+                {
+                    activeProbe.Dispose();
+                    _inventoryCallHook = null;
+                    AppendPlayerDiagnostic("InventoryObserve: direct path observed, component result was 0x0.");
+                    SetStatus("已命中背包快速返回路径，但组件解析返回空值。诊断已保留。", false);
+                    return;
                 }
 
                 var currencyAddress = inventoryComponent + sizeof(int);
