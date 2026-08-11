@@ -92,10 +92,10 @@
                 <Border Style="{StaticResource Card}">
                   <StackPanel>
                     <TextBlock Text="选中目标物品" FontSize="17" FontWeight="SemiBold" />
-                    <TextBlock Text="角色定位正在重新验证；为避免再次崩溃，装备操作暂时关闭。" Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" Margin="0,6,0,0" />
+                    <TextBlock Text="连接后自动旁路捕获最近打开详情的物品；切换物品时地址会自动更新。" Foreground="{StaticResource AccentBrush}" TextWrapping="Wrap" Margin="0,6,0,0" />
                     <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
-                      <Button Style="{StaticResource ActionButton}" Content="开启物品捕获" Click="OnStartItemSelection" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="读取选中物品" Click="OnReadItemSelection" Margin="10,0,0,0" />
+                      <Button Style="{StaticResource ActionButton}" Content="重新开始自动捕获" Click="OnStartItemSelection" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="立即读取" Click="OnReadItemSelection" Margin="10,0,0,0" />
                     </StackPanel>
                     <TextBlock x:Name="SelectedItemText" Text="尚未选择物品。" Foreground="{StaticResource MutedBrush}" Margin="0,11,0,0" TextWrapping="Wrap" />
                   </StackPanel>

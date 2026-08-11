@@ -88,6 +88,17 @@ internal sealed class RemoteItemSelectionHook : IDisposable
                frame != 0 && itemEntity != 0;
     }
 
+    public void ClearSelection()
+    {
+        if (!IsArmed)
+        {
+            return;
+        }
+
+        _session.WriteInt64(_trampoline.ToInt64() + FrameOffset, 0);
+        _session.WriteInt64(_trampoline.ToInt64() + ItemOffset, 0);
+    }
+
     public void Dispose()
     {
         if (_trampoline == IntPtr.Zero)

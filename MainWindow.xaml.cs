@@ -79,6 +79,10 @@ public partial class MainWindow : Window
         {
             OnStartItemCapture(this, new RoutedEventArgs());
         }
+        if (_itemSelectionSite.HasValue)
+        {
+            OnStartItemSelection(this, new RoutedEventArgs());
+        }
     }
 
     private void OnScanKnownSignatures(object sender, RoutedEventArgs e)
@@ -440,7 +444,7 @@ public partial class MainWindow : Window
         WriteValue(address, value * multiplier, _selectedCurrency);
     }
 
-    private void OnStartItemSelection(object sender, RoutedEventArgs e)
+    private async void OnStartItemSelection(object sender, RoutedEventArgs e)
     {
         if (!RequireKnownSite(_itemSelectionSite, "物品详情"))
         {
@@ -458,6 +462,20 @@ public partial class MainWindow : Window
             var result = _itemSelectionHook.Arm();
             SelectedItemText.Text = result;
             SetStatus(result);
+            var activeHook = _itemSelectionHook;
+            for (var attempt = 0; attempt < 18_000 && ReferenceEquals(_itemSelectionHook, activeHook); attempt++)
+            {
+                await Task.Delay(100);
+                if (!activeHook.TryReadSelection(out _, out var itemEntity) || itemEntity == _selectedItemEntity)
+                {
+                    continue;
+                }
+
+                _selectedItemEntity = itemEntity;
+                activeHook.ClearSelection();
+                SelectedItemText.Text = $"已自动选中最近物品：0x{itemEntity:X}。切换物品时这里会自动更新。";
+                SetStatus(SelectedItemText.Text, true);
+            }
         }
         catch (Exception exception)
         {
@@ -475,11 +493,9 @@ public partial class MainWindow : Window
         }
 
         _selectedItemEntity = itemEntity;
-        var linked = _playerContextHook?.SetSelectedItem(itemEntity) == true;
-        SelectedItemText.Text = linked
-            ? $"已选中当前物品：0x{itemEntity:X}。可执行原生改品质、加词条、耐久修复、复制或按该物品模板创建。"
-            : $"已捕获物品：0x{itemEntity:X}。请先在“角色”页开启角色上下文定位，再执行物品操作。";
-        SetStatus(SelectedItemText.Text, linked);
+        _itemSelectionHook.ClearSelection();
+        SelectedItemText.Text = $"已选中当前物品：0x{itemEntity:X}。切换物品时会继续自动更新。";
+        SetStatus(SelectedItemText.Text, true);
     }
 
     private void OnQueueRarity(object sender, RoutedEventArgs e)
