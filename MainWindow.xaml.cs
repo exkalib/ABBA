@@ -37,7 +37,6 @@ public partial class MainWindow : Window
     private RemoteItemSelectionHook? _itemSelectionHook;
     private ValueChangeDetector? _detector;
     private PlayerRuntimeContext? _playerContext;
-    private long? _itemQuantityAddress;
     private long? _currencyAddress;
     private long? _itemQuantitySite;
     private long? _playerContextSite;
@@ -70,8 +69,12 @@ public partial class MainWindow : Window
         RuntimeDetailText.Text = result;
         ConnectionText.Text = "已连接游戏";
         SetStatus(result);
-        AddLog("已连接游戏，正在自动检查当前版本。角色定位仍需由你手动开启。");
+        AddLog("已连接游戏，正在检查当前版本并自动开启物品数量持续跟踪。");
         OnScanKnownSignatures(this, new RoutedEventArgs());
+        if (_itemQuantitySite.HasValue)
+        {
+            OnStartItemCapture(this, new RoutedEventArgs());
+        }
     }
 
     private void OnScanKnownSignatures(object sender, RoutedEventArgs e)
@@ -127,7 +130,6 @@ public partial class MainWindow : Window
         }
 
         _itemCapture?.Dispose();
-        _itemQuantityAddress = null;
         try
         {
             _itemCapture = new RemoteCaptureHook(
@@ -148,51 +150,53 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnReadItemCapture(object sender, RoutedEventArgs e)
+    private void OnKeepLastItemChanged(object sender, RoutedEventArgs e)
     {
-        if (_itemCapture is null || !_itemCapture.TryReadCapturedAddress(out var address))
+        if (_session is { IsAttached: true } && _itemQuantitySite.HasValue)
         {
-            SetStatus("尚未捕获材料地址。开始捕获后，回游戏卖出或使用目标材料 1 个，再重试。", false);
-            return;
+            OnStartItemCapture(this, new RoutedEventArgs());
         }
-
-        _itemQuantityAddress = address;
-        var valueText = _session!.TryReadInt32(address, out var current) ? current.ToString() : "读取失败";
-        if (_itemCapture.PreventsZeroQuantity)
-        {
-            ItemCaptureText.Text = $"已捕获材料数量地址：0x{address:X}，当前值：{valueText}。最后 1 个保留仍已开启；关闭程序或点“停止材料保护”才会恢复正常删除。";
-        }
-        else
-        {
-            _itemCapture.Dispose();
-            _itemCapture = null;
-            ItemCaptureText.Text = $"已捕获材料数量地址：0x{address:X}，当前值：{valueText}。";
-        }
-        SetStatus(ItemCaptureText.Text, true);
     }
 
     private void OnStopItemCapture(object sender, RoutedEventArgs e)
     {
         if (_itemCapture is null)
         {
-            SetStatus("材料保护当前没有开启。", false);
+            SetStatus("物品数量跟踪当前没有开启。", false);
             return;
         }
 
         _itemCapture.Dispose();
         _itemCapture = null;
-        ItemCaptureText.Text = "材料保护已停止：游戏恢复正常删除逻辑。已捕获的数量地址仍可用于当前会话写入。";
+        ItemCaptureText.Text = "持续跟踪已暂停；游戏已恢复原始数量处理逻辑。";
         SetStatus(ItemCaptureText.Text, true);
     }
 
     private void OnWriteItemQuantity(object sender, RoutedEventArgs e)
     {
-        if (!TryGetWriteTarget(_itemQuantityAddress, ItemQuantityBox.Text, 1, 9999, out var address, out var value))
+        if (!RequireSession() || _itemCapture is null || !_itemCapture.TryReadCapturedAddress(out var address))
         {
+            SetStatus("还没有捕获到最近变动的物品。请先在游戏里拾取、拆分、出售或使用目标物品 1 个。", false);
+            return;
+        }
+
+        if (!_session!.TryReadInt32(address, out var current) || current is < 0 or > 999_999)
+        {
+            SetStatus("最近捕获的物品地址已经不可读或已失效。请让目标物品再变化一次。", false);
+            return;
+        }
+
+        if (!TryParseInt32(ItemQuantityBox.Text, out var value) || value is < 1 or > 9_999)
+        {
+            SetStatus("请输入 1 至 9,999 的整数。", false);
             return;
         }
 
         WriteValue(address, value, "材料数量");
+        if (_session.TryReadInt32(address, out var updated) && updated == value)
+        {
+            ItemCaptureText.Text = $"已修改最近变动物品：{current} → {updated}。跟踪保持开启，下一次数量变化会自动切换目标。";
+        }
     }
 
     private void OnCurrencyClick(object sender, RoutedEventArgs e)
@@ -761,6 +765,10 @@ public partial class MainWindow : Window
         _playerContextHook = null;
         _playerContext = null;
         _selectedItemEntity = null;
+        _currencyAddress = null;
+        _itemQuantitySite = null;
+        _playerContextSite = null;
+        _itemSelectionSite = null;
         _session?.Dispose();
         _session = null;
     }

@@ -73,16 +73,15 @@
                 <Border Style="{StaticResource Card}">
                   <StackPanel>
                     <TextBlock Text="物品数量" FontSize="17" FontWeight="SemiBold" />
-                    <TextBlock Text="首次使用：开始捕获后，在游戏里消耗或卖出目标材料 1 个。之后可直接写入。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,6,0,0" />
+                    <TextBlock Text="连接后自动持续跟踪最近一次发生数量变化的物品；让目标物品变化一次，回来直接写入。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,6,0,0" />
                     <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
-                      <CheckBox x:Name="KeepLastItemCheck" Content="最后 1 个保留" IsChecked="True" VerticalAlignment="Center" Margin="0,0,14,0" />
-                      <Button Style="{StaticResource ActionButton}" Content="开始捕获材料" Click="OnStartItemCapture" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="读取捕获结果" Click="OnReadItemCapture" Margin="10,0,0,0" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="停止材料保护" Click="OnStopItemCapture" Margin="10,0,0,0" />
-                      <TextBox x:Name="ItemQuantityBox" Width="110" Height="34" Padding="9,5" Text="20" Margin="18,0,0,0" />
-                      <Button Style="{StaticResource ActionButton}" Content="写入数量" Click="OnWriteItemQuantity" Margin="10,0,0,0" />
+                      <CheckBox x:Name="KeepLastItemCheck" Content="最后 1 个保留" IsChecked="True" Click="OnKeepLastItemChanged" VerticalAlignment="Center" Margin="0,0,18,0" />
+                      <TextBox x:Name="ItemQuantityBox" Width="110" Height="34" Padding="9,5" Text="20" />
+                      <Button Style="{StaticResource ActionButton}" Content="写入最近物品" Click="OnWriteItemQuantity" Margin="10,0,0,0" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="重新跟踪" Click="OnStartItemCapture" Margin="16,0,0,0" />
+                      <Button Style="{StaticResource SecondaryButton}" Content="暂停跟踪" Click="OnStopItemCapture" Margin="8,0,0,0" />
                     </StackPanel>
-                    <TextBlock x:Name="ItemCaptureText" Text="尚未捕获任何物品。" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0" />
+                    <TextBlock x:Name="ItemCaptureText" Text="连接游戏后会自动开始持续跟踪。" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0" />
                   </StackPanel>
                 </Border>
               </StackPanel>

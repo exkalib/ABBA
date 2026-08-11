@@ -45,7 +45,7 @@ internal sealed class RemoteCaptureHook : IDisposable
     {
         if (IsArmed)
         {
-            return "捕获已开启。请回游戏让目标数值变化一次。";
+            return "持续跟踪已开启。最近一次发生数量变化的物品会自动成为写入目标。";
         }
 
         _trampoline = _session.AllocateNear(_site, 0x1000);
@@ -95,8 +95,8 @@ internal sealed class RemoteCaptureHook : IDisposable
 
         _session.Flush(_site, patch.Length);
         return _preventZeroQuantity
-            ? "捕获已开启：最后 1 个将保留。回游戏卖出或使用目标材料一次，再点击“读取捕获结果”。"
-            : "捕获已开启：回游戏让目标数值变化一次，然后点击“读取捕获结果”。";
+            ? "持续跟踪已开启：最后 1 个会保留；让目标物品数量变化一次后可直接写入。"
+            : "持续跟踪已开启：让目标物品数量变化一次后可直接写入。";
     }
 
     public bool TryReadCapturedAddress(out long address)
