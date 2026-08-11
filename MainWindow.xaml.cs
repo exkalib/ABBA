@@ -17,6 +17,7 @@ public partial class MainWindow : Window
     private const string ItemSelectionEntry = "40 53 48 83 EC 20 48 8B D9 48 85 C9";
     private const string CurrentGameAssemblySha256 = "5B00EE90833B1BE2EA73E01CB83E710E09E86199D12AC769BE3C0E82ADD8B4BB";
     private const int GetInventoryComponentRva = 0x5D7F970;
+    private const int InventoryComponentNaturalCallRva = 0x5D7BC6B;
     private const int GetHeroComponentRva = 0x5B32560;
     private const int GetHeroStatsRva = 0x5E02EC0;
     private const int LevelUpRva = 0x5DF50C0;
@@ -35,6 +36,7 @@ public partial class MainWindow : Window
     private GameSession? _session;
     private RemoteCaptureHook? _itemCapture;
     private RemotePlayerContextHook? _playerContextHook;
+    private RemoteInventoryCallHook? _inventoryCallHook;
     private RemoteItemSelectionHook? _itemSelectionHook;
     private ValueChangeDetector? _detector;
     private PlayerRuntimeContext? _playerContext;
@@ -274,8 +276,8 @@ public partial class MainWindow : Window
                 {
                     CurrencyCaptureText.Text = $"捕获成功 · 参数 A：0x{firstArgument:X} · 参数 B：0x{secondArgument:X}";
                     AppendPlayerDiagnostic($"RawCapture: A=0x{firstArgument:X}, B=0x{secondArgument:X}");
-                    InventoryProbeButton.IsEnabled = false;
-                    SetStatus("角色参数捕获成功。危险的主动背包调用已停用；不会再从此入口调用游戏 API。", true);
+                    InventoryProbeButton.IsEnabled = true;
+                    SetStatus("角色参数捕获成功。现在可以开启背包旁路捕获。", true);
                     return;
                 }
             }
@@ -294,45 +296,41 @@ public partial class MainWindow : Window
 
     private async void OnProbeInventoryComponent(object sender, RoutedEventArgs e)
     {
-        var activeProbe = _playerContextHook;
-        if (activeProbe is null || !activeProbe.QueueInventoryProbe())
+        if (!RequireSession())
         {
-            AppendPlayerDiagnostic("InventoryProbe: Request rejected because raw capture is unavailable.");
-            SetStatus("尚未取得有效角色参数，无法测试背包组件。", false);
             return;
         }
 
+        _inventoryCallHook?.Dispose();
         InventoryProbeButton.IsEnabled = false;
-        AppendPlayerDiagnostic("InventoryProbe: Request=1, Completed=0, Result=0x0");
-        SetStatus("已请求一次背包组件解析；正在等待游戏更新线程返回结果。");
-        var requestConsumptionLogged = false;
-        for (var attempt = 0; attempt < 100; attempt++)
+        try
         {
-            await Task.Delay(100);
-            if (!ReferenceEquals(_playerContextHook, activeProbe))
+            var activeProbe = new RemoteInventoryCallHook(
+                _session!,
+                _session!.GameAssemblyBase + InventoryComponentNaturalCallRva,
+                _session.GameAssemblyBase + GetInventoryComponentRva);
+            _inventoryCallHook = activeProbe;
+            var result = activeProbe.Arm();
+            AppendPlayerDiagnostic("InventoryObserve: armed at native IsHeroInventoryFull call site.");
+            SetStatus(result);
+            if (!activeProbe.IsArmed)
             {
+                _inventoryCallHook = null;
+                InventoryProbeButton.IsEnabled = true;
                 return;
             }
 
-            if (!activeProbe.TryReadInventoryProbe(out var inventoryComponent, out var completed, out var pending))
+            for (var attempt = 0; attempt < 600; attempt++)
             {
-                continue;
-            }
-
-            if (!pending && !completed && !requestConsumptionLogged)
-            {
-                requestConsumptionLogged = true;
-                AppendPlayerDiagnostic("InventoryProbe: Request=0, Completed=0; call started, waiting for return.");
-            }
-
-            if (completed)
-            {
-                AppendPlayerDiagnostic($"InventoryProbe: Request=0, Completed=1, Result=0x{inventoryComponent:X}");
-                if (inventoryComponent == 0)
+                await Task.Delay(100);
+                if (!ReferenceEquals(_inventoryCallHook, activeProbe))
                 {
-                    CurrencyCaptureText.Text = "背包函数已执行一次，但返回了空组件。入口线程正常，下一步需要校正函数参数。";
-                    SetStatus(CurrencyCaptureText.Text, false);
                     return;
+                }
+
+                if (!activeProbe.TryReadInventoryComponent(out var inventoryComponent))
+                {
+                    continue;
                 }
 
                 var currencyAddress = inventoryComponent + sizeof(int);
@@ -341,26 +339,27 @@ public partial class MainWindow : Window
                     : "读取失败";
                 _currencyAddress = currencyAddress;
                 CurrencyCaptureText.Text = $"背包组件成功 · 组件：0x{inventoryComponent:X} · 货币基数：{currencyText}";
-                SetStatus("一次性背包组件解析成功，游戏内部函数没有连续执行。", true);
+                AppendPlayerDiagnostic($"InventoryObserve: Result=0x{inventoryComponent:X}, CurrencyBase={currencyText}");
+                activeProbe.Dispose();
+                _inventoryCallHook = null;
+                SetStatus("已从游戏自身的正常调用中旁路捕获背包组件。", true);
                 return;
             }
-        }
 
-        if (activeProbe.TryReadInventoryProbe(out var resultAfterTimeout, out var completedAfterTimeout, out var pendingAfterTimeout))
-        {
-            AppendPlayerDiagnostic($"InventoryProbe: Request={(pendingAfterTimeout ? 1 : 0)}, Completed={(completedAfterTimeout ? 1 : 0)}, Result=0x{resultAfterTimeout:X}");
-            CurrencyCaptureText.Text = pendingAfterTimeout
-                ? "背包测试请求未被游戏更新线程消费；捕获入口可能暂时没有运行。"
-                : completedAfterTimeout
-                    ? "背包函数已经执行，但返回值读取失败。"
-                    : "背包测试请求已被消费，但完成标记未写回；需要检查调用返回路径。";
+            activeProbe.Dispose();
+            _inventoryCallHook = null;
+            InventoryProbeButton.IsEnabled = true;
+            AppendPlayerDiagnostic("InventoryObserve: no native call observed within 60 seconds.");
+            SetStatus("60 秒内没有观察到背包原生调用。请重新开启后拾取、购买或制作一个物品。", false);
         }
-        else
+        catch (Exception exception)
         {
-            AppendPlayerDiagnostic("InventoryProbe: Status read failed.");
-            CurrencyCaptureText.Text = "无法读取背包测试状态；当前捕获区可能已经失效。";
+            _inventoryCallHook?.Dispose();
+            _inventoryCallHook = null;
+            InventoryProbeButton.IsEnabled = true;
+            AppendPlayerDiagnostic($"InventoryObserve: Error={exception.Message}");
+            SetStatus($"无法开启背包旁路捕获：{exception.Message}", false);
         }
-        SetStatus(CurrencyCaptureText.Text, false);
     }
 
     private async void OnCopyPlayerDiagnostic(object sender, RoutedEventArgs e)
@@ -941,9 +940,11 @@ public partial class MainWindow : Window
     {
         _itemCapture?.Dispose();
         _itemSelectionHook?.Dispose();
+        _inventoryCallHook?.Dispose();
         _playerContextHook?.Dispose();
         _itemCapture = null;
         _itemSelectionHook = null;
+        _inventoryCallHook = null;
         _playerContextHook = null;
         _playerContext = null;
         _selectedItemEntity = null;
