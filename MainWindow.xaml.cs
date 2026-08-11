@@ -13,7 +13,7 @@ public partial class MainWindow : Window
     private const string ItemQuantityPattern = "89 3B 0F 94 C0 EB ??";
     private const string PlayerContextPattern = "48 89 5C 24 08 56 57 41 56 48 83 EC 70 0F 29 74 24 60 49 8B D9 49 8B F0 4C 8B F2 48 8B F9";
     private const string PlayerContextEntry = "48 89 5C 24 08 56 57 41 56 48 83 EC 70 0F 29 74 24 60 49 8B D9 49 8B F0 4C 8B F2 48 8B F9";
-    private const string ItemSelectionPattern = "40 53 48 83 EC 20 48 8B D9 48 85 C9";
+    private const string ItemSelectionPattern = "40 53 48 83 EC 20 48 8B D9 48 85 C9 74 5C";
     private const string ItemSelectionEntry = "40 53 48 83 EC 20 48 8B D9 48 85 C9";
     private const string CurrentGameAssemblySha256 = "5B00EE90833B1BE2EA73E01CB83E710E09E86199D12AC769BE3C0E82ADD8B4BB";
     private const int GetInventoryComponentRva = 0x5D7F970;
@@ -265,7 +265,7 @@ public partial class MainWindow : Window
             _playerContextHook = new RemotePlayerContextHook(
                 _session!,
                 _playerContextSite!.Value,
-                AobPattern.Parse(PlayerContextEntry).Bytes,
+                AobPattern.Parse(PlayerContextEntry).Bytes.Select(value => value ?? throw new InvalidOperationException("角色入口签名不能包含通配符。")).ToArray(),
                 _session.GameAssemblyBase + GetInventoryComponentRva,
                 _session.GameAssemblyBase + GetHeroComponentRva,
                 _session.GameAssemblyBase + GetHeroStatsRva,
@@ -358,7 +358,7 @@ public partial class MainWindow : Window
             _itemSelectionHook = new RemoteItemSelectionHook(
                 _session!,
                 _itemSelectionSite!.Value,
-                AobPattern.Parse(ItemSelectionEntry).Bytes);
+                AobPattern.Parse(ItemSelectionEntry).Bytes.Select(value => value ?? throw new InvalidOperationException("物品详情入口签名不能包含通配符。")).ToArray());
             var result = _itemSelectionHook.Arm();
             SelectedItemText.Text = result;
             SetStatus(result);
