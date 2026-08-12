@@ -1,5 +1,8 @@
 using System;
 using System.Linq;
+using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -37,6 +40,7 @@ public partial class MainWindow : Window
     private const int SetResourceInfiniteRva = 0x591A770;
     private const int TryGetHeroInventoryPointerRva = 0x61E20;
     private const int HeroInventoryTypeInfoRva = 0xBFDD5F8;
+    private const int ResolveHeroItemDataRva = 0x5F5F270;
     private const int SetItemLevelRva = 0x5D87920;
     private const int AwardGloamseedRva = 0x5F4BE60;
     private const int GiveMaxStatsRva = 0x5E00240;
@@ -61,24 +65,43 @@ public partial class MainWindow : Window
     private string _selectedCurrency = "Gold";
     private readonly List<CapturedItemTemplate> _capturedItemTemplates = new();
     private readonly HashSet<long> _pendingTemplateCaptures = new();
+    private static readonly string ItemCatalogPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "NRftWManagerUI",
+        "item-catalog.json");
 
-    private sealed record CapturedItemTemplate(long Entity, long Template, long Guid, int ItemType, string Path)
+    private sealed class CapturedItemTemplate
     {
+        public long Guid { get; set; }
+        public int ItemType { get; set; }
+        public int Rarity { get; set; }
+        public string Path { get; set; } = string.Empty;
+        public string CustomName { get; set; } = string.Empty;
+        [JsonIgnore] public long Entity { get; set; }
+        [JsonIgnore] public long Template { get; set; }
+
+        [JsonIgnore]
         public string DisplayName
         {
             get
             {
+                if (!string.IsNullOrWhiteSpace(CustomName))
+                {
+                    return CustomName.Trim();
+                }
+
                 var name = Path.Replace('\\', '/').Split('/').LastOrDefault();
                 return string.IsNullOrWhiteSpace(name) ? $"物品 0x{Guid:X}" : name;
             }
         }
 
-        public override string ToString() => $"{DisplayName}  · 类型 {ItemType}  · GUID 0x{Guid:X16}";
+        public override string ToString() => $"{DisplayName}  · 类型 {ItemType}  · 品质 {Rarity}  · GUID 0x{Guid:X16}";
     }
 
     public MainWindow()
     {
         InitializeComponent();
+        LoadItemCatalog();
         Closed += (_, _) => Disconnect();
         AddLog("界面启动：尚未连接游戏。不会安装或加载任何游戏模组。");
     }
@@ -645,7 +668,8 @@ public partial class MainWindow : Window
                         out var template,
                         out var guid,
                         out var pathAddress,
-                        out var itemType) != true || !completed)
+                        out var itemType,
+                        out var rarity) != true || !completed)
                 {
                     continue;
                 }
@@ -658,10 +682,27 @@ public partial class MainWindow : Window
                 var path = _session?.TryReadIl2CppString(pathAddress, out var resolvedPath) == true
                     ? resolvedPath
                     : string.Empty;
-                if (_capturedItemTemplates.All(item => item.Guid != guid))
+                var existing = _capturedItemTemplates.FirstOrDefault(item => item.Guid == guid);
+                if (existing is null)
                 {
-                    _capturedItemTemplates.Add(new CapturedItemTemplate(itemEntity, template, guid, itemType, path));
-                    RefreshCapturedItemList();
+                    existing = new CapturedItemTemplate { Guid = guid };
+                    _capturedItemTemplates.Add(existing);
+                }
+
+                existing.Entity = itemEntity;
+                existing.Template = template;
+                existing.ItemType = itemType;
+                existing.Rarity = rarity;
+                if (!string.IsNullOrWhiteSpace(path))
+                {
+                    existing.Path = path;
+                }
+                SaveItemCatalog();
+                RefreshCapturedItemList();
+                if (CapturedItemCatalogList.Items.Contains(existing))
+                {
+                    CapturedItemCatalogList.SelectedItem = existing;
+                    CapturedItemCatalogList.ScrollIntoView(existing);
                 }
                 return;
             }
@@ -693,6 +734,52 @@ public partial class MainWindow : Window
         }
     }
 
+    private void LoadItemCatalog()
+    {
+        try
+        {
+            if (File.Exists(ItemCatalogPath))
+            {
+                var savedItems = JsonSerializer.Deserialize<List<CapturedItemTemplate>>(File.ReadAllText(ItemCatalogPath));
+                if (savedItems is not null)
+                {
+                    _capturedItemTemplates.AddRange(savedItems.Where(item => item.Guid != 0));
+                }
+            }
+        }
+        catch (JsonException)
+        {
+            AddLog("物品目录文件格式无效；本次未加载，原文件没有被覆盖。");
+        }
+        catch (IOException exception)
+        {
+            AddLog($"读取物品目录失败：{exception.Message}");
+        }
+
+        RefreshCapturedItemList();
+    }
+
+    private void SaveItemCatalog()
+    {
+        try
+        {
+            var directory = Path.GetDirectoryName(ItemCatalogPath)!;
+            Directory.CreateDirectory(directory);
+            var json = JsonSerializer.Serialize(
+                _capturedItemTemplates.OrderBy(item => item.DisplayName).ToArray(),
+                new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(ItemCatalogPath, json);
+        }
+        catch (IOException exception)
+        {
+            SetStatus($"保存物品目录失败：{exception.Message}", false);
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            SetStatus($"没有权限保存物品目录：{exception.Message}", false);
+        }
+    }
+
     private void OnCreateFromCapturedTemplate(object sender, RoutedEventArgs e)
     {
         if (CapturedItemCatalogList.SelectedItem is not CapturedItemTemplate item)
@@ -701,7 +788,51 @@ public partial class MainWindow : Window
             return;
         }
 
-        CreateFromTemplate(item.Entity, item.DisplayName);
+        if (_selectedItemEntity is not { } ownerItem || ownerItem == 0)
+        {
+            SetStatus("目录已保存。生成前请在当前角色背包里点击任意一件物品，用于识别接收角色。", false);
+            return;
+        }
+
+        CreateFromTemplate(ownerItem, item.DisplayName, item.Guid, item.Rarity);
+    }
+
+    private void OnCapturedItemSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (CapturedItemCatalogList.SelectedItem is CapturedItemTemplate item)
+        {
+            CapturedItemNameBox.Text = item.CustomName;
+        }
+    }
+
+    private void OnSaveCapturedItemName(object sender, RoutedEventArgs e)
+    {
+        var item = CapturedItemCatalogList.SelectedItem as CapturedItemTemplate;
+        if (item is null && _selectedItemEntity is { } selectedEntity)
+        {
+            item = _capturedItemTemplates.LastOrDefault(candidate => candidate.Entity == selectedEntity);
+        }
+
+        if (item is null)
+        {
+            SetStatus("请先在游戏里点击物品，等待它出现在模板列表后再保存名称。", false);
+            return;
+        }
+
+        var customName = CapturedItemNameBox.Text.Trim();
+        if (customName.Length > 80)
+        {
+            SetStatus("物品名称最多 80 个字符。", false);
+            return;
+        }
+
+        item.CustomName = customName;
+        SaveItemCatalog();
+        RefreshCapturedItemList();
+        CapturedItemCatalogList.SelectedItem = item;
+        SetStatus(string.IsNullOrWhiteSpace(customName)
+            ? "已清除手工名称，恢复显示内部资源名称。"
+            : $"已将模板名称保存为“{customName}”。", true);
     }
 
     private void OnQueueRarity(object sender, RoutedEventArgs e)
@@ -746,7 +877,8 @@ public partial class MainWindow : Window
                 _session.GameAssemblyBase + SetHealthInfiniteRva,
                 _session.GameAssemblyBase + SetResourceInfiniteRva,
                 _session.GameAssemblyBase + TryGetHeroInventoryPointerRva,
-                _session.GameAssemblyBase + HeroInventoryTypeInfoRva);
+                _session.GameAssemblyBase + HeroInventoryTypeInfoRva,
+                _session.GameAssemblyBase + ResolveHeroItemDataRva);
             var result = hook.Arm();
             if (hook.IsArmed)
             {
@@ -799,12 +931,15 @@ public partial class MainWindow : Window
             return;
         }
 
-        CreateFromTemplate(selectedItem, $"0x{selectedItem:X}");
+        CreateFromTemplate(selectedItem, $"0x{selectedItem:X}", 0, 0);
     }
 
-    private async void CreateFromTemplate(long selectedItem, string templateName)
+    private async void CreateFromTemplate(long ownerItem, string templateName, long templateGuid, int rarity)
     {
-        if (_quantumCommandHook is null || !_quantumCommandHook.QueueCreateFromTemplate(selectedItem))
+        var queued = templateGuid == 0
+            ? _quantumCommandHook?.QueueCreateFromTemplate(ownerItem) == true
+            : _quantumCommandHook?.QueueCreateFromGuid(ownerItem, templateGuid, rarity) == true;
+        if (!queued)
         {
             SetStatus("模板新建命令无法排队；请重新点击“连接 / 扫描系统”后重试。", false);
             return;
@@ -1294,9 +1429,7 @@ public partial class MainWindow : Window
         _playerContextHook = null;
         _playerContext = null;
         _selectedItemEntity = null;
-        _capturedItemTemplates.Clear();
         _pendingTemplateCaptures.Clear();
-        CapturedItemCatalogList.Items.Clear();
         _stalePlayerContextHookDetected = false;
         _currencyAddress = null;
         CurrencyCaptureText.Text = "先在角色背包里点击任意物品；程序会在模拟线程静默增加所选货币。";

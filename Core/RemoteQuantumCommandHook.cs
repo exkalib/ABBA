@@ -26,6 +26,9 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
     private const int InspectedGuidOffset = 0x898;
     private const int InspectedPathOffset = 0x8A0;
     private const int InspectedItemTypeOffset = 0x8A8;
+    private const int CreateTemplateGuidOffset = 0x8B0;
+    private const int CreateTemplateRarityOffset = 0x8B8;
+    private const int InspectedRarityOffset = 0x8BC;
 
     private readonly GameSession _session;
     private readonly long _site;
@@ -42,6 +45,7 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
     private readonly long _setResourceInfinite;
     private readonly long _tryGetHeroInventoryPointer;
     private readonly long _heroInventoryTypeInfo;
+    private readonly long _resolveHeroItemData;
     private readonly byte[] _replacedBytes;
     private IntPtr _trampoline;
 
@@ -61,7 +65,8 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
         long setHealthInfinite,
         long setResourceInfinite,
         long tryGetHeroInventoryPointer,
-        long heroInventoryTypeInfo)
+        long heroInventoryTypeInfo,
+        long resolveHeroItemData)
     {
         _session = session;
         _site = site;
@@ -78,6 +83,7 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
         _setResourceInfinite = setResourceInfinite;
         _tryGetHeroInventoryPointer = tryGetHeroInventoryPointer;
         _heroInventoryTypeInfo = heroInventoryTypeInfo;
+        _resolveHeroItemData = resolveHeroItemData;
         _replacedBytes = session.Read(site, expectedEntry.Length);
         if (!_replacedBytes.SequenceEqual(expectedEntry))
         {
@@ -158,20 +164,41 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
         var missingOwnerJump = code.Count;
         code.AddRange(new byte[sizeof(int)]);
 
-        // Read only the static HeroItemData template, not the runtime item description.
+        // A persisted catalog entry resolves its static HeroItemData by GUID. A zero GUID keeps
+        // the existing behavior and reads the template from the selected runtime item.
+        AddLoadRipRelative(code, root, CreateTemplateGuidOffset, new byte[] { 0x48, 0x8B, 0x05 });
+        code.AddRange(new byte[] { 0x48, 0x85, 0xC0, 0x0F, 0x84 });
+        var resolveSelectedTemplateJump = code.Count;
+        code.AddRange(new byte[sizeof(int)]);
+        AddLeaRipRelative(code, root, CreateTemplateGuidOffset, new byte[] { 0x48, 0x8D, 0x0D });
+        AddLoadRipRelative(code, root, FrameOffset, new byte[] { 0x48, 0x8B, 0x15 });
+        AddCallAbsolute(code, _resolveHeroItemData);
+        var templateResolvedJump = AddNearJump(code);
+
+        var resolveSelectedTemplateOffset = code.Count;
         AddLoadRipRelative(code, root, FrameOffset, new byte[] { 0x48, 0x8B, 0x0D });
         AddLoadRipRelative(code, root, SelectedItemOffset, new byte[] { 0x48, 0x8B, 0x15 });
         AddCallAbsolute(code, _getItemData);
+        var templateResolvedOffset = code.Count;
         code.AddRange(new byte[] { 0x48, 0x85, 0xC0, 0x0F, 0x84 });
         var missingTemplateJump = code.Count;
         code.AddRange(new byte[sizeof(int)]);
         AddStoreRipRelative(code, root, ItemTemplateOffset, new byte[] { 0x48, 0x89, 0x05 });
 
-        // Preserve the selected item's current rarity for ordinary and fixed-gold templates.
+        // Persisted catalog templates carry the captured rarity; live templates read it now.
+        AddLoadRipRelative(code, root, CreateTemplateGuidOffset, new byte[] { 0x48, 0x8B, 0x05 });
+        code.AddRange(new byte[] { 0x48, 0x85, 0xC0, 0x0F, 0x85 });
+        var loadPersistedRarityJump = code.Count;
+        code.AddRange(new byte[sizeof(int)]);
         AddLoadRipRelative(code, root, FrameOffset, new byte[] { 0x48, 0x8B, 0x0D });
         AddLoadRipRelative(code, root, SelectedItemOffset, new byte[] { 0x48, 0x8B, 0x15 });
         AddCallAbsolute(code, _getItemRarity);
         code.AddRange(new byte[] { 0x44, 0x8B, 0xC8 }); // r9d = current rarity
+        var rarityResolvedJump = AddNearJump(code);
+
+        var loadPersistedRarityOffset = code.Count;
+        AddLoadRipRelative(code, root, CreateTemplateRarityOffset, new byte[] { 0x44, 0x8B, 0x0D });
+        var rarityResolvedOffset = code.Count;
 
         // ItemsAPI.Create(Frame, HeroItemData, 1, currentRarity, Cheat) creates fresh persistent data.
         AddLoadRipRelative(code, root, FrameOffset, new byte[] { 0x48, 0x8B, 0x0D });
@@ -331,6 +358,10 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
         AddStoreRipRelative(code, root, InspectedPathOffset, new byte[] { 0x48, 0x89, 0x15 });
         code.AddRange(new byte[] { 0x8B, 0x50, 0x20 });
         AddStoreRipRelative(code, root, InspectedItemTypeOffset, new byte[] { 0x89, 0x15 });
+        AddLoadRipRelative(code, root, FrameOffset, new byte[] { 0x48, 0x8B, 0x0D });
+        AddLoadRipRelative(code, root, SelectedItemOffset, new byte[] { 0x48, 0x8B, 0x15 });
+        AddCallAbsolute(code, _getItemRarity);
+        AddStoreRipRelative(code, root, InspectedRarityOffset, new byte[] { 0x89, 0x05 });
         AddStoreInt32RipRelative(code, root, ResultOffset, 1);
         AddStoreInt32RipRelative(code, root, CompletedOffset, InspectItemCommand);
         var inspectDoneJump = AddNearJump(code);
@@ -343,6 +374,10 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
         PatchNearJump(code, noCommandJump, restoreOffset);
         PatchNearJump(code, rarityJump, rarityOffset);
         PatchNearJump(code, createJump, createOffset);
+        PatchNearJump(code, resolveSelectedTemplateJump, resolveSelectedTemplateOffset);
+        PatchNearJump(code, templateResolvedJump, templateResolvedOffset);
+        PatchNearJump(code, loadPersistedRarityJump, loadPersistedRarityOffset);
+        PatchNearJump(code, rarityResolvedJump, rarityResolvedOffset);
         PatchNearJump(code, setGoldJump, setGoldOffset);
         PatchNearJump(code, setInfiniteStatJump, setInfiniteStatOffset);
         PatchNearJump(code, inspectItemJump, inspectItemOffset);
@@ -445,6 +480,32 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
                _session.WriteInt64(root + CreatedItemOffset, 0) &&
                _session.WriteInt64(root + InventoryOwnerOffset, 0) &&
                _session.WriteInt64(root + ItemTemplateOffset, 0) &&
+               _session.WriteInt64(root + CreateTemplateGuidOffset, 0) &&
+               _session.WriteInt32(root + CreateTemplateRarityOffset, 0) &&
+               _session.WriteInt32(root + CommandOffset, CreateFromTemplateCommand);
+    }
+
+    public bool QueueCreateFromGuid(long ownerItem, long templateGuid, int rarity)
+    {
+        if (!IsArmed || ownerItem == 0 || templateGuid == 0 || rarity is < 0 or > 3)
+        {
+            return false;
+        }
+
+        var root = _trampoline.ToInt64();
+        if (!_session.TryReadInt32(root + CommandOffset, out var pending) || pending != 0)
+        {
+            return false;
+        }
+
+        return _session.WriteInt64(root + SelectedItemOffset, ownerItem) &&
+               _session.WriteInt32(root + CompletedOffset, 0) &&
+               _session.WriteInt32(root + ResultOffset, 0) &&
+               _session.WriteInt64(root + CreatedItemOffset, 0) &&
+               _session.WriteInt64(root + InventoryOwnerOffset, 0) &&
+               _session.WriteInt64(root + ItemTemplateOffset, 0) &&
+               _session.WriteInt64(root + CreateTemplateGuidOffset, templateGuid) &&
+               _session.WriteInt32(root + CreateTemplateRarityOffset, rarity) &&
                _session.WriteInt32(root + CommandOffset, CreateFromTemplateCommand);
     }
 
@@ -520,6 +581,7 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
                _session.WriteInt64(root + InspectedGuidOffset, 0) &&
                _session.WriteInt64(root + InspectedPathOffset, 0) &&
                _session.WriteInt32(root + InspectedItemTypeOffset, 0) &&
+               _session.WriteInt32(root + InspectedRarityOffset, 0) &&
                _session.WriteInt32(root + CommandOffset, InspectItemCommand);
     }
 
@@ -529,18 +591,21 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
         out long template,
         out long guid,
         out long path,
-        out int itemType)
+        out int itemType,
+        out int rarity)
     {
         template = 0;
         guid = 0;
         path = 0;
         itemType = 0;
+        rarity = 0;
         var root = _trampoline.ToInt64();
         return TryReadCompletion(InspectItemCommand, out completed, out succeeded) &&
                _session.TryReadInt64(root + InspectedTemplateOffset, out template) &&
                _session.TryReadInt64(root + InspectedGuidOffset, out guid) &&
                _session.TryReadInt64(root + InspectedPathOffset, out path) &&
-               _session.TryReadInt32(root + InspectedItemTypeOffset, out itemType);
+               _session.TryReadInt32(root + InspectedItemTypeOffset, out itemType) &&
+               _session.TryReadInt32(root + InspectedRarityOffset, out rarity);
     }
 
     public bool TryReadCreateCompletion(out bool completed, out bool succeeded, out long createdItem)
