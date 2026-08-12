@@ -26,7 +26,6 @@ public partial class MainWindow : Window
     private const int AddItemEnchantmentRva = 0x5D6B250;
     private const int DuplicateItemRva = 0x5D884D0;
     private const int AddItemToInventoryRva = 0x5D792F0;
-    private const int GetInventoryOwnerRva = 0x5D7A090;
     private const int RepairItemRva = 0x5D617E0;
     private const int GetItemDataRva = 0x5D874F0;
     private const int CreateItemRva = 0x5D863B0;
@@ -539,10 +538,7 @@ public partial class MainWindow : Window
                 _session,
                 _session.GameAssemblyBase + QuantumEntitySystemUpdateRva,
                 expected,
-                _session.GameAssemblyBase + ChangeItemRarityRva,
-                _session.GameAssemblyBase + DuplicateItemRva,
-                _session.GameAssemblyBase + GetInventoryOwnerRva,
-                _session.GameAssemblyBase + AddItemToInventoryRva);
+                _session.GameAssemblyBase + ChangeItemRarityRva);
             var result = hook.Arm();
             if (hook.IsArmed)
             {
@@ -557,7 +553,7 @@ public partial class MainWindow : Window
         }
         catch (Exception exception)
         {
-            SetStatus($"无法启用物品命令入口：{exception.Message}", false);
+            SetStatus($"无法启用品质命令入口：{exception.Message}", false);
         }
     }
 
@@ -565,7 +561,7 @@ public partial class MainWindow : Window
     {
         if (_quantumCommandHook is null || !_quantumCommandHook.QueueRarity(selectedItem, rarityValue))
         {
-            SetStatus("品质命令无法排队；请重新点击“连接 / 扫描系统”后重试。", false);
+            SetStatus("品质命令无法排队；请重新点击“连接并检查”后重试。", false);
             return;
         }
 
@@ -573,7 +569,7 @@ public partial class MainWindow : Window
         for (var attempt = 0; attempt < 20; attempt++)
         {
             await Task.Delay(100);
-            if (_quantumCommandHook?.TryReadRarityCompletion(out var completed, out var succeeded) != true || !completed)
+            if (_quantumCommandHook?.TryReadCompletion(out var completed, out var succeeded) != true || !completed)
             {
                 continue;
             }
@@ -605,39 +601,10 @@ public partial class MainWindow : Window
 
     private void OnDuplicateSelectedItem(object sender, RoutedEventArgs e)
     {
-        if (_selectedItemEntity is not { } selectedItem || selectedItem == 0)
+        if (RequireSelectedItem())
         {
-            SetStatus("请先在游戏背包里点击要复制的物品。", false);
-            return;
+            QueuePlayerCommand(PlayerCommand.DuplicateSelectedItem, 0, 0, "复制选中物品");
         }
-
-        QueueDuplicateItem(selectedItem);
-    }
-
-    private async void QueueDuplicateItem(long selectedItem)
-    {
-        if (_quantumCommandHook is null || !_quantumCommandHook.QueueDuplicate(selectedItem))
-        {
-            SetStatus("复制命令无法排队；请重新点击“连接 / 扫描系统”后重试。", false);
-            return;
-        }
-
-        SetStatus($"已排队复制 0x{selectedItem:X}，等待游戏模拟线程执行。", true);
-        for (var attempt = 0; attempt < 20; attempt++)
-        {
-            await Task.Delay(100);
-            if (_quantumCommandHook?.TryReadDuplicateCompletion(out var completed, out var succeeded, out var duplicateItem) != true || !completed)
-            {
-                continue;
-            }
-
-            SetStatus(succeeded
-                ? $"复制完成，新物品实体为 0x{duplicateItem:X}。请关闭并重新打开背包确认。"
-                : "游戏未能把复制品加入原背包；本次不会自动重试。", succeeded);
-            return;
-        }
-
-        SetStatus("2 秒内没有收到复制完成确认；未重复执行，请保持角色在游戏中后重试。", false);
     }
 
     private void OnCreateSelectedItem(object sender, RoutedEventArgs e)
