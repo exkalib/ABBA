@@ -31,6 +31,8 @@ public partial class MainWindow : Window
     private const int GetItemRarityRva = 0x5D88620;
     private const int CreateItemRva = 0x5D863B0;
     private const int GetInventoryOwnerRva = 0x5D7A090;
+    private const int TryGetItemOwnerRva = 0x5D7A150;
+    private const int AddGoldRva = 0x5D79CF0;
     private const int SetItemLevelRva = 0x5D87920;
     private const int AwardGloamseedRva = 0x5F4BE60;
     private const int GiveMaxStatsRva = 0x5E00240;
@@ -92,10 +94,6 @@ public partial class MainWindow : Window
             OnStartItemSelection(this, new RoutedEventArgs());
         }
         StartQuantumCommandHook();
-        if (_session.HasGameAssemblyHash(CurrentGameAssemblySha256))
-        {
-            OnProbeInventoryComponent(this, new RoutedEventArgs());
-        }
     }
 
     private void OnScanKnownSignatures(object sender, RoutedEventArgs e)
@@ -408,17 +406,17 @@ public partial class MainWindow : Window
         SetStatus(CurrencyCaptureText.Text, true);
     }
 
-    private void OnWriteCurrency(object sender, RoutedEventArgs e)
+    private async void OnWriteCurrency(object sender, RoutedEventArgs e)
     {
-        if (!RequireSession() || _currencyAddress is not { } address)
+        if (!RequireSession() || _selectedItemEntity is not { } selectedItem || selectedItem == 0)
         {
-            SetStatus("钱包尚未捕获。请进入角色、打开一次背包或购买/拾取物品，然后点“重新捕获钱包”。", false);
+            SetStatus("请先在游戏背包里点击任意一件属于当前角色的物品，再写入货币。", false);
             return;
         }
 
-        if (!TryParseInt32(CurrencyValueBox.Text, out var value) || value is < 0 or > 9_999_999)
+        if (!TryParseInt32(CurrencyValueBox.Text, out var value) || value is < 1 or > 9_999_999)
         {
-            SetStatus("货币请输入 0 至 9,999,999 的整数。", false);
+            SetStatus("增加数量请输入 1 至 9,999,999 的整数。", false);
             return;
         }
 
@@ -437,12 +435,29 @@ public partial class MainWindow : Window
         }
 
         var internalValue = value * multiplier;
-        WriteValue(address, internalValue, _selectedCurrency);
-        if (_session!.TryReadInt32(address, out var updated) && updated == internalValue)
+        if (_quantumCommandHook is null || !_quantumCommandHook.QueueAddGold(selectedItem, internalValue))
         {
-            CurrencyCaptureText.Text = $"写入成功 · {_selectedCurrency}：{value:N0} · 钱包内部基数：{updated:N0}";
-            SetStatus(CurrencyCaptureText.Text, true);
+            SetStatus("原生货币命令无法排队；请重新连接游戏后重试。", false);
+            return;
         }
+
+        SetStatus($"已排队增加 {_selectedCurrency} {value:N0}，等待游戏模拟线程执行。", true);
+        for (var attempt = 0; attempt < 20; attempt++)
+        {
+            await Task.Delay(100);
+            if (_quantumCommandHook?.TryReadGoldCompletion(out var completed, out var succeeded) != true || !completed)
+            {
+                continue;
+            }
+
+            CurrencyCaptureText.Text = succeeded
+                ? $"游戏原生货币 API 已增加 {_selectedCurrency} {value:N0}。请关闭再打开背包确认。"
+                : "游戏无法从所选物品解析当前角色；请点击角色背包内的物品后重试。";
+            SetStatus(CurrencyCaptureText.Text, succeeded);
+            return;
+        }
+
+        SetStatus("2 秒内没有收到货币命令完成确认；未重复执行。", false);
     }
 
     private async void OnStartItemSelection(object sender, RoutedEventArgs e)
@@ -546,7 +561,9 @@ public partial class MainWindow : Window
                 _session.GameAssemblyBase + GetItemRarityRva,
                 _session.GameAssemblyBase + CreateItemRva,
                 _session.GameAssemblyBase + GetInventoryOwnerRva,
-                _session.GameAssemblyBase + AddItemToInventoryRva);
+                _session.GameAssemblyBase + TryGetItemOwnerRva,
+                _session.GameAssemblyBase + AddItemToInventoryRva,
+                _session.GameAssemblyBase + AddGoldRva);
             var result = hook.Arm();
             if (hook.IsArmed)
             {
@@ -1091,7 +1108,7 @@ public partial class MainWindow : Window
         _selectedItemEntity = null;
         _stalePlayerContextHookDetected = false;
         _currencyAddress = null;
-        CurrencyCaptureText.Text = "连接后自动捕获钱包；进入角色并打开一次背包即可。";
+        CurrencyCaptureText.Text = "先在角色背包里点击任意物品；程序会通过游戏原生 API 增加所选货币。";
         _itemQuantitySite = null;
         _playerContextSite = null;
         _itemSelectionSite = null;

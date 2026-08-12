@@ -5,6 +5,7 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
 {
     private const int RarityCommand = 1;
     private const int CreateFromTemplateCommand = 2;
+    private const int AddGoldCommand = 3;
     private const int FrameOffset = 0x800;
     private const int SelectedItemOffset = 0x808;
     private const int RarityOffset = 0x810;
@@ -14,6 +15,7 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
     private const int CreatedItemOffset = 0x820;
     private const int InventoryOwnerOffset = 0x828;
     private const int ItemTemplateOffset = 0x830;
+    private const int GoldValueOffset = 0x838;
 
     private readonly GameSession _session;
     private readonly long _site;
@@ -22,7 +24,9 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
     private readonly long _getItemRarity;
     private readonly long _createItem;
     private readonly long _getInventoryOwner;
+    private readonly long _tryGetItemOwner;
     private readonly long _addItemToInventory;
+    private readonly long _addGold;
     private readonly byte[] _replacedBytes;
     private IntPtr _trampoline;
 
@@ -35,7 +39,9 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
         long getItemRarity,
         long createItem,
         long getInventoryOwner,
-        long addItemToInventory)
+        long tryGetItemOwner,
+        long addItemToInventory,
+        long addGold)
     {
         _session = session;
         _site = site;
@@ -44,7 +50,9 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
         _getItemRarity = getItemRarity;
         _createItem = createItem;
         _getInventoryOwner = getInventoryOwner;
+        _tryGetItemOwner = tryGetItemOwner;
         _addItemToInventory = addItemToInventory;
+        _addGold = addGold;
         _replacedBytes = session.Read(site, expectedEntry.Length);
         if (!_replacedBytes.SequenceEqual(expectedEntry))
         {
@@ -87,6 +95,9 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
         code.AddRange(new byte[sizeof(int)]);
         code.AddRange(new byte[] { 0x83, 0xF8, CreateFromTemplateCommand, 0x0F, 0x84 });
         var createJump = code.Count;
+        code.AddRange(new byte[sizeof(int)]);
+        code.AddRange(new byte[] { 0x83, 0xF8, AddGoldCommand, 0x0F, 0x84 });
+        var setGoldJump = code.Count;
         code.AddRange(new byte[sizeof(int)]);
         AddStoreInt32RipRelative(code, root, CommandOffset, 0);
         var unknownCommandJump = AddNearJump(code);
@@ -156,17 +167,51 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
         var createFailureOffset = code.Count;
         AddStoreInt32RipRelative(code, root, ResultOffset, 0);
         AddStoreInt32RipRelative(code, root, CompletedOffset, CreateFromTemplateCommand);
+        var createFailureDoneJump = AddNearJump(code);
+
+        var setGoldOffset = code.Count;
+        AddStoreInt32RipRelative(code, root, CommandOffset, 0);
+
+        // Resolve the current hero from any item in that hero's backpack.
+        AddLoadRipRelative(code, root, FrameOffset, new byte[] { 0x48, 0x8B, 0x0D });
+        AddLoadRipRelative(code, root, SelectedItemOffset, new byte[] { 0x48, 0x8B, 0x15 });
+        AddLeaRipRelative(code, root, InventoryOwnerOffset, new byte[] { 0x4C, 0x8D, 0x05 });
+        AddCallAbsolute(code, _tryGetItemOwner);
+        code.AddRange(new byte[] { 0x84, 0xC0, 0x0F, 0x84 });
+        var missingGoldOwnerJump = code.Count;
+        code.AddRange(new byte[sizeof(int)]);
+
+        // Award through the native API so the simulation, UI and persistent state are notified.
+        AddLoadRipRelative(code, root, FrameOffset, new byte[] { 0x48, 0x8B, 0x0D });
+        AddLoadRipRelative(code, root, InventoryOwnerOffset, new byte[] { 0x48, 0x8B, 0x15 });
+        AddLoadRipRelative(code, root, GoldValueOffset, new byte[] { 0x44, 0x8B, 0x05 });
+        code.AddRange(new byte[] { 0x41, 0xB9, 0x04, 0x00, 0x00, 0x00 }); // source = Cheat
+        code.AddRange(new byte[] { 0xC6, 0x44, 0x24, 0x20, 0x00 }); // suppressNotification = false
+        AddCallAbsolute(code, _addGold);
+        AddLoadRipRelative(code, root, GoldValueOffset, new byte[] { 0x44, 0x8B, 0x15 });
+        code.AddRange(new byte[] { 0x44, 0x39, 0xD0, 0x0F, 0x94, 0xC0, 0x0F, 0xB6, 0xC0 });
+        AddStoreRipRelative(code, root, ResultOffset, new byte[] { 0x89, 0x05 });
+        AddStoreInt32RipRelative(code, root, CompletedOffset, AddGoldCommand);
+        var setGoldDoneJump = AddNearJump(code);
+
+        var setGoldFailureOffset = code.Count;
+        AddStoreInt32RipRelative(code, root, ResultOffset, 0);
+        AddStoreInt32RipRelative(code, root, CompletedOffset, AddGoldCommand);
 
         var restoreOffset = code.Count;
         PatchNearJump(code, noCommandJump, restoreOffset);
         PatchNearJump(code, rarityJump, rarityOffset);
         PatchNearJump(code, createJump, createOffset);
+        PatchNearJump(code, setGoldJump, setGoldOffset);
         PatchNearJump(code, unknownCommandJump, restoreOffset);
         PatchNearJump(code, rarityDoneJump, restoreOffset);
         PatchNearJump(code, missingOwnerJump, createFailureOffset);
         PatchNearJump(code, missingTemplateJump, createFailureOffset);
         PatchNearJump(code, createFailedJump, createFailureOffset);
         PatchNearJump(code, createDoneJump, restoreOffset);
+        PatchNearJump(code, createFailureDoneJump, restoreOffset);
+        PatchNearJump(code, missingGoldOwnerJump, setGoldFailureOffset);
+        PatchNearJump(code, setGoldDoneJump, restoreOffset);
         code.AddRange(new byte[] { 0x48, 0x83, 0xC4, 0x28 });
         code.AddRange(new byte[] { 0x41, 0x5B, 0x41, 0x5A, 0x41, 0x59, 0x41, 0x58, 0x5A, 0x59, 0x58, 0x9D });
 
@@ -239,6 +284,30 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
     public bool TryReadRarityCompletion(out bool completed, out bool succeeded) =>
         TryReadCompletion(RarityCommand, out completed, out succeeded);
 
+    public bool QueueAddGold(long selectedItem, int gold)
+    {
+        if (!IsArmed || selectedItem == 0 || gold <= 0)
+        {
+            return false;
+        }
+
+        var root = _trampoline.ToInt64();
+        if (!_session.TryReadInt32(root + CommandOffset, out var pending) || pending != 0)
+        {
+            return false;
+        }
+
+        return _session.WriteInt64(root + SelectedItemOffset, selectedItem) &&
+               _session.WriteInt32(root + GoldValueOffset, gold) &&
+               _session.WriteInt32(root + CompletedOffset, 0) &&
+               _session.WriteInt32(root + ResultOffset, 0) &&
+               _session.WriteInt64(root + InventoryOwnerOffset, 0) &&
+               _session.WriteInt32(root + CommandOffset, AddGoldCommand);
+    }
+
+    public bool TryReadGoldCompletion(out bool completed, out bool succeeded) =>
+        TryReadCompletion(AddGoldCommand, out completed, out succeeded);
+
     public bool TryReadCreateCompletion(out bool completed, out bool succeeded, out long createdItem)
     {
         createdItem = 0;
@@ -285,6 +354,9 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
     }
 
     private static void AddStoreRipRelative(List<byte> code, long root, int targetOffset, byte[] opcode) =>
+        AddLoadRipRelative(code, root, targetOffset, opcode);
+
+    private static void AddLeaRipRelative(List<byte> code, long root, int targetOffset, byte[] opcode) =>
         AddLoadRipRelative(code, root, targetOffset, opcode);
 
     private static void AddStoreInt32RipRelative(List<byte> code, long root, int targetOffset, int value)

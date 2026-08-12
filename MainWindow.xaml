@@ -165,7 +165,7 @@
                 <StackPanel>
                   <TextBlock Text="WALLET MATRIX / 04" Style="{StaticResource MicroLabel}" />
                   <TextBlock Text="铜币 / 银币 / 金币" Style="{StaticResource SectionTitle}" Margin="0,4,0,0" />
-                  <TextBlock x:Name="CurrencyCaptureText" Text="连接后自动捕获钱包；进入角色并打开一次背包即可。" Foreground="{StaticResource MutedBrush}" Margin="0,7,0,0" TextWrapping="Wrap" />
+                  <TextBlock x:Name="CurrencyCaptureText" Text="先在角色背包里点击任意物品；程序会通过游戏原生 API 增加所选货币。" Foreground="{StaticResource MutedBrush}" Margin="0,7,0,0" TextWrapping="Wrap" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0,0,0">
                   <Button Style="{StaticResource SecondaryButton}" Content="铜币" Tag="Copper" Click="OnCurrencyClick" Padding="11,7" Margin="0,0,7,0" />
@@ -174,8 +174,7 @@
                 </StackPanel>
                 <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,14,0,0">
                   <TextBox x:Name="CurrencyValueBox" Width="140" Height="34" Padding="9,5" Text="1000" />
-                  <Button Style="{StaticResource ActionButton}" Content="写入所选货币" Click="OnWriteCurrency" Margin="10,0,0,0" />
-                  <Button Style="{StaticResource SecondaryButton}" Content="重新捕获钱包" Click="OnProbeInventoryComponent" Margin="10,0,0,0" />
+                  <Button Style="{StaticResource ActionButton}" Content="增加所选货币" Click="OnWriteCurrency" Margin="10,0,0,0" />
                 </StackPanel>
               </Grid>
             </Border>
