@@ -179,6 +179,22 @@
               </Grid>
             </Border>
 
+            <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+              <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <StackPanel>
+                  <TextBlock Text="VITAL OVERRIDE / 05" Style="{StaticResource MicroLabel}" />
+                  <TextBlock Text="生命与能量" Style="{StaticResource SectionTitle}" Margin="0,4,0,0" />
+                  <TextBlock Text="通过当前选中物品识别角色，并在游戏模拟线程调用原生无限状态。" Foreground="{StaticResource MutedBrush}" Margin="0,7,0,0" TextWrapping="Wrap" />
+                </StackPanel>
+                <WrapPanel Grid.Column="1" VerticalAlignment="Center" Margin="24,0,0,0">
+                  <CheckBox Content="无限生命" Tag="health" Click="OnToggleInfiniteStat" Margin="0,0,18,0" />
+                  <CheckBox Content="无限体力" Tag="stamina" Click="OnToggleInfiniteStat" Margin="0,0,18,0" />
+                  <CheckBox Content="无限专注" Tag="focus" Click="OnToggleInfiniteStat" />
+                </WrapPanel>
+              </Grid>
+            </Border>
+
             <Grid x:Name="CharacterView" Visibility="Collapsed">
               <StackPanel>
                 <Border Style="{StaticResource Card}" Padding="16,13" Margin="0,0,0,12">

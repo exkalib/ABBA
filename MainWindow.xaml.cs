@@ -33,6 +33,8 @@ public partial class MainWindow : Window
     private const int GetInventoryOwnerRva = 0x5D7A090;
     private const int TryGetItemOwnerRva = 0x5D7A150;
     private const int AddGoldRva = 0x5D79CF0;
+    private const int SetHealthInfiniteRva = 0x5DE6050;
+    private const int SetResourceInfiniteRva = 0x591A770;
     private const int SetItemLevelRva = 0x5D87920;
     private const int AwardGloamseedRva = 0x5F4BE60;
     private const int GiveMaxStatsRva = 0x5E00240;
@@ -451,13 +453,76 @@ public partial class MainWindow : Window
             }
 
             CurrencyCaptureText.Text = succeeded
-                ? $"游戏原生货币 API 已增加 {_selectedCurrency} {value:N0}。请关闭再打开背包确认。"
+                ? $"游戏原生货币 API 已静默增加 {_selectedCurrency} {value:N0}。"
                 : "游戏无法从所选物品解析当前角色；请点击角色背包内的物品后重试。";
             SetStatus(CurrencyCaptureText.Text, succeeded);
             return;
         }
 
         SetStatus("2 秒内没有收到货币命令完成确认；未重复执行。", false);
+    }
+
+    private async void OnToggleInfiniteStat(object sender, RoutedEventArgs e)
+    {
+        if (sender is not CheckBox { Tag: string feature, IsChecked: bool enabled } checkBox)
+        {
+            return;
+        }
+
+        var statKind = feature switch
+        {
+            "health" => 0,
+            "stamina" => 1,
+            "focus" => 2,
+            _ => -1
+        };
+        var featureName = feature switch
+        {
+            "health" => "无限生命",
+            "stamina" => "无限体力",
+            "focus" => "无限专注",
+            _ => "无限状态"
+        };
+
+        if (!RequireSession() || statKind < 0 || _selectedItemEntity is not { } selectedItem || selectedItem == 0)
+        {
+            checkBox.IsChecked = !enabled;
+            SetStatus($"开启{featureName}前，请先在角色背包里点击任意一件物品。", false);
+            return;
+        }
+
+        checkBox.IsEnabled = false;
+        if (_quantumCommandHook is null || !_quantumCommandHook.QueueInfiniteStat(selectedItem, statKind, enabled))
+        {
+            checkBox.IsChecked = !enabled;
+            checkBox.IsEnabled = true;
+            SetStatus($"{featureName}命令无法排队；请重新连接游戏后重试。", false);
+            return;
+        }
+
+        for (var attempt = 0; attempt < 20; attempt++)
+        {
+            await Task.Delay(100);
+            if (_quantumCommandHook?.TryReadInfiniteStatCompletion(out var completed, out var succeeded) != true || !completed)
+            {
+                continue;
+            }
+
+            checkBox.IsEnabled = true;
+            if (!succeeded)
+            {
+                checkBox.IsChecked = !enabled;
+                SetStatus($"无法从所选物品解析角色的{featureName}组件。请点击角色背包内的物品后重试。", false);
+                return;
+            }
+
+            SetStatus($"{featureName}已{(enabled ? "开启" : "关闭")}。", true);
+            return;
+        }
+
+        checkBox.IsChecked = !enabled;
+        checkBox.IsEnabled = true;
+        SetStatus($"2 秒内没有收到{featureName}命令完成确认；未重复执行。", false);
     }
 
     private async void OnStartItemSelection(object sender, RoutedEventArgs e)
@@ -563,7 +628,10 @@ public partial class MainWindow : Window
                 _session.GameAssemblyBase + GetInventoryOwnerRva,
                 _session.GameAssemblyBase + TryGetItemOwnerRva,
                 _session.GameAssemblyBase + AddItemToInventoryRva,
-                _session.GameAssemblyBase + AddGoldRva);
+                _session.GameAssemblyBase + AddGoldRva,
+                _session.GameAssemblyBase + GetHeroStatsRva,
+                _session.GameAssemblyBase + SetHealthInfiniteRva,
+                _session.GameAssemblyBase + SetResourceInfiniteRva);
             var result = hook.Arm();
             if (hook.IsArmed)
             {
