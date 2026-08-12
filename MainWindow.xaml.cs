@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using NRftWManagerUI.Core;
 
 namespace NRftWManagerUI;
@@ -75,6 +76,8 @@ public partial class MainWindow : Window
         RuntimeStateText.Text = "已连接";
         RuntimeDetailText.Text = result;
         ConnectionText.Text = "已连接游戏";
+        ConnectionText.Foreground = (Brush)FindResource("AccentBrush");
+        ConnectionIndicator.Fill = (Brush)FindResource("AccentBrush");
         SetStatus(result);
         AddLog("已连接游戏，正在检查当前版本并自动开启物品数量持续跟踪。");
         OnScanKnownSignatures(this, new RoutedEventArgs());
@@ -1063,6 +1066,9 @@ public partial class MainWindow : Window
         _itemSelectionSite = null;
         _session?.Dispose();
         _session = null;
+        ConnectionText.Text = "LINK OFFLINE";
+        ConnectionText.Foreground = (Brush)FindResource("WarningBrush");
+        ConnectionIndicator.Fill = (Brush)FindResource("WarningBrush");
     }
 
     private void SetStatus(string message, bool success = false)
