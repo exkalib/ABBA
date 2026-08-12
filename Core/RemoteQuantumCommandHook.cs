@@ -197,11 +197,12 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
         var missingGoldOwnerJump = code.Count;
         code.AddRange(new byte[sizeof(int)]);
 
-        // SilentLoot updates persistent currency without forcing the open inventory view to rebuild.
+        // Payload is the one source AddGold excludes from its item-added event. The gold-modified
+        // event still updates the wallet, without making the open inventory rebuild fake item slots.
         AddLoadRipRelative(code, root, FrameOffset, new byte[] { 0x48, 0x8B, 0x0D });
         AddLoadRipRelative(code, root, InventoryOwnerOffset, new byte[] { 0x48, 0x8B, 0x15 });
         AddLoadRipRelative(code, root, GoldValueOffset, new byte[] { 0x44, 0x8B, 0x05 });
-        code.AddRange(new byte[] { 0x41, 0xB9, 0x07, 0x00, 0x00, 0x00 }); // source = SilentLoot
+        code.AddRange(new byte[] { 0x41, 0xB9, 0x0E, 0x00, 0x00, 0x00 }); // source = Payload
         code.AddRange(new byte[] { 0xC6, 0x44, 0x24, 0x20, 0x01 }); // suppressNotification = true
         AddCallAbsolute(code, _addGold);
         AddLoadRipRelative(code, root, GoldValueOffset, new byte[] { 0x44, 0x8B, 0x15 });
