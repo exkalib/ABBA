@@ -78,7 +78,7 @@
             <StackPanel Grid.Row="4">
               <Rectangle Height="1" Fill="#29475A" Margin="0,0,0,12" />
               <TextBlock Text="OPERATOR NOTE" Style="{StaticResource MicroLabel}" Foreground="{StaticResource WarningBrush}" />
-              <TextBlock Text="先在游戏中点击目标物品，再执行单项写入。未验证模块保持锁定。" Foreground="{StaticResource MutedBrush}" FontSize="11" TextWrapping="Wrap" LineHeight="17" Margin="0,7,0,0" />
+              <TextBlock Text="先在游戏中点击目标物品，再执行单项写入。界面只显示当前已验证模块。" Foreground="{StaticResource MutedBrush}" FontSize="11" TextWrapping="Wrap" LineHeight="17" Margin="0,7,0,0" />
               <TextBlock Text="BUILD 1.45 / NODE 01" FontFamily="Consolas" FontSize="9" Foreground="#49677A" Margin="0,15,0,0" />
             </StackPanel>
           </Grid>
@@ -98,8 +98,6 @@
                       <CheckBox x:Name="KeepLastItemCheck" Content="最后 1 个保留" IsChecked="True" Click="OnKeepLastItemChanged" VerticalAlignment="Center" Margin="0,0,18,0" />
                       <TextBox x:Name="ItemQuantityBox" Width="110" Height="34" Padding="9,5" Text="20" />
                       <Button Style="{StaticResource ActionButton}" Content="写入最近物品" Click="OnWriteItemQuantity" Margin="10,0,0,0" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="重新跟踪" Click="OnStartItemCapture" Margin="16,0,0,0" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="暂停跟踪" Click="OnStopItemCapture" Margin="8,0,0,0" />
                     </StackPanel>
                     <TextBlock x:Name="ItemCaptureText" Text="连接游戏后会自动开始持续跟踪。" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0" />
                   </StackPanel>
@@ -114,36 +112,26 @@
                     <TextBlock Text="TARGET ACQUISITION / 02" Style="{StaticResource MicroLabel}" />
                     <TextBlock Text="选中目标物品" Style="{StaticResource SectionTitle}" Margin="0,4,0,0" />
                     <TextBlock Text="连接后自动旁路捕获最近打开详情的物品；切换物品时地址会自动更新。" Foreground="{StaticResource AccentBrush}" TextWrapping="Wrap" Margin="0,6,0,0" />
-                    <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
-                      <Button Style="{StaticResource ActionButton}" Content="重新开始自动捕获" Click="OnStartItemSelection" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="立即读取" Click="OnReadItemSelection" Margin="10,0,0,0" />
-                    </StackPanel>
                     <TextBlock x:Name="SelectedItemText" Text="尚未选择物品。" Foreground="{StaticResource MutedBrush}" Margin="0,11,0,0" TextWrapping="Wrap" />
                     <TextBlock Text="最近 5 次不同的捕获值" Foreground="{StaticResource MutedBrush}" Margin="0,10,0,5" />
                     <ListBox x:Name="SelectedItemHistoryList" Height="82" FontFamily="Consolas" FontSize="12" />
                   </StackPanel>
                 </Border>
                 <Grid Margin="0,16,0,0">
-                  <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                  <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,8,0">
+                  <Border Style="{StaticResource Card}">
                     <StackPanel>
-                      <TextBlock Text="QUANTUM ITEM MATRIX / 03" Style="{StaticResource MicroLabel}" />
-                      <TextBlock Text="原生品质与词条" Style="{StaticResource SectionTitle}" Margin="0,4,0,0" />
+                      <TextBlock Text="QUANTUM RARITY MATRIX / 03" Style="{StaticResource MicroLabel}" />
+                      <TextBlock Text="原生品质转换" Style="{StaticResource SectionTitle}" Margin="0,4,0,0" />
                       <TextBlock Text="使用游戏的原生物品 API，而不是直接改颜色。每次点击只排队执行一次；游戏加载场景后约 1 秒内完成。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,9,0,0" />
                       <WrapPanel Margin="0,13,0,0">
                         <Button Style="{StaticResource RarityButton}" BorderBrush="#AFC3D1" Foreground="#EAF4F8" Content="COMMON / 白" Tag="Common" Click="OnQueueRarity" Margin="0,0,8,8" />
                         <Button Style="{StaticResource RarityButton}" BorderBrush="{StaticResource AccentBrush}" Foreground="{StaticResource AccentBrush}" Content="MAGICAL / 蓝" Tag="Magical" Click="OnQueueRarity" Margin="0,0,8,8" />
                         <Button Style="{StaticResource RarityButton}" BorderBrush="{StaticResource PurpleBrush}" Foreground="#CBB9FF" Content="PLAGUED / 紫" Tag="Plagued" Click="OnQueueRarity" Margin="0,0,8,8" />
-                        <Button Style="{StaticResource RarityButton}" BorderBrush="{StaticResource WarningBrush}" Foreground="{StaticResource WarningBrush}" Content="GOLD / 金" Tag="Gold" Click="OnQueueRarity" Margin="0,0,8,8" />
                       </WrapPanel>
-                      <WrapPanel IsHitTestVisible="False" Opacity="0.62">
-                        <Button Style="{StaticResource ActionButton}" Content="随机新增词条" Click="OnAddSelectedItemEnchantment" Margin="0,0,8,8" />
-                        <Button Style="{StaticResource SecondaryButton}" Content="修满耐久" Click="OnRepairSelectedItem" Margin="0,0,8,8" />
-                        <Button Style="{StaticResource SecondaryButton}" Content="复制当前物品" Click="OnDuplicateSelectedItem" Margin="0,0,8,8" />
-                      </WrapPanel>
+                      <TextBlock Text="金色是游戏预定义的固定装备，不属于可转换品质；后续应通过对应金装模板生成或复制。" Foreground="{StaticResource WarningBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0" />
                     </StackPanel>
                   </Border>
-                  <Border Grid.Column="1" Style="{StaticResource Card}" Margin="8,0,0,0" IsHitTestVisible="False" Opacity="0.62">
+                  <Border Grid.Column="1" Visibility="Collapsed">
                     <StackPanel>
                       <TextBlock Text="FABRICATION / LOCKED" Style="{StaticResource MicroLabel}" Foreground="{StaticResource WarningBrush}" />
                       <TextBlock Text="创建与等级" Style="{StaticResource SectionTitle}" Margin="0,4,0,0" />
@@ -169,7 +157,7 @@
               </StackPanel>
             </Grid>
 
-            <Grid x:Name="CharacterView" Margin="0,0,0,12">
+            <Grid x:Name="CharacterView" Visibility="Collapsed">
               <StackPanel>
                 <Border Style="{StaticResource Card}" Padding="16,13" Margin="0,0,0,12">
                   <Grid>

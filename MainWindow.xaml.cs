@@ -101,35 +101,26 @@ public partial class MainWindow : Window
 
         try
         {
-            SetStatus("正在扫描 GameAssembly.dll 中已验证的材料、角色上下文与物品详情入口…");
+            SetStatus("正在扫描 GameAssembly.dll 中已验证的数量与物品入口…");
             var itemMatches = _session!.ScanGameAssembly(AobPattern.Parse(ItemQuantityPattern));
-            var profileMatches = _session.HasGameAssemblyHash(CurrentGameAssemblySha256)
-                ? _session.ScanGameAssembly(AobPattern.Parse(PlayerContextPattern))
-                : Array.Empty<long>();
             var itemSelectionMatches = _session.HasGameAssemblyHash(CurrentGameAssemblySha256)
                 ? _session.ScanGameAssembly(AobPattern.Parse(ItemSelectionPattern))
                 : Array.Empty<long>();
 
             _itemQuantitySite = itemMatches.Count == 1 ? itemMatches[0] : null;
-            _playerContextSite = profileMatches.Count == 1 ? profileMatches[0] : null;
+            _playerContextSite = null;
             _itemSelectionSite = itemSelectionMatches.Count == 1 ? itemSelectionMatches[0] : null;
-            _stalePlayerContextHookDetected = profileMatches.Count == 0 && HasStalePlayerContextHook();
+            _stalePlayerContextHookDetected = false;
 
-            var summary = $"材料数量：{itemMatches.Count} 个匹配；角色入口：{profileMatches.Count} 个匹配；物品详情：{itemSelectionMatches.Count} 个匹配。";
-            SignatureStateText.Text = _itemQuantitySite.HasValue && _playerContextSite.HasValue && _itemSelectionSite.HasValue ? "已验证" : "不匹配";
+            var summary = $"数量入口：{itemMatches.Count} 个匹配；物品选择：{itemSelectionMatches.Count} 个匹配。";
+            SignatureStateText.Text = _itemQuantitySite.HasValue && _itemSelectionSite.HasValue ? "已验证" : "不匹配";
             SignatureDetailText.Text = summary;
 
-            if (_itemQuantitySite.HasValue && _playerContextSite.HasValue && _itemSelectionSite.HasValue)
+            if (_itemQuantitySite.HasValue && _itemSelectionSite.HasValue)
             {
                 WriteStateText.Text = "可捕获";
-                WriteStateDetailText.Text = "角色、钱包和物品均通过当前版本入口校验。";
-                SetStatus($"{summary} 当前游戏版本可验证。钱包和角色字段无需先让数值变化。", true);
-            }
-            else if (_stalePlayerContextHookDetected)
-            {
-                WriteStateText.Text = "需重启游戏";
-                WriteStateDetailText.Text = "检测到上次管理器异常退出后残留的角色捕获跳转。";
-                SetStatus("检测到本程序上次留下的角色捕获跳转。请完全退出并重新启动游戏，再点击“连接并检查”。", false);
+                WriteStateDetailText.Text = "数量与物品入口均通过当前版本校验。";
+                SetStatus($"{summary} 当前版本的数量、物品选择和品质功能可用。", true);
             }
             else
             {
@@ -941,7 +932,6 @@ public partial class MainWindow : Window
             "Common" => 0,
             "Magical" => 1,
             "Plagued" => 2,
-            "Gold" => 3,
             _ => -1
         };
         return value >= 0;
