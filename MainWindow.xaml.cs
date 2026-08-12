@@ -41,6 +41,7 @@ public partial class MainWindow : Window
     private const int TryGetHeroInventoryPointerRva = 0x61E20;
     private const int HeroInventoryTypeInfoRva = 0xBFDD5F8;
     private const int ResolveHeroItemDataRva = 0x5F5F270;
+    private const int GetLocalizedItemNameRva = 0x8FB07C0;
     private const int SetItemLevelRva = 0x5D87920;
     private const int AwardGloamseedRva = 0x5F4BE60;
     private const int GiveMaxStatsRva = 0x5E00240;
@@ -76,6 +77,7 @@ public partial class MainWindow : Window
         public int ItemType { get; set; }
         public int Rarity { get; set; }
         public string Path { get; set; } = string.Empty;
+        public string LocalizedName { get; set; } = string.Empty;
         public string CustomName { get; set; } = string.Empty;
         [JsonIgnore] public long Entity { get; set; }
         [JsonIgnore] public long Template { get; set; }
@@ -88,6 +90,11 @@ public partial class MainWindow : Window
                 if (!string.IsNullOrWhiteSpace(CustomName))
                 {
                     return CustomName.Trim();
+                }
+
+                if (!string.IsNullOrWhiteSpace(LocalizedName))
+                {
+                    return LocalizedName.Trim();
                 }
 
                 var name = Path.Replace('\\', '/').Split('/').LastOrDefault();
@@ -582,6 +589,7 @@ public partial class MainWindow : Window
             _itemSelectionHook = new RemoteItemSelectionHook(
                 _session!,
                 _itemSelectionSite!.Value,
+                _session!.GameAssemblyBase + GetLocalizedItemNameRva,
                 AobPattern.Parse(ItemSelectionEntry).Bytes.Select(value => value ?? throw new InvalidOperationException("物品详情入口签名不能包含通配符。")).ToArray());
             var result = _itemSelectionHook.Arm();
             SelectedItemText.Text = result;
@@ -590,15 +598,18 @@ public partial class MainWindow : Window
             for (var attempt = 0; attempt < 18_000 && ReferenceEquals(_itemSelectionHook, activeHook); attempt++)
             {
                 await Task.Delay(100);
-                if (!activeHook.TryReadSelection(out var itemEntity) || itemEntity == _selectedItemEntity)
+                if (!activeHook.TryReadSelection(out var itemEntity, out var localizedNameAddress) || itemEntity == _selectedItemEntity)
                 {
                     continue;
                 }
 
+                var localizedName = ReadLocalizedItemName(localizedNameAddress);
                 _selectedItemEntity = itemEntity;
                 activeHook.ClearSelection();
-                RecordSelectedItem(itemEntity);
-                SelectedItemText.Text = $"已自动选中最近物品：0x{itemEntity:X}。切换物品时这里会自动更新。";
+                RecordSelectedItem(itemEntity, localizedName);
+                SelectedItemText.Text = string.IsNullOrWhiteSpace(localizedName)
+                    ? $"已自动选中最近物品：0x{itemEntity:X}。切换物品时这里会自动更新。"
+                    : $"已自动选中：{localizedName}（0x{itemEntity:X}）。";
                 SetStatus(SelectedItemText.Text, true);
             }
         }
@@ -611,31 +622,42 @@ public partial class MainWindow : Window
 
     private void OnReadItemSelection(object sender, RoutedEventArgs e)
     {
-        if (_itemSelectionHook is null || !_itemSelectionHook.TryReadSelection(out var itemEntity))
+        if (_itemSelectionHook is null || !_itemSelectionHook.TryReadSelection(out var itemEntity, out var localizedNameAddress))
         {
             SetStatus("尚未捕获物品。请先开启物品选择捕获，再回游戏打开背包并点击目标物品详情。", false);
             return;
         }
 
+        var localizedName = ReadLocalizedItemName(localizedNameAddress);
         _selectedItemEntity = itemEntity;
         _itemSelectionHook.ClearSelection();
-        RecordSelectedItem(itemEntity);
-        SelectedItemText.Text = $"已选中当前物品：0x{itemEntity:X}。切换物品时会继续自动更新。";
+        RecordSelectedItem(itemEntity, localizedName);
+        SelectedItemText.Text = string.IsNullOrWhiteSpace(localizedName)
+            ? $"已选中当前物品：0x{itemEntity:X}。切换物品时会继续自动更新。"
+            : $"已选中：{localizedName}（0x{itemEntity:X}）。";
         SetStatus(SelectedItemText.Text, true);
     }
 
-    private void RecordSelectedItem(long itemEntity)
+    private string ReadLocalizedItemName(long address)
     {
-        SelectedItemHistoryList.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff}   0x{itemEntity:X16}");
+        return _session?.TryReadIl2CppString(address, out var value) == true
+            ? value.Trim()
+            : string.Empty;
+    }
+
+    private void RecordSelectedItem(long itemEntity, string localizedName)
+    {
+        var nameSuffix = string.IsNullOrWhiteSpace(localizedName) ? string.Empty : $"   {localizedName}";
+        SelectedItemHistoryList.Items.Insert(0, $"{DateTime.Now:HH:mm:ss.fff}   0x{itemEntity:X16}{nameSuffix}");
         while (SelectedItemHistoryList.Items.Count > 5)
         {
             SelectedItemHistoryList.Items.RemoveAt(SelectedItemHistoryList.Items.Count - 1);
         }
 
-        _ = CaptureItemTemplateAsync(itemEntity);
+        _ = CaptureItemTemplateAsync(itemEntity, localizedName);
     }
 
-    private async Task CaptureItemTemplateAsync(long itemEntity)
+    private async Task CaptureItemTemplateAsync(long itemEntity, string localizedName)
     {
         if (_capturedItemTemplates.Any(item => item.Entity == itemEntity) || !_pendingTemplateCaptures.Add(itemEntity))
         {
@@ -693,6 +715,10 @@ public partial class MainWindow : Window
                 existing.Template = template;
                 existing.ItemType = itemType;
                 existing.Rarity = rarity;
+                if (!string.IsNullOrWhiteSpace(localizedName))
+                {
+                    existing.LocalizedName = localizedName;
+                }
                 if (!string.IsNullOrWhiteSpace(path))
                 {
                     existing.Path = path;
