@@ -127,6 +127,7 @@
                         <Button Style="{StaticResource RarityButton}" BorderBrush="#AFC3D1" Foreground="#EAF4F8" Content="COMMON / 白" Tag="Common" Click="OnQueueRarity" Margin="0,0,8,8" />
                         <Button Style="{StaticResource RarityButton}" BorderBrush="{StaticResource AccentBrush}" Foreground="{StaticResource AccentBrush}" Content="MAGICAL / 蓝" Tag="Magical" Click="OnQueueRarity" Margin="0,0,8,8" />
                         <Button Style="{StaticResource RarityButton}" BorderBrush="{StaticResource PurpleBrush}" Foreground="#CBB9FF" Content="PLAGUED / 紫" Tag="Plagued" Click="OnQueueRarity" Margin="0,0,8,8" />
+                        <Button Style="{StaticResource ActionButton}" Content="复制当前物品" Click="OnDuplicateSelectedItem" Margin="12,0,8,8" />
                       </WrapPanel>
                       <TextBlock Text="金色是游戏预定义的固定装备，不属于可转换品质；后续应通过对应金装模板生成或复制。" Foreground="{StaticResource WarningBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0" />
                     </StackPanel>
