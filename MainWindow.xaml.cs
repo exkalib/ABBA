@@ -28,7 +28,9 @@ public partial class MainWindow : Window
     private const int AddItemToInventoryRva = 0x5D792F0;
     private const int RepairItemRva = 0x5D617E0;
     private const int GetItemDataRva = 0x5D874F0;
+    private const int GetItemRarityRva = 0x5D88620;
     private const int CreateItemRva = 0x5D863B0;
+    private const int GetInventoryOwnerRva = 0x5D7A090;
     private const int SetItemLevelRva = 0x5D87920;
     private const int AwardGloamseedRva = 0x5F4BE60;
     private const int GiveMaxStatsRva = 0x5E00240;
@@ -538,7 +540,12 @@ public partial class MainWindow : Window
                 _session,
                 _session.GameAssemblyBase + QuantumEntitySystemUpdateRva,
                 expected,
-                _session.GameAssemblyBase + ChangeItemRarityRva);
+                _session.GameAssemblyBase + ChangeItemRarityRva,
+                _session.GameAssemblyBase + GetItemDataRva,
+                _session.GameAssemblyBase + GetItemRarityRva,
+                _session.GameAssemblyBase + CreateItemRva,
+                _session.GameAssemblyBase + GetInventoryOwnerRva,
+                _session.GameAssemblyBase + AddItemToInventoryRva);
             var result = hook.Arm();
             if (hook.IsArmed)
             {
@@ -569,7 +576,7 @@ public partial class MainWindow : Window
         for (var attempt = 0; attempt < 20; attempt++)
         {
             await Task.Delay(100);
-            if (_quantumCommandHook?.TryReadCompletion(out var completed, out var succeeded) != true || !completed)
+            if (_quantumCommandHook?.TryReadRarityCompletion(out var completed, out var succeeded) != true || !completed)
             {
                 continue;
             }
@@ -581,6 +588,38 @@ public partial class MainWindow : Window
         }
 
         SetStatus("2 秒内没有收到品质命令完成确认；未重复执行，请保持角色在游戏中后重试。", false);
+    }
+
+    private async void OnCreateFromSelectedTemplate(object sender, RoutedEventArgs e)
+    {
+        if (_selectedItemEntity is not { } selectedItem || selectedItem == 0)
+        {
+            SetStatus("请先在游戏背包里点击要作为模板的物品。", false);
+            return;
+        }
+
+        if (_quantumCommandHook is null || !_quantumCommandHook.QueueCreateFromTemplate(selectedItem))
+        {
+            SetStatus("模板新建命令无法排队；请重新点击“连接 / 扫描系统”后重试。", false);
+            return;
+        }
+
+        SetStatus($"已排队按 0x{selectedItem:X} 的静态模板新建一件物品，等待游戏模拟线程执行。", true);
+        for (var attempt = 0; attempt < 20; attempt++)
+        {
+            await Task.Delay(100);
+            if (_quantumCommandHook?.TryReadCreateCompletion(out var completed, out var succeeded, out var createdItem) != true || !completed)
+            {
+                continue;
+            }
+
+            SetStatus(succeeded
+                ? $"已由游戏创建全新物品实体 0x{createdItem:X} 并加入原背包；它不是运行时实体克隆。"
+                : "游戏未能按当前模板创建或加入物品；没有重复执行。", succeeded);
+            return;
+        }
+
+        SetStatus("2 秒内没有收到模板新建命令完成确认；未重复执行，请保持角色在游戏中后重试。", false);
     }
 
     private void OnAddSelectedItemEnchantment(object sender, RoutedEventArgs e)
