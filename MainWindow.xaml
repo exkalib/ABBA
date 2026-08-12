@@ -158,6 +158,28 @@
               </StackPanel>
             </Grid>
 
+            <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+              <Grid>
+                <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <StackPanel>
+                  <TextBlock Text="WALLET MATRIX / 04" Style="{StaticResource MicroLabel}" />
+                  <TextBlock Text="铜币 / 银币 / 金币" Style="{StaticResource SectionTitle}" Margin="0,4,0,0" />
+                  <TextBlock x:Name="CurrencyCaptureText" Text="连接后自动捕获钱包；进入角色并打开一次背包即可。" Foreground="{StaticResource MutedBrush}" Margin="0,7,0,0" TextWrapping="Wrap" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0,0,0">
+                  <Button Style="{StaticResource SecondaryButton}" Content="铜币" Tag="Copper" Click="OnCurrencyClick" Padding="11,7" Margin="0,0,7,0" />
+                  <Button Style="{StaticResource SecondaryButton}" Content="银币" Tag="Silver" Click="OnCurrencyClick" Padding="11,7" Margin="0,0,7,0" />
+                  <Button Style="{StaticResource SecondaryButton}" Content="金币" Tag="Gold" Click="OnCurrencyClick" Padding="11,7" />
+                </StackPanel>
+                <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,14,0,0">
+                  <TextBox x:Name="CurrencyValueBox" Width="140" Height="34" Padding="9,5" Text="1000" />
+                  <Button Style="{StaticResource ActionButton}" Content="写入所选货币" Click="OnWriteCurrency" Margin="10,0,0,0" />
+                  <Button Style="{StaticResource SecondaryButton}" Content="重新捕获钱包" Click="OnProbeInventoryComponent" Margin="10,0,0,0" />
+                </StackPanel>
+              </Grid>
+            </Border>
+
             <Grid x:Name="CharacterView" Visibility="Collapsed">
               <StackPanel>
                 <Border Style="{StaticResource Card}" Padding="16,13" Margin="0,0,0,12">
@@ -168,7 +190,7 @@
                       <TextBlock Text="OPERATOR LINK / 04" Style="{StaticResource MicroLabel}" />
                       <TextBlock Text="角色与背包通道" Style="{StaticResource SectionTitle}" Margin="0,4,0,0" />
                       <TextBlock Text="角色参数仅做旁路捕获；危险的主动背包 API 测试已停用。" Foreground="{StaticResource WarningBrush}" FontSize="12" Margin="0,3,0,0" />
-                      <TextBlock x:Name="CurrencyCaptureText" Text="尚未开启最小角色捕获。" Foreground="{StaticResource AccentBrush}" FontSize="12" Margin="0,7,0,0" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Text="钱包捕获与写入已移到主页面。" Foreground="{StaticResource AccentBrush}" FontSize="12" Margin="0,7,0,0" TextTrimming="CharacterEllipsis" />
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0,0,0">
                       <Button Style="{StaticResource SecondaryButton}" Content="捕获角色参数" Click="OnStartCurrencyCapture" />
@@ -202,22 +224,6 @@
                     </StackPanel>
                   </Border>
                 </Grid>
-                <Border Style="{StaticResource Card}" Padding="16,13" Margin="0,0,0,12" IsEnabled="False">
-                  <Grid>
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="92" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="货币" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center" />
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                      <Button Style="{StaticResource SecondaryButton}" Content="铜币" Tag="Copper" Click="OnCurrencyClick" Padding="11,7" Margin="0,0,7,0" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="银币" Tag="Silver" Click="OnCurrencyClick" Padding="11,7" Margin="0,0,7,0" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="金币" Tag="Gold" Click="OnCurrencyClick" Padding="11,7" Margin="0,0,7,0" />
-                      <Button Style="{StaticResource SecondaryButton}" Content="Gloamseed" Tag="Gloamseed" Click="OnCurrencyClick" Padding="11,7" />
-                    </StackPanel>
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0,0,0">
-                      <TextBox x:Name="CurrencyValueBox" Width="112" Height="34" Padding="9,5" Text="1000" />
-                      <Button Style="{StaticResource ActionButton}" Content="写入" Click="OnWriteCurrency" Margin="8,0,0,0" />
-                    </StackPanel>
-                  </Grid>
-                </Border>
                 <Border Style="{StaticResource Card}" Padding="16,13" IsEnabled="False">
                   <StackPanel>
                     <TextBlock Text="倍率与成长" FontSize="17" FontWeight="SemiBold" />

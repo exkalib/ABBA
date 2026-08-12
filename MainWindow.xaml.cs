@@ -92,6 +92,10 @@ public partial class MainWindow : Window
             OnStartItemSelection(this, new RoutedEventArgs());
         }
         StartQuantumCommandHook();
+        if (_session.HasGameAssemblyHash(CurrentGameAssemblySha256))
+        {
+            OnProbeInventoryComponent(this, new RoutedEventArgs());
+        }
     }
 
     private void OnScanKnownSignatures(object sender, RoutedEventArgs e)
@@ -219,9 +223,7 @@ public partial class MainWindow : Window
         if (sender is Button { Tag: string currency })
         {
             _selectedCurrency = currency;
-            CurrencyCaptureText.Text = currency == "Gloamseed"
-                ? "已选择 Gloamseed（输入值为增加量）。"
-                : $"已选择 {currency}。";
+            CurrencyCaptureText.Text = $"已选择 {currency}；输入的是该单位的总数量。";
             SetStatus(CurrencyCaptureText.Text);
         }
     }
@@ -408,22 +410,15 @@ public partial class MainWindow : Window
 
     private void OnWriteCurrency(object sender, RoutedEventArgs e)
     {
-        if (_selectedCurrency == "Gloamseed")
+        if (!RequireSession() || _currencyAddress is not { } address)
         {
-            if (!TryParseInt32(CurrencyValueBox.Text, out var gloamseed) || gloamseed is < 1 or > 9_999_999 ||
-                _playerContextHook is null || !TryRefreshPlayerContext(out _))
-            {
-                SetStatus("Gloamseed 请输入 1 至 9,999,999，并先完成角色上下文定位。", false);
-                return;
-            }
-
-            QueuePlayerCommand(PlayerCommand.AwardGloamseed, gloamseed, 0, "Gloamseed");
+            SetStatus("钱包尚未捕获。请进入角色、打开一次背包或购买/拾取物品，然后点“重新捕获钱包”。", false);
             return;
         }
 
-        if (!TryRefreshPlayerContext(out var context) ||
-            !TryGetWriteTarget(context.InventoryComponent + sizeof(int), CurrencyValueBox.Text, 0, 9_999_999, out var address, out var value))
+        if (!TryParseInt32(CurrencyValueBox.Text, out var value) || value is < 0 or > 9_999_999)
         {
+            SetStatus("货币请输入 0 至 9,999,999 的整数。", false);
             return;
         }
 
@@ -441,7 +436,13 @@ public partial class MainWindow : Window
             return;
         }
 
-        WriteValue(address, value * multiplier, _selectedCurrency);
+        var internalValue = value * multiplier;
+        WriteValue(address, internalValue, _selectedCurrency);
+        if (_session!.TryReadInt32(address, out var updated) && updated == internalValue)
+        {
+            CurrencyCaptureText.Text = $"写入成功 · {_selectedCurrency}：{value:N0} · 钱包内部基数：{updated:N0}";
+            SetStatus(CurrencyCaptureText.Text, true);
+        }
     }
 
     private async void OnStartItemSelection(object sender, RoutedEventArgs e)
@@ -1090,6 +1091,7 @@ public partial class MainWindow : Window
         _selectedItemEntity = null;
         _stalePlayerContextHookDetected = false;
         _currencyAddress = null;
+        CurrencyCaptureText.Text = "连接后自动捕获钱包；进入角色并打开一次背包即可。";
         _itemQuantitySite = null;
         _playerContextSite = null;
         _itemSelectionSite = null;
