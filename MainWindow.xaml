@@ -115,6 +115,13 @@
                     <TextBlock x:Name="SelectedItemText" Text="尚未选择物品。" Foreground="{StaticResource MutedBrush}" Margin="0,11,0,0" TextWrapping="Wrap" />
                     <TextBlock Text="最近 5 次不同的捕获值" Foreground="{StaticResource MutedBrush}" Margin="0,10,0,5" />
                     <ListBox x:Name="SelectedItemHistoryList" Height="82" FontFamily="Consolas" FontSize="12" />
+                    <Grid Margin="0,13,0,6">
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                      <TextBox x:Name="CapturedItemSearchBox" Height="34" Padding="9,5" TextChanged="OnFilterCapturedItems" ToolTip="按内部名称、路径或 GUID 搜索本次捕获的物品" />
+                      <Button Grid.Column="1" Style="{StaticResource ActionButton}" Content="按列表模板新建" Click="OnCreateFromCapturedTemplate" Margin="10,0,0,0" />
+                    </Grid>
+                    <TextBlock Text="物品模板列表 · 在游戏里点过的不同物品会自动加入，选中后可直接生成" Foreground="{StaticResource AccentBrush}" Margin="0,3,0,5" />
+                    <ListBox x:Name="CapturedItemCatalogList" Height="112" FontFamily="Consolas" FontSize="12" />
                   </StackPanel>
                 </Border>
                 <Grid Margin="0,16,0,0">
@@ -165,7 +172,7 @@
                 <StackPanel>
                   <TextBlock Text="WALLET MATRIX / 04" Style="{StaticResource MicroLabel}" />
                   <TextBlock Text="铜币 / 银币 / 金币" Style="{StaticResource SectionTitle}" Margin="0,4,0,0" />
-                  <TextBlock x:Name="CurrencyCaptureText" Text="先在角色背包里点击任意物品；程序会通过游戏原生 API 增加所选货币。" Foreground="{StaticResource MutedBrush}" Margin="0,7,0,0" TextWrapping="Wrap" />
+                  <TextBlock x:Name="CurrencyCaptureText" Text="先在角色背包里点击任意物品；程序会在模拟线程静默增加所选货币。" Foreground="{StaticResource MutedBrush}" Margin="0,7,0,0" TextWrapping="Wrap" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0,0,0">
                   <Button Style="{StaticResource SecondaryButton}" Content="铜币" Tag="Copper" Click="OnCurrencyClick" Padding="11,7" Margin="0,0,7,0" />

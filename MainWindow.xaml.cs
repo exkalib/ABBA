@@ -35,6 +35,8 @@ public partial class MainWindow : Window
     private const int AddGoldRva = 0x5D79CF0;
     private const int SetHealthInfiniteRva = 0x5DE6050;
     private const int SetResourceInfiniteRva = 0x591A770;
+    private const int TryGetHeroInventoryPointerRva = 0x61E20;
+    private const int HeroInventoryTypeInfoRva = 0xBFDD5F8;
     private const int SetItemLevelRva = 0x5D87920;
     private const int AwardGloamseedRva = 0x5F4BE60;
     private const int GiveMaxStatsRva = 0x5E00240;
@@ -57,6 +59,22 @@ public partial class MainWindow : Window
     private long? _selectedItemEntity;
     private bool _stalePlayerContextHookDetected;
     private string _selectedCurrency = "Gold";
+    private readonly List<CapturedItemTemplate> _capturedItemTemplates = new();
+    private readonly HashSet<long> _pendingTemplateCaptures = new();
+
+    private sealed record CapturedItemTemplate(long Entity, long Template, long Guid, int ItemType, string Path)
+    {
+        public string DisplayName
+        {
+            get
+            {
+                var name = Path.Replace('\\', '/').Split('/').LastOrDefault();
+                return string.IsNullOrWhiteSpace(name) ? $"物品 0x{Guid:X}" : name;
+            }
+        }
+
+        public override string ToString() => $"{DisplayName}  · 类型 {ItemType}  · GUID 0x{Guid:X16}";
+    }
 
     public MainWindow()
     {
@@ -242,25 +260,26 @@ public partial class MainWindow : Window
         PlayerDiagnosticBox.Text = $"{DateTime.Now:HH:mm:ss}  开始新的角色捕获会话。";
         try
         {
+            var session = _session!;
             var activeProbe = new RemotePlayerContextHook(
-                _session!,
+                session,
                 _playerContextSite!.Value,
                 AobPattern.Parse(PlayerContextEntry).Bytes.Select(value => value ?? throw new InvalidOperationException("角色入口签名不能包含通配符。")).ToArray(),
-                _session.GameAssemblyBase + GetInventoryComponentRva,
-                _session.GameAssemblyBase + GetHeroComponentRva,
-                _session.GameAssemblyBase + GetHeroStatsRva,
-                _session.GameAssemblyBase + LevelUpRva,
-                _session.GameAssemblyBase + ChangeItemRarityRva,
-                _session.GameAssemblyBase + AddItemEnchantmentRva,
-                _session.GameAssemblyBase + DuplicateItemRva,
-                _session.GameAssemblyBase + AddItemToInventoryRva,
-                _session.GameAssemblyBase + RepairItemRva,
-                _session.GameAssemblyBase + GetItemDataRva,
-                _session.GameAssemblyBase + CreateItemRva,
-                _session.GameAssemblyBase + SetItemLevelRva,
-                _session.GameAssemblyBase + AwardGloamseedRva,
-                _session.GameAssemblyBase + GiveMaxStatsRva,
-                _session.GameAssemblyBase + UnlockFastTravelRva);
+                session.GameAssemblyBase + GetInventoryComponentRva,
+                session.GameAssemblyBase + GetHeroComponentRva,
+                session.GameAssemblyBase + GetHeroStatsRva,
+                session.GameAssemblyBase + LevelUpRva,
+                session.GameAssemblyBase + ChangeItemRarityRva,
+                session.GameAssemblyBase + AddItemEnchantmentRva,
+                session.GameAssemblyBase + DuplicateItemRva,
+                session.GameAssemblyBase + AddItemToInventoryRva,
+                session.GameAssemblyBase + RepairItemRva,
+                session.GameAssemblyBase + GetItemDataRva,
+                session.GameAssemblyBase + CreateItemRva,
+                session.GameAssemblyBase + SetItemLevelRva,
+                session.GameAssemblyBase + AwardGloamseedRva,
+                session.GameAssemblyBase + GiveMaxStatsRva,
+                session.GameAssemblyBase + UnlockFastTravelRva);
             _playerContextHook = activeProbe;
             var result = activeProbe.Arm();
             CurrencyCaptureText.Text = result;
@@ -453,7 +472,7 @@ public partial class MainWindow : Window
             }
 
             CurrencyCaptureText.Text = succeeded
-                ? $"游戏原生货币 API 已静默增加 {_selectedCurrency} {value:N0}。"
+                ? $"模拟状态已静默增加 {_selectedCurrency} {value:N0}；若金额未立即刷新，关闭再打开背包即可。"
                 : "游戏无法从所选物品解析当前角色；请点击角色背包内的物品后重试。";
             SetStatus(CurrencyCaptureText.Text, succeeded);
             return;
@@ -589,6 +608,100 @@ public partial class MainWindow : Window
         {
             SelectedItemHistoryList.Items.RemoveAt(SelectedItemHistoryList.Items.Count - 1);
         }
+
+        _ = CaptureItemTemplateAsync(itemEntity);
+    }
+
+    private async Task CaptureItemTemplateAsync(long itemEntity)
+    {
+        if (_capturedItemTemplates.Any(item => item.Entity == itemEntity) || !_pendingTemplateCaptures.Add(itemEntity))
+        {
+            return;
+        }
+
+        try
+        {
+            var queued = false;
+            for (var attempt = 0; attempt < 10 && !queued; attempt++)
+            {
+                queued = _quantumCommandHook?.QueueItemInspection(itemEntity) == true;
+                if (!queued)
+                {
+                    await Task.Delay(100);
+                }
+            }
+
+            if (!queued)
+            {
+                return;
+            }
+
+            for (var attempt = 0; attempt < 20; attempt++)
+            {
+                await Task.Delay(100);
+                if (_quantumCommandHook?.TryReadItemInspectionCompletion(
+                        out var completed,
+                        out var succeeded,
+                        out var template,
+                        out var guid,
+                        out var pathAddress,
+                        out var itemType) != true || !completed)
+                {
+                    continue;
+                }
+
+                if (!succeeded || template == 0 || guid == 0)
+                {
+                    return;
+                }
+
+                var path = _session?.TryReadIl2CppString(pathAddress, out var resolvedPath) == true
+                    ? resolvedPath
+                    : string.Empty;
+                if (_capturedItemTemplates.All(item => item.Guid != guid))
+                {
+                    _capturedItemTemplates.Add(new CapturedItemTemplate(itemEntity, template, guid, itemType, path));
+                    RefreshCapturedItemList();
+                }
+                return;
+            }
+        }
+        finally
+        {
+            _pendingTemplateCaptures.Remove(itemEntity);
+        }
+    }
+
+    private void OnFilterCapturedItems(object sender, TextChangedEventArgs e) => RefreshCapturedItemList();
+
+    private void RefreshCapturedItemList()
+    {
+        if (CapturedItemCatalogList is null)
+        {
+            return;
+        }
+
+        var search = CapturedItemSearchBox?.Text.Trim() ?? string.Empty;
+        CapturedItemCatalogList.Items.Clear();
+        foreach (var item in _capturedItemTemplates.Where(item =>
+                     search.Length == 0 ||
+                     item.DisplayName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                     item.Path.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                     item.Guid.ToString("X").Contains(search, StringComparison.OrdinalIgnoreCase)))
+        {
+            CapturedItemCatalogList.Items.Add(item);
+        }
+    }
+
+    private void OnCreateFromCapturedTemplate(object sender, RoutedEventArgs e)
+    {
+        if (CapturedItemCatalogList.SelectedItem is not CapturedItemTemplate item)
+        {
+            SetStatus("请先在物品模板列表中选择一项。", false);
+            return;
+        }
+
+        CreateFromTemplate(item.Entity, item.DisplayName);
     }
 
     private void OnQueueRarity(object sender, RoutedEventArgs e)
@@ -631,7 +744,9 @@ public partial class MainWindow : Window
                 _session.GameAssemblyBase + AddGoldRva,
                 _session.GameAssemblyBase + GetHeroStatsRva,
                 _session.GameAssemblyBase + SetHealthInfiniteRva,
-                _session.GameAssemblyBase + SetResourceInfiniteRva);
+                _session.GameAssemblyBase + SetResourceInfiniteRva,
+                _session.GameAssemblyBase + TryGetHeroInventoryPointerRva,
+                _session.GameAssemblyBase + HeroInventoryTypeInfoRva);
             var result = hook.Arm();
             if (hook.IsArmed)
             {
@@ -676,7 +791,7 @@ public partial class MainWindow : Window
         SetStatus("2 秒内没有收到品质命令完成确认；未重复执行，请保持角色在游戏中后重试。", false);
     }
 
-    private async void OnCreateFromSelectedTemplate(object sender, RoutedEventArgs e)
+    private void OnCreateFromSelectedTemplate(object sender, RoutedEventArgs e)
     {
         if (_selectedItemEntity is not { } selectedItem || selectedItem == 0)
         {
@@ -684,13 +799,18 @@ public partial class MainWindow : Window
             return;
         }
 
+        CreateFromTemplate(selectedItem, $"0x{selectedItem:X}");
+    }
+
+    private async void CreateFromTemplate(long selectedItem, string templateName)
+    {
         if (_quantumCommandHook is null || !_quantumCommandHook.QueueCreateFromTemplate(selectedItem))
         {
             SetStatus("模板新建命令无法排队；请重新点击“连接 / 扫描系统”后重试。", false);
             return;
         }
 
-        SetStatus($"已排队按 0x{selectedItem:X} 的静态模板新建一件物品，等待游戏模拟线程执行。", true);
+        SetStatus($"已排队按 {templateName} 的静态模板新建一件物品，等待游戏模拟线程执行。", true);
         for (var attempt = 0; attempt < 20; attempt++)
         {
             await Task.Delay(100);
@@ -1174,9 +1294,12 @@ public partial class MainWindow : Window
         _playerContextHook = null;
         _playerContext = null;
         _selectedItemEntity = null;
+        _capturedItemTemplates.Clear();
+        _pendingTemplateCaptures.Clear();
+        CapturedItemCatalogList.Items.Clear();
         _stalePlayerContextHookDetected = false;
         _currencyAddress = null;
-        CurrencyCaptureText.Text = "先在角色背包里点击任意物品；程序会通过游戏原生 API 增加所选货币。";
+        CurrencyCaptureText.Text = "先在角色背包里点击任意物品；程序会在模拟线程静默增加所选货币。";
         _itemQuantitySite = null;
         _playerContextSite = null;
         _itemSelectionSite = null;

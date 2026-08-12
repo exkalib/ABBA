@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Security.Cryptography;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace NRftWManagerUI.Core;
 
@@ -209,6 +210,29 @@ internal sealed class GameSession : IDisposable
         }
 
         value = BitConverter.ToInt64(bytes);
+        return true;
+    }
+
+    public bool TryReadIl2CppString(long address, out string value)
+    {
+        value = string.Empty;
+        if (address == 0 || !TryReadInt32(address + 0x10, out var length) || length is < 0 or > 1024)
+        {
+            return false;
+        }
+
+        if (length == 0)
+        {
+            return true;
+        }
+
+        var bytes = Read(address + 0x14, checked(length * sizeof(char)));
+        if (bytes.Length != length * sizeof(char))
+        {
+            return false;
+        }
+
+        value = Encoding.Unicode.GetString(bytes);
         return true;
     }
 

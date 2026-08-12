@@ -7,6 +7,7 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
     private const int CreateFromTemplateCommand = 2;
     private const int AddGoldCommand = 3;
     private const int SetInfiniteStatCommand = 4;
+    private const int InspectItemCommand = 5;
     private const int FrameOffset = 0x800;
     private const int SelectedItemOffset = 0x808;
     private const int RarityOffset = 0x810;
@@ -20,6 +21,11 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
     private const int StatKindOffset = 0x83C;
     private const int StatEnabledOffset = 0x840;
     private const int StatsGroupOffset = 0x848;
+    private const int HeroInventoryPointerOffset = 0x888;
+    private const int InspectedTemplateOffset = 0x890;
+    private const int InspectedGuidOffset = 0x898;
+    private const int InspectedPathOffset = 0x8A0;
+    private const int InspectedItemTypeOffset = 0x8A8;
 
     private readonly GameSession _session;
     private readonly long _site;
@@ -34,6 +40,8 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
     private readonly long _getHeroStats;
     private readonly long _setHealthInfinite;
     private readonly long _setResourceInfinite;
+    private readonly long _tryGetHeroInventoryPointer;
+    private readonly long _heroInventoryTypeInfo;
     private readonly byte[] _replacedBytes;
     private IntPtr _trampoline;
 
@@ -51,7 +59,9 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
         long addGold,
         long getHeroStats,
         long setHealthInfinite,
-        long setResourceInfinite)
+        long setResourceInfinite,
+        long tryGetHeroInventoryPointer,
+        long heroInventoryTypeInfo)
     {
         _session = session;
         _site = site;
@@ -66,6 +76,8 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
         _getHeroStats = getHeroStats;
         _setHealthInfinite = setHealthInfinite;
         _setResourceInfinite = setResourceInfinite;
+        _tryGetHeroInventoryPointer = tryGetHeroInventoryPointer;
+        _heroInventoryTypeInfo = heroInventoryTypeInfo;
         _replacedBytes = session.Read(site, expectedEntry.Length);
         if (!_replacedBytes.SequenceEqual(expectedEntry))
         {
@@ -114,6 +126,9 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
         code.AddRange(new byte[sizeof(int)]);
         code.AddRange(new byte[] { 0x83, 0xF8, SetInfiniteStatCommand, 0x0F, 0x84 });
         var setInfiniteStatJump = code.Count;
+        code.AddRange(new byte[sizeof(int)]);
+        code.AddRange(new byte[] { 0x83, 0xF8, InspectItemCommand, 0x0F, 0x84 });
+        var inspectItemJump = code.Count;
         code.AddRange(new byte[sizeof(int)]);
         AddStoreInt32RipRelative(code, root, CommandOffset, 0);
         var unknownCommandJump = AddNearJump(code);
@@ -197,17 +212,43 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
         var missingGoldOwnerJump = code.Count;
         code.AddRange(new byte[sizeof(int)]);
 
-        // Payload is the one source AddGold excludes from its item-added event. The gold-modified
-        // event still updates the wallet, without making the open inventory rebuild fake item slots.
+        // A zero-value native call initializes the generated HeroInventoryComponent type metadata
+        // without changing state or raising events. Resolve the live component pointer afterwards.
         AddLoadRipRelative(code, root, FrameOffset, new byte[] { 0x48, 0x8B, 0x0D });
         AddLoadRipRelative(code, root, InventoryOwnerOffset, new byte[] { 0x48, 0x8B, 0x15 });
-        AddLoadRipRelative(code, root, GoldValueOffset, new byte[] { 0x44, 0x8B, 0x05 });
+        code.AddRange(new byte[] { 0x45, 0x33, 0xC0 }); // r8d = 0
         code.AddRange(new byte[] { 0x41, 0xB9, 0x0E, 0x00, 0x00, 0x00 }); // source = Payload
         code.AddRange(new byte[] { 0xC6, 0x44, 0x24, 0x20, 0x01 }); // suppressNotification = true
         AddCallAbsolute(code, _addGold);
-        AddLoadRipRelative(code, root, GoldValueOffset, new byte[] { 0x44, 0x8B, 0x15 });
-        code.AddRange(new byte[] { 0x44, 0x39, 0xD0, 0x0F, 0x94, 0xC0, 0x0F, 0xB6, 0xC0 });
-        AddStoreRipRelative(code, root, ResultOffset, new byte[] { 0x89, 0x05 });
+
+        code.AddRange(new byte[] { 0x48, 0xB8 });
+        code.AddRange(BitConverter.GetBytes(_heroInventoryTypeInfo));
+        code.AddRange(new byte[] { 0x48, 0x8B, 0x00, 0x48, 0x85, 0xC0, 0x0F, 0x84 });
+        var missingInventoryTypeJump = code.Count;
+        code.AddRange(new byte[sizeof(int)]);
+        code.AddRange(new byte[] { 0x4C, 0x8B, 0x48, 0x38, 0x4D, 0x85, 0xC9, 0x0F, 0x84 });
+        var missingInventoryMethodTableJump = code.Count;
+        code.AddRange(new byte[sizeof(int)]);
+        code.AddRange(new byte[] { 0x4D, 0x8B, 0x49, 0x08 });
+        AddLoadRipRelative(code, root, FrameOffset, new byte[] { 0x48, 0x8B, 0x0D });
+        code.AddRange(new byte[] { 0x48, 0x83, 0xC1, 0x60 });
+        AddLoadRipRelative(code, root, InventoryOwnerOffset, new byte[] { 0x48, 0x8B, 0x15 });
+        AddLeaRipRelative(code, root, HeroInventoryPointerOffset, new byte[] { 0x4C, 0x8D, 0x05 });
+        AddCallAbsolute(code, _tryGetHeroInventoryPointer);
+        code.AddRange(new byte[] { 0x84, 0xC0, 0x0F, 0x84 });
+        var missingHeroInventoryJump = code.Count;
+        code.AddRange(new byte[sizeof(int)]);
+
+        AddLoadRipRelative(code, root, HeroInventoryPointerOffset, new byte[] { 0x48, 0x8B, 0x0D });
+        code.AddRange(new byte[] { 0x48, 0x85, 0xC9, 0x0F, 0x84 });
+        var nullHeroInventoryJump = code.Count;
+        code.AddRange(new byte[sizeof(int)]);
+        AddLoadRipRelative(code, root, GoldValueOffset, new byte[] { 0x8B, 0x05 });
+        code.AddRange(new byte[] { 0x8B, 0x51, 0x04, 0x03, 0xD0, 0x0F, 0x88 });
+        var goldOverflowJump = code.Count;
+        code.AddRange(new byte[sizeof(int)]);
+        code.AddRange(new byte[] { 0x89, 0x51, 0x04 });
+        AddStoreInt32RipRelative(code, root, ResultOffset, 1);
         AddStoreInt32RipRelative(code, root, CompletedOffset, AddGoldCommand);
         var setGoldDoneJump = AddNearJump(code);
 
@@ -273,6 +314,30 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
         var setInfiniteStatFailureOffset = code.Count;
         AddStoreInt32RipRelative(code, root, ResultOffset, 0);
         AddStoreInt32RipRelative(code, root, CompletedOffset, SetInfiniteStatCommand);
+        var setInfiniteStatFailureDoneJump = AddNearJump(code);
+
+        var inspectItemOffset = code.Count;
+        AddStoreInt32RipRelative(code, root, CommandOffset, 0);
+        AddLoadRipRelative(code, root, FrameOffset, new byte[] { 0x48, 0x8B, 0x0D });
+        AddLoadRipRelative(code, root, SelectedItemOffset, new byte[] { 0x48, 0x8B, 0x15 });
+        AddCallAbsolute(code, _getItemData);
+        code.AddRange(new byte[] { 0x48, 0x85, 0xC0, 0x0F, 0x84 });
+        var inspectFailedJump = code.Count;
+        code.AddRange(new byte[sizeof(int)]);
+        AddStoreRipRelative(code, root, InspectedTemplateOffset, new byte[] { 0x48, 0x89, 0x05 });
+        code.AddRange(new byte[] { 0x48, 0x8B, 0x50, 0x18 });
+        AddStoreRipRelative(code, root, InspectedGuidOffset, new byte[] { 0x48, 0x89, 0x15 });
+        code.AddRange(new byte[] { 0x48, 0x8B, 0x50, 0x10 });
+        AddStoreRipRelative(code, root, InspectedPathOffset, new byte[] { 0x48, 0x89, 0x15 });
+        code.AddRange(new byte[] { 0x8B, 0x50, 0x20 });
+        AddStoreRipRelative(code, root, InspectedItemTypeOffset, new byte[] { 0x89, 0x15 });
+        AddStoreInt32RipRelative(code, root, ResultOffset, 1);
+        AddStoreInt32RipRelative(code, root, CompletedOffset, InspectItemCommand);
+        var inspectDoneJump = AddNearJump(code);
+
+        var inspectFailureOffset = code.Count;
+        AddStoreInt32RipRelative(code, root, ResultOffset, 0);
+        AddStoreInt32RipRelative(code, root, CompletedOffset, InspectItemCommand);
 
         var restoreOffset = code.Count;
         PatchNearJump(code, noCommandJump, restoreOffset);
@@ -280,6 +345,7 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
         PatchNearJump(code, createJump, createOffset);
         PatchNearJump(code, setGoldJump, setGoldOffset);
         PatchNearJump(code, setInfiniteStatJump, setInfiniteStatOffset);
+        PatchNearJump(code, inspectItemJump, inspectItemOffset);
         PatchNearJump(code, unknownCommandJump, restoreOffset);
         PatchNearJump(code, rarityDoneJump, restoreOffset);
         PatchNearJump(code, missingOwnerJump, createFailureOffset);
@@ -290,6 +356,11 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
         PatchNearJump(code, missingGoldOwnerJump, setGoldFailureOffset);
         PatchNearJump(code, setGoldDoneJump, restoreOffset);
         PatchNearJump(code, setGoldFailureDoneJump, restoreOffset);
+        PatchNearJump(code, missingInventoryTypeJump, setGoldFailureOffset);
+        PatchNearJump(code, missingInventoryMethodTableJump, setGoldFailureOffset);
+        PatchNearJump(code, missingHeroInventoryJump, setGoldFailureOffset);
+        PatchNearJump(code, nullHeroInventoryJump, setGoldFailureOffset);
+        PatchNearJump(code, goldOverflowJump, setGoldFailureOffset);
         PatchNearJump(code, missingStatOwnerJump, setInfiniteStatFailureOffset);
         PatchNearJump(code, missingStatsJump, setInfiniteStatFailureOffset);
         PatchNearJump(code, healthJump, healthOffset);
@@ -299,12 +370,21 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
         PatchNearJump(code, healthDoneJump, setInfiniteStatSuccessOffset);
         PatchNearJump(code, staminaDoneJump, setInfiniteStatSuccessOffset);
         PatchNearJump(code, setInfiniteStatDoneJump, restoreOffset);
+        PatchNearJump(code, setInfiniteStatFailureDoneJump, restoreOffset);
+        PatchNearJump(code, inspectFailedJump, inspectFailureOffset);
+        PatchNearJump(code, inspectDoneJump, restoreOffset);
         code.AddRange(new byte[] { 0x48, 0x83, 0xC4, 0x28 });
         code.AddRange(new byte[] { 0x41, 0x5B, 0x41, 0x5A, 0x41, 0x59, 0x41, 0x58, 0x5A, 0x59, 0x58, 0x9D });
 
         code.AddRange(_replacedBytes);
         code.Add(0xE9);
         code.AddRange(BitConverter.GetBytes(checked((int)((_site + _replacedBytes.Length) - (root + code.Count + sizeof(int))))));
+
+        if (code.Count >= FrameOffset)
+        {
+            Dispose();
+            return "物品命令代码超过安全区域；已拒绝写入游戏。";
+        }
 
         if (!_session.Write(root, code.ToArray()))
         {
@@ -419,6 +499,49 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
 
     public bool TryReadInfiniteStatCompletion(out bool completed, out bool succeeded) =>
         TryReadCompletion(SetInfiniteStatCommand, out completed, out succeeded);
+
+    public bool QueueItemInspection(long selectedItem)
+    {
+        if (!IsArmed || selectedItem == 0)
+        {
+            return false;
+        }
+
+        var root = _trampoline.ToInt64();
+        if (!_session.TryReadInt32(root + CommandOffset, out var pending) || pending != 0)
+        {
+            return false;
+        }
+
+        return _session.WriteInt64(root + SelectedItemOffset, selectedItem) &&
+               _session.WriteInt32(root + CompletedOffset, 0) &&
+               _session.WriteInt32(root + ResultOffset, 0) &&
+               _session.WriteInt64(root + InspectedTemplateOffset, 0) &&
+               _session.WriteInt64(root + InspectedGuidOffset, 0) &&
+               _session.WriteInt64(root + InspectedPathOffset, 0) &&
+               _session.WriteInt32(root + InspectedItemTypeOffset, 0) &&
+               _session.WriteInt32(root + CommandOffset, InspectItemCommand);
+    }
+
+    public bool TryReadItemInspectionCompletion(
+        out bool completed,
+        out bool succeeded,
+        out long template,
+        out long guid,
+        out long path,
+        out int itemType)
+    {
+        template = 0;
+        guid = 0;
+        path = 0;
+        itemType = 0;
+        var root = _trampoline.ToInt64();
+        return TryReadCompletion(InspectItemCommand, out completed, out succeeded) &&
+               _session.TryReadInt64(root + InspectedTemplateOffset, out template) &&
+               _session.TryReadInt64(root + InspectedGuidOffset, out guid) &&
+               _session.TryReadInt64(root + InspectedPathOffset, out path) &&
+               _session.TryReadInt32(root + InspectedItemTypeOffset, out itemType);
+    }
 
     public bool TryReadCreateCompletion(out bool completed, out bool succeeded, out long createdItem)
     {
