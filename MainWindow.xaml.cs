@@ -41,7 +41,6 @@ public partial class MainWindow : Window
     private const int TryGetHeroInventoryPointerRva = 0x61E20;
     private const int HeroInventoryTypeInfoRva = 0xBFDD5F8;
     private const int ResolveHeroItemDataRva = 0x5F5F270;
-    private const int GetLocalizedItemNameRva = 0x8FB07C0;
     private const int SetItemLevelRva = 0x5D87920;
     private const int AwardGloamseedRva = 0x5F4BE60;
     private const int GiveMaxStatsRva = 0x5E00240;
@@ -589,7 +588,6 @@ public partial class MainWindow : Window
             _itemSelectionHook = new RemoteItemSelectionHook(
                 _session!,
                 _itemSelectionSite!.Value,
-                _session!.GameAssemblyBase + GetLocalizedItemNameRva,
                 AobPattern.Parse(ItemSelectionEntry).Bytes.Select(value => value ?? throw new InvalidOperationException("物品详情入口签名不能包含通配符。")).ToArray());
             var result = _itemSelectionHook.Arm();
             SelectedItemText.Text = result;
@@ -598,12 +596,12 @@ public partial class MainWindow : Window
             for (var attempt = 0; attempt < 18_000 && ReferenceEquals(_itemSelectionHook, activeHook); attempt++)
             {
                 await Task.Delay(100);
-                if (!activeHook.TryReadSelection(out var itemEntity, out var localizedNameAddress) || itemEntity == _selectedItemEntity)
+                if (!activeHook.TryReadSelection(out var itemEntity, out var itemAsset) || itemEntity == _selectedItemEntity)
                 {
                     continue;
                 }
 
-                var localizedName = ReadLocalizedItemName(localizedNameAddress);
+                var localizedName = ReadSimplifiedChineseItemName(itemAsset);
                 _selectedItemEntity = itemEntity;
                 activeHook.ClearSelection();
                 RecordSelectedItem(itemEntity, localizedName);
@@ -622,13 +620,13 @@ public partial class MainWindow : Window
 
     private void OnReadItemSelection(object sender, RoutedEventArgs e)
     {
-        if (_itemSelectionHook is null || !_itemSelectionHook.TryReadSelection(out var itemEntity, out var localizedNameAddress))
+        if (_itemSelectionHook is null || !_itemSelectionHook.TryReadSelection(out var itemEntity, out var itemAsset))
         {
             SetStatus("尚未捕获物品。请先开启物品选择捕获，再回游戏打开背包并点击目标物品详情。", false);
             return;
         }
 
-        var localizedName = ReadLocalizedItemName(localizedNameAddress);
+        var localizedName = ReadSimplifiedChineseItemName(itemAsset);
         _selectedItemEntity = itemEntity;
         _itemSelectionHook.ClearSelection();
         RecordSelectedItem(itemEntity, localizedName);
@@ -638,11 +636,17 @@ public partial class MainWindow : Window
         SetStatus(SelectedItemText.Text, true);
     }
 
-    private string ReadLocalizedItemName(long address)
+    private string ReadSimplifiedChineseItemName(long itemAsset)
     {
-        return _session?.TryReadIl2CppString(address, out var value) == true
-            ? value.Trim()
-            : string.Empty;
+        // HeroItemDataAsset.ItemNameMsg -> LocalizedMessage.SimplifiedChinese.
+        if (_session?.TryReadInt64(itemAsset + 0x50, out var message) != true || message == 0 ||
+            !_session.TryReadInt64(message + 0x58, out var simplifiedChinese) || simplifiedChinese == 0 ||
+            !_session.TryReadIl2CppString(simplifiedChinese, out var value))
+        {
+            return string.Empty;
+        }
+
+        return value.Trim();
     }
 
     private void RecordSelectedItem(long itemEntity, string localizedName)
@@ -659,7 +663,19 @@ public partial class MainWindow : Window
 
     private async Task CaptureItemTemplateAsync(long itemEntity, string localizedName)
     {
-        if (_capturedItemTemplates.Any(item => item.Entity == itemEntity) || !_pendingTemplateCaptures.Add(itemEntity))
+        var existingEntity = _capturedItemTemplates.FirstOrDefault(item => item.Entity == itemEntity);
+        if (existingEntity is not null)
+        {
+            if (!string.IsNullOrWhiteSpace(localizedName) && existingEntity.LocalizedName != localizedName)
+            {
+                existingEntity.LocalizedName = localizedName;
+                SaveItemCatalog();
+                RefreshCapturedItemList();
+            }
+            return;
+        }
+
+        if (!_pendingTemplateCaptures.Add(itemEntity))
         {
             return;
         }
