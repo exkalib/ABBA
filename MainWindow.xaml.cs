@@ -90,6 +90,7 @@ public partial class MainWindow : Window
     private string _selectedCurrency = "Gold";
     private readonly List<CapturedItemTemplate> _capturedItemTemplates = new();
     private readonly List<LocalGameItem> _localGameItems = new();
+    private string _selectedIconCatalogCategory = "全部";
     private readonly HashSet<long> _pendingTemplateCaptures = new();
     private static readonly string ItemCatalogPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -163,6 +164,15 @@ public partial class MainWindow : Window
         public string SearchText => $"{DisplayName} {Category} {Metadata} {PreviewDescription}";
         public bool CanGenerate => Template is not null;
         public string AvailabilityText => CanGenerate ? "可生成" : "待解析 GUID";
+    }
+
+    private sealed class IconCatalogCategoryFilter
+    {
+        public required string Name { get; init; }
+        public required string Icon { get; init; }
+        public required int Count { get; init; }
+        public string DisplayName => $"{Icon} {Name}";
+        public string CountText => Count.ToString();
     }
 
     public MainWindow()
@@ -1028,6 +1038,15 @@ public partial class MainWindow : Window
 
     private void OnFilterIconCatalogItems(object sender, TextChangedEventArgs e) => RefreshIconCatalogList();
 
+    private void OnIconCatalogCategoryChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (IconCatalogCategoryList?.SelectedItem is IconCatalogCategoryFilter category)
+        {
+            _selectedIconCatalogCategory = category.Name;
+            RefreshIconCatalogList();
+        }
+    }
+
     private async void OnScanLocalItems(object sender, RoutedEventArgs e)
     {
         if (_selectedGame is not { IsInstalled: true } game || string.IsNullOrWhiteSpace(game.InstallPath))
@@ -1116,7 +1135,7 @@ public partial class MainWindow : Window
 
     private void RefreshIconCatalogList()
     {
-        if (IconCatalogList is null)
+        if (IconCatalogList is null || IconCatalogCategoryList is null)
         {
             return;
         }
@@ -1132,7 +1151,11 @@ public partial class MainWindow : Window
             .Where(item => !capturedKeys.Contains(item.Key))
             .Select(item => new IconCatalogEntry { LocalItem = item });
 
-        var visibleItems = captured.Concat(local)
+        var allItems = captured.Concat(local).ToArray();
+        RefreshIconCatalogCategories(allItems);
+
+        var visibleItems = allItems
+            .Where(item => _selectedIconCatalogCategory == "全部" || item.Category == _selectedIconCatalogCategory)
             .Where(item => search.Length == 0 || item.SearchText.Contains(search, StringComparison.OrdinalIgnoreCase))
             .OrderBy(item => GetCategoryOrder(item.Category))
             .ThenByDescending(item => item.CanGenerate)
@@ -1151,6 +1174,45 @@ public partial class MainWindow : Window
         {
             IconCatalogList.SelectedItem = visibleItems.FirstOrDefault(item => item.DisplayName == selectedName);
         }
+    }
+
+    private void RefreshIconCatalogCategories(IReadOnlyCollection<IconCatalogEntry> allItems)
+    {
+        var categories = allItems
+            .GroupBy(item => item.Category)
+            .OrderBy(group => GetCategoryOrder(group.Key))
+            .ThenBy(group => group.Key, StringComparer.CurrentCultureIgnoreCase)
+            .Select(group => new IconCatalogCategoryFilter
+            {
+                Name = group.Key,
+                Icon = GetCategoryIcon(group.Key),
+                Count = group.Count()
+            })
+            .ToList();
+
+        categories.Insert(0, new IconCatalogCategoryFilter
+        {
+            Name = "全部",
+            Icon = "✦",
+            Count = allItems.Count
+        });
+
+        if (!categories.Any(category => category.Name == _selectedIconCatalogCategory))
+        {
+            _selectedIconCatalogCategory = "全部";
+        }
+
+        var previousHandler = new SelectionChangedEventHandler(OnIconCatalogCategoryChanged);
+        IconCatalogCategoryList.SelectionChanged -= previousHandler;
+        IconCatalogCategoryList.Items.Clear();
+        foreach (var category in categories)
+        {
+            IconCatalogCategoryList.Items.Add(category);
+        }
+
+        IconCatalogCategoryList.SelectedItem = categories.FirstOrDefault(category => category.Name == _selectedIconCatalogCategory)
+                                               ?? categories.FirstOrDefault();
+        IconCatalogCategoryList.SelectionChanged += previousHandler;
     }
 
     private static string CategorizeItem(int itemType, string path, string displayName)
@@ -1209,6 +1271,18 @@ public partial class MainWindow : Window
         "材料" => 4,
         "任务/钥匙" => 5,
         _ => 9
+    };
+
+    private static string GetCategoryIcon(string category) => category switch
+    {
+        "武器" => "⚔",
+        "防具" => "◈",
+        "饰品" => "◇",
+        "消耗品" => "✚",
+        "材料" => "◆",
+        "任务/钥匙" => "⌑",
+        "图纸/配方" => "▧",
+        _ => "•"
     };
 
     private void LoadItemCatalog()

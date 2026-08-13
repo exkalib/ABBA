@@ -323,50 +323,70 @@
                 <Grid Margin="0,2,0,0">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="1.45*" /><ColumnDefinition Width="0.9*" /></Grid.ColumnDefinitions>
 
-                  <Border Style="{StaticResource Card}" Margin="0,0,7,0" Padding="22,20">
+                  <Border Style="{StaticResource Card}" Margin="0,0,7,0" Padding="18,16">
                     <Grid>
                       <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
                       <Grid>
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <StackPanel>
                           <TextBlock Text="图标物品库" Style="{StaticResource SectionTitle}" />
-                          <TextBlock Text="实验版：从当前游戏安装目录实时扫描资源" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,6,0,0" />
+                          <TextBlock Text="从当前游戏安装目录实时扫描资源" Foreground="{StaticResource MutedBrush}" FontSize="10" Margin="0,4,0,0" />
                         </StackPanel>
-                        <Border Grid.Column="1" Background="#1B202C" CornerRadius="9" Padding="11,7" VerticalAlignment="Center">
-                          <TextBlock x:Name="IconCatalogSummaryText" Text="等待扫描" Foreground="{StaticResource MutedBrush}" FontSize="11" />
+                        <Border Grid.Column="1" Background="#1B202C" CornerRadius="8" Padding="9,5" VerticalAlignment="Center">
+                          <TextBlock x:Name="IconCatalogSummaryText" Text="等待扫描" Foreground="{StaticResource MutedBrush}" FontSize="10" />
                         </Border>
-                        <Button Grid.Column="2" x:Name="ScanLocalItemsButton" Style="{StaticResource SecondaryButton}" Content="扫描当前游戏" Click="OnScanLocalItems" Padding="12,7" Margin="8,0,0,0" />
+                        <Button Grid.Column="2" x:Name="ScanLocalItemsButton" Style="{StaticResource SecondaryButton}" Content="扫描" Click="OnScanLocalItems" Padding="10,5" Margin="6,0,0,0" />
                       </Grid>
 
-                      <Grid Grid.Row="1" Margin="0,18,0,12">
+                      <Grid Grid.Row="1" Margin="0,12,0,10">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                        <Path Data="M2,2 L12,12 M7,2 A5,5 0 1 0 7,12 A5,5 0 1 0 7,2" Stroke="#78849A" StrokeThickness="1.6" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,10,0" />
-                        <TextBox Grid.Column="1" x:Name="IconCatalogSearchBox" Height="42" Padding="12,7" TextChanged="OnFilterIconCatalogItems" ToolTip="输入物品名称、路径或 GUID" />
+                        <Path Data="M2,2 L12,12 M7,2 A5,5 0 1 0 7,12 A5,5 0 1 0 7,2" Stroke="#78849A" StrokeThickness="1.5" Width="13" Height="13" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBox Grid.Column="1" x:Name="IconCatalogSearchBox" Height="34" Padding="10,5" FontSize="11" TextChanged="OnFilterIconCatalogItems" ToolTip="输入物品名称、路径或 GUID" />
                       </Grid>
 
-                      <ListBox Grid.Row="2" x:Name="IconCatalogList" SelectionChanged="OnIconCatalogSelectionChanged" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                        <ListBox.ItemsPanel>
-                          <ItemsPanelTemplate>
-                            <WrapPanel />
-                          </ItemsPanelTemplate>
-                        </ListBox.ItemsPanel>
-                        <ListBox.ItemTemplate>
-                          <DataTemplate>
-                            <Border Width="86" Height="102" Background="#10141D" BorderBrush="#263046" BorderThickness="1" CornerRadius="8" Padding="8" Margin="4">
-                              <Grid>
-                                <Grid.RowDefinitions><RowDefinition Height="46" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-                                <Border Width="44" Height="44" CornerRadius="8" Background="#1A1F2B" BorderBrush="#333B52" BorderThickness="1" HorizontalAlignment="Center" ClipToBounds="True">
-                                  <Image Source="{Binding IconPath}" Stretch="UniformToFill" />
-                                </Border>
-                                <Border HorizontalAlignment="Right" VerticalAlignment="Top" Background="#20283A" CornerRadius="7" Padding="5,2">
-                                  <TextBlock Text="{Binding AvailabilityText}" FontSize="8" Foreground="#AEB8CC" />
-                                </Border>
-                                <TextBlock Grid.Row="1" Text="{Binding DisplayName}" FontSize="10" FontWeight="SemiBold" Foreground="#EFF7FF" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,7,0,0" />
-                              </Grid>
-                            </Border>
-                          </DataTemplate>
-                        </ListBox.ItemTemplate>
-                      </ListBox>
+                      <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="112" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+
+                        <ListBox x:Name="IconCatalogCategoryList" SelectionChanged="OnIconCatalogCategoryChanged" Background="#0B0D13" BorderBrush="#242B3B" BorderThickness="1" Padding="5" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                          <ListBox.ItemTemplate>
+                            <DataTemplate>
+                              <Border Background="#10141D" BorderBrush="#252E42" BorderThickness="1" CornerRadius="8" Padding="8,7" Margin="0,0,0,6">
+                                <Grid>
+                                  <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                  <TextBlock Text="{Binding DisplayName}" FontSize="11" FontWeight="SemiBold" Foreground="#EFF7FF" />
+                                  <Border Grid.Column="1" Background="#20283A" CornerRadius="7" Padding="5,1" Margin="6,0,0,0">
+                                    <TextBlock Text="{Binding CountText}" FontSize="9" Foreground="#AEB8CC" />
+                                  </Border>
+                                </Grid>
+                              </Border>
+                            </DataTemplate>
+                          </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <ListBox Grid.Column="1" x:Name="IconCatalogList" Margin="10,0,0,0" SelectionChanged="OnIconCatalogSelectionChanged" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                          <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                              <WrapPanel />
+                            </ItemsPanelTemplate>
+                          </ListBox.ItemsPanel>
+                          <ListBox.ItemTemplate>
+                            <DataTemplate>
+                              <Border Width="82" Height="98" Background="#10141D" BorderBrush="#263046" BorderThickness="1" CornerRadius="8" Padding="7" Margin="4">
+                                <Grid>
+                                  <Grid.RowDefinitions><RowDefinition Height="44" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                                  <Border Width="42" Height="42" CornerRadius="8" Background="#1A1F2B" BorderBrush="#333B52" BorderThickness="1" HorizontalAlignment="Center" ClipToBounds="True">
+                                    <Image Source="{Binding IconPath}" Stretch="UniformToFill" />
+                                  </Border>
+                                  <Border HorizontalAlignment="Right" VerticalAlignment="Top" Background="#20283A" CornerRadius="7" Padding="5,2">
+                                    <TextBlock Text="{Binding AvailabilityText}" FontSize="8" Foreground="#AEB8CC" />
+                                  </Border>
+                                  <TextBlock Grid.Row="1" Text="{Binding DisplayName}" FontSize="9.5" FontWeight="SemiBold" Foreground="#EFF7FF" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,6,0,0" />
+                                </Grid>
+                              </Border>
+                            </DataTemplate>
+                          </ListBox.ItemTemplate>
+                        </ListBox>
+                      </Grid>
                     </Grid>
                   </Border>
 
