@@ -215,6 +215,55 @@
       <Setter Property="Padding" Value="12,8" />
     </Style>
 
+    <Style TargetType="TabControl">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="TabControl">
+            <Grid>
+              <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+              <TabPanel IsItemsHost="True" Background="Transparent" />
+              <Border Grid.Row="1" Background="#B80B111D" BorderBrush="#263B58" BorderThickness="1" CornerRadius="0,14,14,14" Padding="0">
+                <ContentPresenter ContentSource="SelectedContent" />
+              </Border>
+            </Grid>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style TargetType="TabItem">
+      <Setter Property="Foreground" Value="#8498B3" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Padding" Value="22,13" />
+      <Setter Property="Margin" Value="0,0,6,0" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="TabItem">
+            <Border x:Name="TabShell" Background="{TemplateBinding Background}" BorderBrush="#2B425F" BorderThickness="1" CornerRadius="10,10,0,0" Padding="{TemplateBinding Padding}">
+              <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                <Setter TargetName="TabShell" Property="Background" Value="#D5111B2B" />
+                <Setter TargetName="TabShell" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                <Setter TargetName="TabShell" Property="Effect"><Setter.Value><DropShadowEffect Color="#38E8FF" BlurRadius="12" ShadowDepth="0" Opacity="0.18" /></Setter.Value></Setter>
+              </Trigger>
+              <Trigger Property="IsMouseOver" Value="True"><Setter Property="Foreground" Value="#D7E6F5" /></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
     <Style TargetType="ScrollBar">
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="Width" Value="7" />

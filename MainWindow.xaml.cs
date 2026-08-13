@@ -84,6 +84,8 @@ public partial class MainWindow : Window
     private long? _itemSelectionSite;
     private long? _selectedItemEntity;
     private bool _stalePlayerContextHookDetected;
+    private bool _isConnecting;
+    private bool _isClosing;
     private string _selectedCurrency = "Gold";
     private readonly List<CapturedItemTemplate> _capturedItemTemplates = new();
     private readonly HashSet<long> _pendingTemplateCaptures = new();
@@ -133,83 +135,133 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         LoadItemCatalog();
-        Closed += (_, _) => Disconnect();
+        Closed += (_, _) =>
+        {
+            _isClosing = true;
+            Disconnect();
+        };
         AddLog("界面启动：尚未连接游戏。不会安装或加载任何游戏模组。");
     }
 
-    private void OnConnectGame(object sender, RoutedEventArgs e)
+    private async void OnConnectGame(object sender, RoutedEventArgs e)
     {
+        if (_isConnecting)
+        {
+            return;
+        }
+
         Disconnect();
-        _session = new GameSession();
-        var result = _session.Attach();
-
-        if (!_session.IsAttached)
-        {
-            _session.Dispose();
-            _session = null;
-            SetStatus(result);
-            return;
-        }
-
-        RuntimeStateText.Text = "已连接";
-        RuntimeDetailText.Text = result;
-        ConnectionText.Text = "已连接游戏";
-        ConnectionText.Foreground = (Brush)FindResource("AccentBrush");
-        ConnectionIndicator.Fill = (Brush)FindResource("AccentBrush");
-        SetStatus(result);
-        AddLog("已连接游戏，正在检查当前版本并自动开启物品数量持续跟踪。");
-        OnScanKnownSignatures(this, new RoutedEventArgs());
-        if (_itemQuantitySite.HasValue)
-        {
-            OnStartItemCapture(this, new RoutedEventArgs());
-        }
-        if (_itemSelectionSite.HasValue)
-        {
-            OnStartItemSelection(this, new RoutedEventArgs());
-        }
-        StartQuantumCommandHook();
-    }
-
-    private void OnScanKnownSignatures(object sender, RoutedEventArgs e)
-    {
-        if (!RequireSession())
-        {
-            return;
-        }
+        SetConnectionBusy(true, "正在查找游戏进程…");
+        var session = new GameSession();
 
         try
         {
-            SetStatus("正在扫描 GameAssembly.dll 中已验证的数量与物品入口…");
-            var itemMatches = _session!.ScanGameAssembly(AobPattern.Parse(ItemQuantityPattern));
-            var itemSelectionMatches = _session.HasGameAssemblyHash(CurrentGameAssemblySha256)
-                ? _session.ScanGameAssembly(AobPattern.Parse(ItemSelectionPattern))
-                : Array.Empty<long>();
+            var result = await Task.Run(session.Attach);
+            if (_isClosing)
+            {
+                session.Dispose();
+                return;
+            }
+            if (!session.IsAttached)
+            {
+                session.Dispose();
+                SetStatus(result);
+                return;
+            }
 
-            _itemQuantitySite = itemMatches.Count == 1 ? itemMatches[0] : null;
+            ConnectionProgressText.Text = "正在验证版本与功能入口…";
+            var scanResult = await Task.Run(() =>
+            {
+                var itemMatches = session.ScanGameAssembly(AobPattern.Parse(ItemQuantityPattern));
+                var itemSelectionMatches = session.HasGameAssemblyHash(CurrentGameAssemblySha256)
+                    ? session.ScanGameAssembly(AobPattern.Parse(ItemSelectionPattern))
+                    : Array.Empty<long>();
+                return (ItemMatches: itemMatches, ItemSelectionMatches: itemSelectionMatches);
+            });
+            if (_isClosing)
+            {
+                session.Dispose();
+                return;
+            }
+
+            _session = session;
+            _itemQuantitySite = scanResult.ItemMatches.Count == 1 ? scanResult.ItemMatches[0] : null;
             _playerContextSite = null;
-            _itemSelectionSite = itemSelectionMatches.Count == 1 ? itemSelectionMatches[0] : null;
+            _itemSelectionSite = scanResult.ItemSelectionMatches.Count == 1 ? scanResult.ItemSelectionMatches[0] : null;
             _stalePlayerContextHookDetected = false;
 
-            var summary = $"数量入口：{itemMatches.Count} 个匹配；物品选择：{itemSelectionMatches.Count} 个匹配。";
-            SignatureStateText.Text = _itemQuantitySite.HasValue && _itemSelectionSite.HasValue ? "已验证" : "不匹配";
-            SignatureDetailText.Text = summary;
+            RuntimeStateText.Text = "已连接";
+            RuntimeDetailText.Text = result;
+            ConnectionText.Text = "已连接游戏";
+            ConnectionText.Foreground = (Brush)FindResource("AccentBrush");
+            ConnectionIndicator.Fill = (Brush)FindResource("AccentBrush");
 
-            if (_itemQuantitySite.HasValue && _itemSelectionSite.HasValue)
+            var summary = $"数量入口：{scanResult.ItemMatches.Count} 个匹配；物品选择：{scanResult.ItemSelectionMatches.Count} 个匹配。";
+            var verified = _itemQuantitySite.HasValue && _itemSelectionSite.HasValue;
+            SignatureStateText.Text = verified ? "已验证" : "不匹配";
+            SignatureDetailText.Text = summary;
+            WriteStateText.Text = verified ? "可捕获" : "已锁定";
+            WriteStateDetailText.Text = verified
+                ? "数量与物品入口均通过当前版本校验。"
+                : "游戏更新或文件不匹配；所有写入功能保持禁用。";
+
+            if (!verified)
             {
-                WriteStateText.Text = "可捕获";
-                WriteStateDetailText.Text = "数量与物品入口均通过当前版本校验。";
-                SetStatus($"{summary} 当前版本的数量、物品选择和品质功能可用。", true);
+                SetStatus($"{summary} 未通过当前版本的唯一匹配检查，因此所有功能保持禁用。", false);
+                return;
             }
-            else
-            {
-                WriteStateText.Text = "已锁定";
-                WriteStateDetailText.Text = "游戏更新或文件不匹配；请不要尝试写入。";
-                SetStatus($"{summary} 未通过当前版本的唯一匹配检查，因此本程序不会写入游戏。", false);
-            }
+
+            ConnectionProgressText.Text = "正在启动自动捕获…";
+            SetStatus($"{summary} 当前版本功能可用。", true);
+            OnStartItemCapture(this, new RoutedEventArgs());
+            OnStartItemSelection(this, new RoutedEventArgs());
+            StartQuantumCommandHook();
         }
         catch (Exception exception)
         {
-            SetStatus($"特征码扫描失败：{exception.Message}", false);
+            if (!ReferenceEquals(_session, session))
+            {
+                session.Dispose();
+            }
+            else
+            {
+                Disconnect();
+            }
+            SetStatus($"连接或扫描失败：{exception.Message}", false);
+        }
+        finally
+        {
+            if (!_isClosing)
+            {
+                SetConnectionBusy(false);
+            }
+        }
+    }
+
+    private void SetConnectionBusy(bool busy, string progress = "")
+    {
+        _isConnecting = busy;
+        ConnectButton.IsEnabled = !busy;
+        ConnectSpinner.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
+        ConnectButtonLabel.Text = busy ? "正在验证" : "连接并验证游戏";
+        ConnectionOverlay.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
+        OperationSurface.IsEnabled = !busy &&
+                                     _session is { IsAttached: true } &&
+                                     _itemQuantitySite.HasValue &&
+                                     _itemSelectionSite.HasValue;
+        if (busy)
+        {
+            ConnectionText.Text = "CONNECTING";
+            ConnectionText.Foreground = (Brush)FindResource("AccentBrush");
+            ConnectionIndicator.Fill = (Brush)FindResource("AccentBrush");
+            ConnectionProgressText.Text = progress;
+            SetStatus(progress);
+        }
+        else if (_session is not { IsAttached: true })
+        {
+            ConnectionText.Text = "LINK OFFLINE";
+            ConnectionText.Foreground = (Brush)FindResource("WarningBrush");
+            ConnectionIndicator.Fill = (Brush)FindResource("WarningBrush");
         }
     }
 
@@ -1574,6 +1626,7 @@ public partial class MainWindow : Window
         _itemSelectionSite = null;
         _session?.Dispose();
         _session = null;
+        OperationSurface.IsEnabled = false;
         ConnectionText.Text = "LINK OFFLINE";
         ConnectionText.Foreground = (Brush)FindResource("WarningBrush");
         ConnectionIndicator.Fill = (Brush)FindResource("WarningBrush");
