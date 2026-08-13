@@ -1,7 +1,7 @@
 <Window x:Class="NRftWManagerUI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="NRftW Manager" Height="780" Width="1240" MinHeight="700" MinWidth="1040"
+        Title="NRftW Manager" Height="560" Width="1120" MinHeight="520" MinWidth="980"
         WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="CanResize" Background="#090B12">
   <Border Background="{StaticResource SciFiGridBrush}" BorderBrush="#303643" BorderThickness="1" CornerRadius="12">
   <Grid>
@@ -104,17 +104,17 @@
 
             <TabControl Grid.Row="0">
               <TabItem Header="物品修改">
-                <Grid Margin="0,2,0,0">
-                  <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-                  <Border Style="{StaticResource Card}" Padding="24,20" Margin="0,0,0,14">
+                <Grid Margin="0,2,0,0" VerticalAlignment="Top">
+                  <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                  <Border Style="{StaticResource Card}" Padding="22,17" Margin="0,0,0,12">
                     <Grid>
                       <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                      <Border Width="48" Height="48" Background="#28243F" CornerRadius="14" VerticalAlignment="Center">
+                      <Border Width="44" Height="44" Background="#28243F" CornerRadius="12" VerticalAlignment="Center">
                         <Path Data="M12,8 H36 V40 H12 Z M18,15 H30 M18,22 H30 M18,29 H26" Stroke="{StaticResource AccentBrush}" StrokeThickness="2" Stretch="Uniform" Margin="12" />
                       </Border>
-                      <StackPanel Grid.Column="1" Margin="16,0" VerticalAlignment="Center">
-                        <TextBlock Text="当前物品" Foreground="{StaticResource MutedBrush}" FontSize="11" />
-                        <TextBlock x:Name="SelectedItemText" Text="尚未选择物品" FontSize="25" FontWeight="SemiBold" Margin="0,4,0,0" TextWrapping="Wrap" />
+                      <StackPanel Grid.Column="1" Margin="14,0" VerticalAlignment="Center">
+                        <TextBlock Text="当前物品" Foreground="{StaticResource MutedBrush}" FontSize="10" />
+                        <TextBlock x:Name="SelectedItemText" Text="尚未选择物品" FontSize="21" FontWeight="SemiBold" Margin="0,2,0,0" TextWrapping="Wrap" />
                       </StackPanel>
                       <Expander Grid.Column="2" Header="高级" IsExpanded="False" Foreground="#737D8F" VerticalAlignment="Center">
                         <StackPanel Width="300" Margin="0,8,0,0">
@@ -126,34 +126,39 @@
                     </Grid>
                   </Border>
 
-                  <Grid Grid.Row="1">
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="0.85*" /><ColumnDefinition Width="1.15*" /></Grid.ColumnDefinitions>
-                    <Border x:Name="ItemsView" Style="{StaticResource Card}" Margin="0,0,7,0" Padding="24">
-                      <StackPanel>
-                        <TextBlock Text="修改数量" Style="{StaticResource SectionTitle}" />
-                        <TextBlock x:Name="ItemCaptureText" Text="等待数量变化" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,7,0,0" TextWrapping="Wrap" />
-                        <Grid Margin="0,24,0,0">
+                  <Border Grid.Row="1" x:Name="ItemsView" Style="{StaticResource Card}" Padding="22,20">
+                    <Grid>
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="1.1*" /><ColumnDefinition Width="1" /><ColumnDefinition Width="1.2*" /><ColumnDefinition Width="1" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                      <StackPanel Margin="0,0,22,0">
+                        <TextBlock Text="物品数量" Style="{StaticResource SectionTitle}" FontSize="17" />
+                        <TextBlock x:Name="ItemCaptureText" Text="等待数量变化" Foreground="{StaticResource MutedBrush}" FontSize="10" Margin="0,4,0,0" TextWrapping="Wrap" />
+                        <Grid Margin="0,14,0,0">
                           <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                          <TextBox x:Name="ItemQuantityBox" Height="44" Padding="13,7" Text="20" FontSize="16" />
-                          <Button Grid.Column="1" Style="{StaticResource ActionButton}" Content="写入数量" Click="OnWriteItemQuantity" Margin="10,0,0,0" />
+                          <TextBox x:Name="ItemQuantityBox" MinWidth="110" Height="40" Padding="12,6" Text="20" FontSize="15" />
+                          <Button Grid.Column="1" Style="{StaticResource ActionButton}" Content="写入数量" Click="OnWriteItemQuantity" Padding="15,9" Margin="9,0,0,0" />
                         </Grid>
-                        <CheckBox x:Name="KeepLastItemCheck" Content="保留最后 1 个" IsChecked="True" Click="OnKeepLastItemChanged" Margin="0,18,0,0" />
+                        <CheckBox x:Name="KeepLastItemCheck" Content="保留最后 1 个" IsChecked="True" Click="OnKeepLastItemChanged" Margin="0,13,0,0" />
                       </StackPanel>
-                    </Border>
 
-                    <Border Grid.Column="1" Style="{StaticResource Card}" Margin="7,0,0,0" Padding="24">
-                      <StackPanel>
-                        <TextBlock Text="品质与复制" Style="{StaticResource SectionTitle}" />
-                        <TextBlock Text="选择品质会直接应用到当前物品" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,7,0,0" />
-                        <UniformGrid Columns="3" Margin="0,24,0,0">
-                          <Button Style="{StaticResource RarityButton}" BorderBrush="#AFC3D1" Foreground="#EAF4F8" Content="白色" Tag="Common" Click="OnQueueRarity" Margin="0,0,7,0" />
-                          <Button Style="{StaticResource RarityButton}" BorderBrush="#5AB8FF" Foreground="#8CCBFF" Content="蓝色" Tag="Magical" Click="OnQueueRarity" Margin="7,0" />
-                          <Button Style="{StaticResource RarityButton}" BorderBrush="{StaticResource PurpleBrush}" Foreground="#F1ACFF" Content="紫色" Tag="Plagued" Click="OnQueueRarity" Margin="7,0,0,0" />
+                      <Border Grid.Column="1" Background="#2A303D" />
+                      <StackPanel Grid.Column="2" Margin="22,0">
+                        <TextBlock Text="品质" Style="{StaticResource SectionTitle}" FontSize="17" />
+                        <TextBlock Text="直接应用到当前物品" Foreground="{StaticResource MutedBrush}" FontSize="10" Margin="0,4,0,0" />
+                        <UniformGrid Columns="3" Margin="0,20,0,0">
+                          <Button Style="{StaticResource RarityButton}" BorderBrush="#AFC3D1" Foreground="#EAF4F8" Content="白色" Tag="Common" Click="OnQueueRarity" Padding="10,8" Margin="0,0,5,0" />
+                          <Button Style="{StaticResource RarityButton}" BorderBrush="#5AB8FF" Foreground="#8CCBFF" Content="蓝色" Tag="Magical" Click="OnQueueRarity" Padding="10,8" Margin="5,0" />
+                          <Button Style="{StaticResource RarityButton}" BorderBrush="{StaticResource PurpleBrush}" Foreground="#F1ACFF" Content="紫色" Tag="Plagued" Click="OnQueueRarity" Padding="10,8" Margin="5,0,0,0" />
                         </UniformGrid>
-                        <Button Style="{StaticResource ActionButton}" Content="复制当前物品" Click="OnCreateFromSelectedTemplate" HorizontalAlignment="Stretch" Margin="0,16,0,0" />
                       </StackPanel>
-                    </Border>
-                  </Grid>
+
+                      <Border Grid.Column="3" Background="#2A303D" />
+                      <StackPanel Grid.Column="4" Width="175" Margin="22,0,0,0">
+                        <TextBlock Text="复制" Style="{StaticResource SectionTitle}" FontSize="17" />
+                        <TextBlock Text="以当前物品为模板" Foreground="{StaticResource MutedBrush}" FontSize="10" Margin="0,4,0,0" />
+                        <Button Style="{StaticResource ActionButton}" Content="复制当前物品" Click="OnCreateFromSelectedTemplate" HorizontalAlignment="Stretch" Margin="0,20,0,0" Padding="14,9" />
+                      </StackPanel>
+                    </Grid>
+                  </Border>
                 </Grid>
               </TabItem>
 
@@ -224,47 +229,43 @@
               </TabItem>
 
               <TabItem Header="常规功能">
-                <Grid Margin="0,2,0,0">
-                  <Grid.ColumnDefinitions><ColumnDefinition Width="1.1*" /><ColumnDefinition Width="0.9*" /></Grid.ColumnDefinitions>
-
-                  <Border Style="{StaticResource Card}" Margin="0,0,7,0" Padding="26,24">
+                <Grid Margin="0,2,0,0" VerticalAlignment="Top">
+                  <Border Style="{StaticResource Card}" Padding="24,22">
                     <Grid>
-                      <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-                      <StackPanel>
-                        <TextBlock Text="货币" Style="{StaticResource SectionTitle}" />
-                        <TextBlock x:Name="CurrencyCaptureText" Text="选择币种并输入增加数量" Foreground="{StaticResource MutedBrush}" Margin="0,7,0,0" TextWrapping="Wrap" />
-                      </StackPanel>
-                      <UniformGrid Grid.Row="1" Columns="3" Margin="0,30,0,0">
-                        <Button x:Name="CurrencyCopperButton" Style="{StaticResource SecondaryButton}" Content="铜币" Tag="Copper" Click="OnCurrencyClick" Padding="11,10" Margin="0,0,6,0" />
-                        <Button x:Name="CurrencySilverButton" Style="{StaticResource SecondaryButton}" Content="银币" Tag="Silver" Click="OnCurrencyClick" Padding="11,10" Margin="6,0" />
-                        <Button x:Name="CurrencyGoldButton" Style="{StaticResource SecondaryButton}" Content="金币" Tag="Gold" Click="OnCurrencyClick" Padding="11,10" Margin="6,0,0,0" Background="#8B7CFF" BorderBrush="#8B7CFF" Foreground="#FFFFFF" />
-                      </UniformGrid>
-                      <StackPanel Grid.Row="2" VerticalAlignment="Center" Margin="0,22,0,22">
-                        <TextBlock Text="增加数量" Foreground="{StaticResource MutedBrush}" FontSize="11" />
-                        <TextBox x:Name="CurrencyValueBox" Height="48" Padding="14,8" Text="1000" FontSize="18" Margin="0,7,0,0" />
-                      </StackPanel>
-                      <Button Grid.Row="3" Style="{StaticResource ActionButton}" Content="增加所选货币" Click="OnWriteCurrency" HorizontalAlignment="Stretch" />
-                    </Grid>
-                  </Border>
+                      <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="1" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                      <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="170" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                          <TextBlock Text="货币" Style="{StaticResource SectionTitle}" FontSize="18" />
+                          <TextBlock x:Name="CurrencyCaptureText" Text="选择币种与增加数量" Foreground="{StaticResource MutedBrush}" FontSize="10" Margin="0,4,0,0" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,20,0">
+                          <Button x:Name="CurrencyCopperButton" Style="{StaticResource SecondaryButton}" Content="铜币" Tag="Copper" Click="OnCurrencyClick" Padding="14,9" Margin="0,0,6,0" />
+                          <Button x:Name="CurrencySilverButton" Style="{StaticResource SecondaryButton}" Content="银币" Tag="Silver" Click="OnCurrencyClick" Padding="14,9" Margin="0,0,6,0" />
+                          <Button x:Name="CurrencyGoldButton" Style="{StaticResource SecondaryButton}" Content="金币" Tag="Gold" Click="OnCurrencyClick" Padding="14,9" Background="#8B7CFF" BorderBrush="#8B7CFF" Foreground="#FFFFFF" />
+                        </StackPanel>
+                        <TextBox Grid.Column="2" x:Name="CurrencyValueBox" MinWidth="130" Height="40" Padding="12,6" Text="1000" FontSize="15" VerticalAlignment="Center" />
+                        <Button Grid.Column="3" Style="{StaticResource ActionButton}" Content="增加货币" Click="OnWriteCurrency" Padding="17,9" Margin="9,0,0,0" VerticalAlignment="Center" />
+                      </Grid>
 
-                  <Border Grid.Column="1" Style="{StaticResource Card}" Margin="7,0,0,0" Padding="26,24">
-                    <Grid>
-                      <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-                      <StackPanel>
-                        <TextBlock Text="生命与能量" Style="{StaticResource SectionTitle}" />
-                        <TextBlock Text="离开背包后仍会持续保持" Foreground="{StaticResource MutedBrush}" Margin="0,7,0,0" />
-                      </StackPanel>
-                      <StackPanel Grid.Row="1" VerticalAlignment="Center" Margin="0,24,0,0">
-                        <Border Background="#151A24" BorderBrush="#282E3B" BorderThickness="1" CornerRadius="11" Padding="16,14" Margin="0,0,0,10">
-                          <Grid><TextBlock Text="无限生命" FontSize="14" VerticalAlignment="Center" /><CheckBox Tag="health" Click="OnToggleInfiniteStat" HorizontalAlignment="Right" /></Grid>
+                      <Border Grid.Row="1" Background="#2A303D" Margin="0,22" />
+
+                      <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="170" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                          <TextBlock Text="生命与能量" Style="{StaticResource SectionTitle}" FontSize="18" />
+                          <TextBlock Text="离开背包后持续保持" Foreground="{StaticResource MutedBrush}" FontSize="10" Margin="0,4,0,0" />
+                        </StackPanel>
+                        <Border Grid.Column="1" Background="#151A24" BorderBrush="#282E3B" BorderThickness="1" CornerRadius="11" Padding="14,13" Margin="8,0,6,0">
+                          <Grid><TextBlock Text="无限生命" FontSize="13" VerticalAlignment="Center" /><CheckBox Tag="health" Click="OnToggleInfiniteStat" HorizontalAlignment="Right" /></Grid>
                         </Border>
-                        <Border Background="#151A24" BorderBrush="#282E3B" BorderThickness="1" CornerRadius="11" Padding="16,14" Margin="0,0,0,10">
-                          <Grid><TextBlock Text="无限体力" FontSize="14" VerticalAlignment="Center" /><CheckBox Tag="stamina" Click="OnToggleInfiniteStat" HorizontalAlignment="Right" /></Grid>
+                        <Border Grid.Column="2" Background="#151A24" BorderBrush="#282E3B" BorderThickness="1" CornerRadius="11" Padding="14,13" Margin="6,0">
+                          <Grid><TextBlock Text="无限体力" FontSize="13" VerticalAlignment="Center" /><CheckBox Tag="stamina" Click="OnToggleInfiniteStat" HorizontalAlignment="Right" /></Grid>
                         </Border>
-                        <Border Background="#151A24" BorderBrush="#282E3B" BorderThickness="1" CornerRadius="11" Padding="16,14">
-                          <Grid><TextBlock Text="无限专注" FontSize="14" VerticalAlignment="Center" /><CheckBox Tag="focus" Click="OnToggleInfiniteStat" HorizontalAlignment="Right" /></Grid>
+                        <Border Grid.Column="3" Background="#151A24" BorderBrush="#282E3B" BorderThickness="1" CornerRadius="11" Padding="14,13" Margin="6,0,0,0">
+                          <Grid><TextBlock Text="无限专注" FontSize="13" VerticalAlignment="Center" /><CheckBox Tag="focus" Click="OnToggleInfiniteStat" HorizontalAlignment="Right" /></Grid>
                         </Border>
-                      </StackPanel>
+                      </Grid>
                     </Grid>
                   </Border>
                 </Grid>
