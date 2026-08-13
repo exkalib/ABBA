@@ -321,7 +321,7 @@
 
               <TabItem x:Name="IconCatalogTab" Header="图标物品库">
                 <Grid Margin="0,2,0,0">
-                  <Grid.ColumnDefinitions><ColumnDefinition Width="1.45*" /><ColumnDefinition Width="0.9*" /></Grid.ColumnDefinitions>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="1.6*" /><ColumnDefinition Width="0.78*" /></Grid.ColumnDefinitions>
 
                   <Border Style="{StaticResource Card}" Margin="0,0,7,0" Padding="18,16">
                     <Grid>
@@ -345,16 +345,17 @@
                       </Grid>
 
                       <Grid Grid.Row="2">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="112" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="138" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
 
-                        <ListBox x:Name="IconCatalogCategoryList" SelectionChanged="OnIconCatalogCategoryChanged" Background="#0B0D13" BorderBrush="#242B3B" BorderThickness="1" Padding="5" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox x:Name="IconCatalogCategoryList" SelectionChanged="OnIconCatalogCategoryChanged" Background="#0B0D13" BorderBrush="#242B3B" BorderThickness="1" Padding="6" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                           <ListBox.ItemTemplate>
                             <DataTemplate>
-                              <Border Background="#10141D" BorderBrush="#252E42" BorderThickness="1" CornerRadius="8" Padding="8,7" Margin="0,0,0,6">
+                              <Border Background="#10141D" BorderBrush="#252E42" BorderThickness="1" CornerRadius="9" Padding="10,8" Margin="0,0,0,7">
                                 <Grid>
-                                  <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                  <TextBlock Text="{Binding DisplayName}" FontSize="11" FontWeight="SemiBold" Foreground="#EFF7FF" />
-                                  <Border Grid.Column="1" Background="#20283A" CornerRadius="7" Padding="5,1" Margin="6,0,0,0">
+                                  <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                  <TextBlock Text="{Binding Icon}" FontSize="12" Foreground="#C9BCFF" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                  <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="11" FontWeight="SemiBold" Foreground="#EFF7FF" VerticalAlignment="Center" />
+                                  <Border Grid.Column="2" Background="#20283A" CornerRadius="7" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center">
                                     <TextBlock Text="{Binding CountText}" FontSize="9" Foreground="#AEB8CC" />
                                   </Border>
                                 </Grid>
@@ -371,7 +372,7 @@
                           </ListBox.ItemsPanel>
                           <ListBox.ItemTemplate>
                             <DataTemplate>
-                              <Border Width="82" Height="98" Background="#10141D" BorderBrush="#263046" BorderThickness="1" CornerRadius="8" Padding="7" Margin="4">
+                              <Border Width="88" Height="102" Background="#10141D" BorderBrush="#263046" BorderThickness="1" CornerRadius="8" Padding="7" Margin="4">
                                 <Grid>
                                   <Grid.RowDefinitions><RowDefinition Height="44" /><RowDefinition Height="*" /></Grid.RowDefinitions>
                                   <Border Width="42" Height="42" CornerRadius="8" Background="#1A1F2B" BorderBrush="#333B52" BorderThickness="1" HorizontalAlignment="Center" ClipToBounds="True">
@@ -380,7 +381,7 @@
                                   <Border HorizontalAlignment="Right" VerticalAlignment="Top" Background="#20283A" CornerRadius="7" Padding="5,2">
                                     <TextBlock Text="{Binding AvailabilityText}" FontSize="8" Foreground="#AEB8CC" />
                                   </Border>
-                                  <TextBlock Grid.Row="1" Text="{Binding DisplayName}" FontSize="9.5" FontWeight="SemiBold" Foreground="#EFF7FF" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,6,0,0" />
+                                  <TextBlock Grid.Row="1" Text="{Binding DisplayName}" FontSize="9.5" FontWeight="SemiBold" Foreground="#EFF7FF" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,6,0,0" MaxHeight="36" />
                                 </Grid>
                               </Border>
                             </DataTemplate>

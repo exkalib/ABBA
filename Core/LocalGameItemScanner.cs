@@ -128,7 +128,10 @@ internal static partial class LocalGameItemScanner
 
     private static string ToDisplayName(string key)
     {
-        var name = key.Split('.', StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? key;
+        var parts = key.Split('.', StringSplitOptions.RemoveEmptyEntries);
+        var name = parts.LastOrDefault(part =>
+            !part.Equals("Name", StringComparison.OrdinalIgnoreCase) &&
+            !part.Equals("Title", StringComparison.OrdinalIgnoreCase)) ?? key;
         name = NameBoundaryRegex().Replace(name, " $1");
         return string.Join(' ', name.Split(' ', StringSplitOptions.RemoveEmptyEntries)
             .Select(part => part.Length <= 1
