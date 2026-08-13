@@ -109,6 +109,12 @@ internal sealed class RemoteCaptureHook : IDisposable
         code.AddRange(RegisterMoveToRipRelative(_register, trampolineAddress, out _captureOffset));
         if (_preventZeroQuantity)
         {
+            // Normal quantity changes only need address capture. Resolving ownership on every
+            // pickup/use made this hot path fragile; ownership matters only for a zero write.
+            code.AddRange(new byte[] { 0x85, 0xFF }); // test edi,edi
+            var nonZeroQuantityJump = code.Count;
+            code.AddRange(new byte[] { 0x0F, 0x85, 0x00, 0x00, 0x00, 0x00 }); // jne original
+
             AddStoreInt32RipRelative(code, trampolineAddress, _ownerResolvedOffset, 0);
             code.AddRange(new byte[] { 0x48, 0x81, 0xEC, 0xC0, 0x00, 0x00, 0x00 }); // sub rsp,C0
             AddSaveVolatileRegisters(code);
@@ -129,7 +135,13 @@ internal sealed class RemoteCaptureHook : IDisposable
             code.AddRange(new byte[] { 0x85, 0xC0 }); // test eax,eax
             code.AddRange(new byte[] { 0x74, 0x0A }); // je original
             code.AddRange(new byte[] { 0x83, 0xFF, 0x00, 0x75, 0x05, 0xBF, 0x01, 0x00, 0x00, 0x00 }); // clamp backpack zero writes
+            var originalInstructionOffset = code.Count;
             code.AddRange(new byte[] { 0x89, 0x3B, 0x85, 0xFF, 0x0F, 0x94, 0xC0 });
+            var nonZeroQuantityOffset = BitConverter.GetBytes(originalInstructionOffset - (nonZeroQuantityJump + 6));
+            for (var index = 0; index < nonZeroQuantityOffset.Length; index++)
+            {
+                code[nonZeroQuantityJump + 2 + index] = nonZeroQuantityOffset[index];
+            }
         }
         else
         {

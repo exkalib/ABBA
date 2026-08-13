@@ -159,6 +159,19 @@ public partial class MainWindow : Window
         public string DisplayName => Template?.DisplayName ?? LocalItem?.DisplayName ?? string.Empty;
         public string Category => Template?.Category ?? LocalItem?.Category ?? "其他";
         public string IconPath => Template?.IconPath ?? LocalItem?.IconPath ?? "Assets/riftctrl-icon.png";
+        public string IconSource
+        {
+            get
+            {
+                var path = IconPath;
+                if (string.IsNullOrWhiteSpace(path))
+                {
+                    return string.Empty;
+                }
+
+                return Path.IsPathRooted(path) ? new Uri(path).AbsoluteUri : path;
+            }
+        }
         public string Metadata => Template?.Metadata ?? LocalItem?.Metadata ?? string.Empty;
         public string PreviewDescription => Template?.PreviewDescription ?? LocalItem?.Description ?? string.Empty;
         public string SearchText => $"{DisplayName} {Category} {Metadata} {PreviewDescription}";

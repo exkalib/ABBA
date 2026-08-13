@@ -376,7 +376,10 @@
                                 <Grid>
                                   <Grid.RowDefinitions><RowDefinition Height="44" /><RowDefinition Height="*" /></Grid.RowDefinitions>
                                   <Border Width="42" Height="42" CornerRadius="8" Background="#171C28" BorderBrush="#303A52" BorderThickness="1" HorizontalAlignment="Center">
-                                    <TextBlock Text="{Binding CategoryIcon}" FontSize="18" Foreground="#BDAEFF" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    <Grid>
+                                      <TextBlock Text="{Binding CategoryIcon}" FontSize="18" Foreground="#BDAEFF" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                      <Image Source="{Binding IconSource}" Stretch="Uniform" Margin="2" />
+                                    </Grid>
                                   </Border>
                                   <Border HorizontalAlignment="Right" VerticalAlignment="Top" Background="#20283A" CornerRadius="7" Padding="5,2">
                                     <TextBlock Text="{Binding AvailabilityText}" FontSize="8" Foreground="#AEB8CC" />
@@ -398,7 +401,7 @@
                         <Border Width="72" Height="72" CornerRadius="12" Background="#171C28" BorderBrush="#333B52" BorderThickness="1" HorizontalAlignment="Left" ClipToBounds="True">
                           <Grid>
                             <TextBlock Text="{Binding ElementName=IconCatalogList, Path=SelectedItem.CategoryIcon}" FontSize="28" Foreground="#BDAEFF" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            <Image Source="{Binding ElementName=IconCatalogList, Path=SelectedItem.IconPath}" Stretch="UniformToFill" />
+                            <Image Source="{Binding ElementName=IconCatalogList, Path=SelectedItem.IconSource}" Stretch="Uniform" Margin="3" />
                           </Grid>
                         </Border>
                         <TextBlock Text="{Binding ElementName=IconCatalogList, Path=SelectedItem.DisplayName, TargetNullValue=选择一个物品}" Style="{StaticResource SectionTitle}" FontSize="20" Margin="0,14,0,0" TextWrapping="Wrap" />
