@@ -8,5 +8,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>RiftCtrl</AssemblyName>
     <Product>RIFT//CTRL</Product>
+    <ApplicationIcon>Assets\riftctrl.ico</ApplicationIcon>
   </PropertyGroup>
+  <ItemGroup>
+    <Resource Include="Assets\riftctrl-icon.png" />
+    <Resource Include="Assets\riftctrl.ico" />
+  </ItemGroup>
 </Project>
