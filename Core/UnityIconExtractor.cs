@@ -36,7 +36,7 @@ internal static class UnityIconExtractor
 
         var extracted = wanted
             .Select(name => (name, path: Path.Combine(cachePath, name + ".png")))
-            .Where(item => File.Exists(item.path))
+            .Where(item => new FileInfo(item.path) is { Exists: true, Length: > 0 })
             .ToDictionary(item => item.name, item => item.path, StringComparer.OrdinalIgnoreCase);
 
         wanted.ExceptWith(extracted.Keys);
@@ -92,13 +92,25 @@ internal static class UnityIconExtractor
                     var data = textureFile.FillPictureData(assetsFile);
                     if (data.Length == 0)
                     {
+                        DeleteEmptyOutput(outPath);
                         continue;
                     }
 
                     if (textureFile.DecodeTextureImage(data, outPath, ImageExportType.Png, 100))
                     {
-                        extracted[textureName] = outPath;
-                        wanted.Remove(textureName);
+                        if (new FileInfo(outPath) is { Exists: true, Length: > 0 })
+                        {
+                            extracted[textureName] = outPath;
+                            wanted.Remove(textureName);
+                        }
+                        else
+                        {
+                            DeleteEmptyOutput(outPath);
+                        }
+                    }
+                    else
+                    {
+                        DeleteEmptyOutput(outPath);
                     }
                 }
             }
@@ -109,6 +121,21 @@ internal static class UnityIconExtractor
         catch
         {
             // Icon extraction is best-effort. The catalog view still works with category placeholders.
+        }
+    }
+
+    private static void DeleteEmptyOutput(string path)
+    {
+        try
+        {
+            if (new FileInfo(path) is { Exists: true, Length: 0 })
+            {
+                File.Delete(path);
+            }
+        }
+        catch
+        {
+            // Ignore cache cleanup failures.
         }
     }
 }

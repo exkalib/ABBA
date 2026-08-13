@@ -21,6 +21,13 @@ internal sealed class LocalGameItem
     public string DisplayName => Name;
 }
 
+internal sealed class LocalGameItemScanResult
+{
+    public required IReadOnlyList<LocalGameItem> Items { get; init; }
+    public required int MatchedIconResources { get; init; }
+    public required int ExtractedIcons { get; init; }
+}
+
 internal static partial class LocalGameItemScanner
 {
     private static readonly string[] ItemBundleHints =
@@ -30,12 +37,17 @@ internal static partial class LocalGameItemScanner
         "static_assets"
     };
 
-    public static IReadOnlyList<LocalGameItem> Scan(string installPath)
+    public static LocalGameItemScanResult Scan(string installPath)
     {
         var dataPath = Path.Combine(installPath, "NoRestForTheWicked_Data", "StreamingAssets", "aa", "StandaloneWindows64");
         if (!Directory.Exists(dataPath))
         {
-            return Array.Empty<LocalGameItem>();
+            return new LocalGameItemScanResult
+            {
+                Items = Array.Empty<LocalGameItem>(),
+                MatchedIconResources = 0,
+                ExtractedIcons = 0
+            };
         }
 
         var iconResources = ScanIconResources(installPath);
@@ -55,10 +67,16 @@ internal static partial class LocalGameItemScanner
             }
         }
 
-        return found.Values
+        var items = found.Values
             .OrderBy(item => GetCategoryOrder(item.Category))
             .ThenBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToArray();
+        return new LocalGameItemScanResult
+        {
+            Items = items,
+            MatchedIconResources = items.Count(item => !string.IsNullOrWhiteSpace(item.IconResourceName)),
+            ExtractedIcons = items.Count(item => !string.IsNullOrWhiteSpace(item.IconPath))
+        };
     }
 
     private static IEnumerable<string> ExtractAsciiTokens(string path)

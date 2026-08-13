@@ -1095,16 +1095,16 @@ public partial class MainWindow : Window
         }
 
         IconCatalogSummaryText.Text = "正在扫描当前游戏资源…";
-        var items = await Task.Run(() => LocalGameItemScanner.Scan(game.InstallPath));
+        var scanResult = await Task.Run(() => LocalGameItemScanner.Scan(game.InstallPath));
         if (!ReferenceEquals(_selectedGame, game) && (_selectedGame?.AppId != game.AppId || _selectedGame?.Platform != game.Platform))
         {
             return;
         }
 
         _localGameItems.Clear();
-        _localGameItems.AddRange(items);
+        _localGameItems.AddRange(scanResult.Items);
         RefreshIconCatalogList();
-        SetStatus($"已从当前游戏资源扫描到 {_localGameItems.Count} 个候选物品。", _localGameItems.Count > 0);
+        SetStatus($"已扫描 {_localGameItems.Count} 个候选物品；匹配图标资源 {scanResult.MatchedIconResources} 个，实际导出图标 {scanResult.ExtractedIcons} 个。", _localGameItems.Count > 0);
     }
 
     private void RefreshCapturedItemList()
@@ -1180,7 +1180,8 @@ public partial class MainWindow : Window
             IconCatalogList.Items.Add(item);
         }
 
-        IconCatalogSummaryText.Text = $"{visibleItems.Length} 个 · 名称 {_localGameItems.Count} · 图标待解析 · 可生成 {_capturedItemTemplates.Count}";
+        var localIconCount = _localGameItems.Count(item => !string.IsNullOrWhiteSpace(item.IconPath));
+        IconCatalogSummaryText.Text = $"{visibleItems.Length} 个 · 名称 {_localGameItems.Count} · 图标 {localIconCount} · 可生成 {_capturedItemTemplates.Count}";
 
         if (!string.IsNullOrWhiteSpace(selectedName))
         {
