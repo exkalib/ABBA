@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using NRftWManagerUI.Core;
 
 namespace NRftWManagerUI;
@@ -86,6 +87,9 @@ public partial class MainWindow : Window
     private bool _stalePlayerContextHookDetected;
     private bool _isConnecting;
     private bool _isScanningLocalItems;
+    private bool _isRenderingIconCatalog;
+    private int _iconCatalogRenderVersion;
+    private IconCatalogEntry[] _pendingIconCatalogItems = Array.Empty<IconCatalogEntry>();
     private bool _isClosing;
     private InstalledGame? _selectedGame;
     private string _selectedCurrency = "Gold";
@@ -1140,11 +1144,26 @@ public partial class MainWindow : Window
 
     private void SetIconCatalogLoading(bool loading)
     {
-        IconCatalogTabSpinner.Visibility = loading ? Visibility.Visible : Visibility.Collapsed;
+        var busy = loading || _isRenderingIconCatalog;
+        IconCatalogTabSpinner.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
         ScanLocalItemsSpinner.Visibility = loading ? Visibility.Visible : Visibility.Collapsed;
         IconCatalogLoadingOverlay.Visibility = loading ? Visibility.Visible : Visibility.Collapsed;
+        IconCatalogRenderOverlay.Visibility = !loading && _isRenderingIconCatalog ? Visibility.Visible : Visibility.Collapsed;
         ScanLocalItemsButtonText.Text = loading ? "扫描中" : "扫描";
         ScanLocalItemsButton.IsEnabled = !loading && _selectedGame?.IsInstalled == true;
+    }
+
+    private void OnMainFeatureTabChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!ReferenceEquals(e.Source, MainFeatureTabs) || MainFeatureTabs.SelectedItem != IconCatalogTab)
+        {
+            return;
+        }
+
+        if (!_isScanningLocalItems && _pendingIconCatalogItems.Length > 0)
+        {
+            _ = RenderIconCatalogItemsAsync(_pendingIconCatalogItems, ++_iconCatalogRenderVersion);
+        }
     }
 
     private void RefreshCapturedItemList()
@@ -1214,18 +1233,64 @@ public partial class MainWindow : Window
             .ThenBy(item => item.DisplayName, StringComparer.CurrentCultureIgnoreCase)
             .ToArray();
 
+        _pendingIconCatalogItems = visibleItems;
         IconCatalogList.Items.Clear();
-        foreach (var item in visibleItems)
-        {
-            IconCatalogList.Items.Add(item);
-        }
 
         var localIconCount = _localGameItems.Count(item => !string.IsNullOrWhiteSpace(item.IconPath));
         IconCatalogSummaryText.Text = $"{visibleItems.Length} 个 · 名称 {_localGameItems.Count} · 图标 {localIconCount} · 可生成 {_capturedItemTemplates.Count}";
 
         if (!string.IsNullOrWhiteSpace(selectedName))
         {
-            IconCatalogList.SelectedItem = visibleItems.FirstOrDefault(item => item.DisplayName == selectedName);
+            // Restored after the incremental render completes.
+        }
+
+
+        var renderVersion = ++_iconCatalogRenderVersion;
+        if (MainFeatureTabs?.SelectedItem == IconCatalogTab)
+        {
+            _ = RenderIconCatalogItemsAsync(visibleItems, renderVersion, selectedName);
+        }
+    }
+
+    private async Task RenderIconCatalogItemsAsync(
+        IReadOnlyList<IconCatalogEntry> items,
+        int renderVersion,
+        string? selectedName = null)
+    {
+        _isRenderingIconCatalog = true;
+        SetIconCatalogLoading(_isScanningLocalItems);
+        await Dispatcher.Yield(DispatcherPriority.Render);
+        try
+        {
+            IconCatalogList.Items.Clear();
+            const int batchSize = 24;
+            for (var start = 0; start < items.Count; start += batchSize)
+            {
+                if (renderVersion != _iconCatalogRenderVersion || MainFeatureTabs.SelectedItem != IconCatalogTab)
+                {
+                    return;
+                }
+
+                var end = Math.Min(start + batchSize, items.Count);
+                for (var index = start; index < end; index++)
+                {
+                    IconCatalogList.Items.Add(items[index]);
+                }
+                await Dispatcher.Yield(DispatcherPriority.Background);
+            }
+
+            if (!string.IsNullOrWhiteSpace(selectedName))
+            {
+                IconCatalogList.SelectedItem = items.FirstOrDefault(item => item.DisplayName == selectedName);
+            }
+        }
+        finally
+        {
+            if (renderVersion == _iconCatalogRenderVersion)
+            {
+                _isRenderingIconCatalog = false;
+                SetIconCatalogLoading(_isScanningLocalItems);
+            }
         }
     }
 
