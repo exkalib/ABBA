@@ -383,7 +383,8 @@ public partial class MainWindow : Window
                 5,
                 CaptureRegister.Rbx,
                 0,
-                KeepLastItemCheck.IsChecked == true);
+                KeepLastItemCheck.IsChecked == true,
+                _session!.GameAssemblyBase + TryGetItemOwnerRva);
             var result = _itemCapture.Arm();
             ItemCaptureText.Text = result;
             SetStatus(result);
