@@ -6,5 +6,7 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>RiftCtrl</AssemblyName>
+    <Product>RIFT//CTRL</Product>
   </PropertyGroup>
 </Project>

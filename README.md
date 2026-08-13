@@ -1,4 +1,4 @@
-# NRftW Manager UI
+# RIFT//CTRL
 
 Windows-only external trainer for the current No Rest for the Wicked workflow. It does not install, load, or depend on a game mod.
 
