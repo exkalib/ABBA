@@ -13,6 +13,7 @@ internal sealed class LocalGameItem
     public string IconPath { get; init; } = string.Empty;
     public string IconResourceName { get; init; } = string.Empty;
     public long Guid { get; init; }
+    public bool HasIconReference { get; init; }
     public string Description { get; init; } = "已从当前游戏资源包解析到物品名称；图标、中文描述与生成 GUID 还需要继续解析 Addressables/Unity 资源。";
     public int Rarity { get; init; }
     public int ItemType { get; init; }
@@ -61,17 +62,21 @@ internal static partial class LocalGameItemScanner
         var extractedIcons = UnityIconExtractor.Extract(installPath, iconResources.Values.Distinct(StringComparer.OrdinalIgnoreCase).ToArray());
         var spriteIcons = UnityIconExtractor.ExtractSprites(installPath, rawItemNames, CanonicalName);
         var itemDefinitions = UnityIconExtractor.ExtractItemDefinitions(installPath, rawItemNames, CanonicalName);
+        var referencedIcons = UnityIconExtractor.ExtractReferencedItemIcons(installPath, itemDefinitions);
         var found = new Dictionary<string, LocalGameItem>(StringComparer.OrdinalIgnoreCase);
         foreach (var (key, localizedName) in catalogLocalizedItems)
         {
-            if (TryCreateItem(key, "qdb_assets", iconResources, extractedIcons, spriteIcons, itemDefinitions, localizedName, out var item))
+            if (TryCreateItem(key, "qdb_assets", iconResources, extractedIcons, spriteIcons, referencedIcons, itemDefinitions, localizedName, out var item))
             {
                 found.TryAdd(item.Key, item);
             }
         }
 
         var items = found.Values
-            .Where(item => IsCatalogItem(item.Key))
+            .Where(item => IsCatalogItem(item.Key) &&
+                           item.Guid != 0 &&
+                           item.HasIconReference &&
+                           !string.IsNullOrWhiteSpace(item.IconPath))
             .OrderBy(item => GetCategoryOrder(item.Category))
             .ThenBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToArray();
@@ -266,6 +271,7 @@ internal static partial class LocalGameItemScanner
         IReadOnlyDictionary<string, string> iconResources,
         IReadOnlyDictionary<string, string> extractedIcons,
         IReadOnlyDictionary<string, string> spriteIcons,
+        IReadOnlyDictionary<string, string> referencedIcons,
         IReadOnlyDictionary<string, UnityIconExtractor.ItemDefinition> itemDefinitions,
         LocalizedItemName localizedName,
         out LocalGameItem item)
@@ -300,7 +306,9 @@ internal static partial class LocalGameItemScanner
         var iconPath = !string.IsNullOrWhiteSpace(iconResourceName) &&
                        extractedIcons.TryGetValue(Path.GetFileNameWithoutExtension(iconResourceName), out var extractedIconPath)
             ? extractedIconPath
-            : spriteIcons.GetValueOrDefault(rawCanonicalName, spriteIcons.GetValueOrDefault(englishCanonicalName, string.Empty));
+            : referencedIcons.GetValueOrDefault(rawCanonicalName,
+                referencedIcons.GetValueOrDefault(englishCanonicalName,
+                    spriteIcons.GetValueOrDefault(rawCanonicalName, spriteIcons.GetValueOrDefault(englishCanonicalName, string.Empty))));
         item = new LocalGameItem
         {
             Key = key,
@@ -310,6 +318,7 @@ internal static partial class LocalGameItemScanner
             IconPath = iconPath,
             IconResourceName = iconResourceName ?? string.Empty,
             Guid = guid,
+            HasIconReference = definition is not null && definition.IconPathId != 0,
             ItemType = GetCategoryOrder(category),
             Rarity = 0,
             Description = string.IsNullOrWhiteSpace(iconResourceName)

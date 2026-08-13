@@ -7,7 +7,7 @@ namespace NRftWManagerUI.Core;
 
 internal static class UnityIconExtractor
 {
-    internal sealed record ItemDefinition(long Guid, int IconFileId, long IconPathId);
+    internal sealed record ItemDefinition(long Guid, string IconCabName, long IconPathId);
 
     public static IReadOnlyDictionary<string, ItemDefinition> ExtractItemDefinitions(
         string installPath,
@@ -36,11 +36,28 @@ internal static class UnityIconExtractor
                             var itemIcon = field["ItemIcon"];
                             if (field["ItemNameMsg"].IsDummy && field["ItemNameMsgRef"].IsDummy && itemIcon.IsDummy) continue;
                             var guidField = field["AssetGuid"]["Value"];
-                            if (guidField.IsDummy || guidField.AsLong == 0) continue;
-                            definitions.TryAdd(canonicalName, new ItemDefinition(
-                                guidField.AsLong,
-                                itemIcon.IsDummy ? 0 : itemIcon["m_FileID"].AsInt,
-                                itemIcon.IsDummy ? 0 : itemIcon["m_PathID"].AsLong));
+                            if (guidField.IsDummy) continue;
+                            var itemGuid = guidField.AsLong;
+                            if (itemGuid == 0) continue;
+                            var iconFileId = itemIcon.IsDummy ? 0 : itemIcon["m_FileID"].AsInt;
+                            var iconCabName = string.Empty;
+                            if (iconFileId > 0 && iconFileId <= assetsFile.file.Metadata.Externals.Count)
+                            {
+                                iconCabName = Path.GetFileName(assetsFile.file.Metadata.Externals[iconFileId - 1].PathName);
+                            }
+                            else if (iconFileId == 0)
+                            {
+                                iconCabName = bundle.file.BlockAndDirInfo.DirectoryInfos[fileIndex].Name;
+                            }
+                            var candidate = new ItemDefinition(
+                                itemGuid,
+                                iconCabName,
+                                itemIcon.IsDummy ? 0 : itemIcon["m_PathID"].AsLong);
+                            if (!definitions.TryGetValue(canonicalName, out var current) ||
+                                (current.IconPathId == 0 && candidate.IconPathId != 0))
+                            {
+                                definitions[canonicalName] = candidate;
+                            }
                         }
                         catch { }
                     }
@@ -53,14 +70,23 @@ internal static class UnityIconExtractor
         return definitions;
     }
 
-    public static IReadOnlyDictionary<string, long> ExtractItemGuids(
+    public static IReadOnlyDictionary<string, string> ExtractReferencedItemIcons(
         string installPath,
-        IReadOnlySet<string> wantedCanonicalNames,
-        Func<string, string> canonicalize)
+        IReadOnlyDictionary<string, ItemDefinition> definitions)
     {
-        var guids = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+        var extracted = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var unresolved = definitions
+            .Where(pair => pair.Value.IconPathId != 0 && !string.IsNullOrWhiteSpace(pair.Value.IconCabName))
+            .ToArray();
+        if (unresolved.Length == 0) return extracted;
+
+        var wantedCabs = unresolved.Select(pair => pair.Value.IconCabName).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var dataPath = Path.Combine(installPath, "NoRestForTheWicked_Data", "StreamingAssets", "aa", "StandaloneWindows64");
-        foreach (var bundlePath in Directory.EnumerateFiles(dataPath, "qdb_assets*.bundle"))
+        var cachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NRftWManagerUI", "item-icons");
+        Directory.CreateDirectory(cachePath);
+        var diagnosticPath = Path.Combine(cachePath, "referenced-icon.log");
+        File.WriteAllText(diagnosticPath, string.Empty);
+        foreach (var bundlePath in Directory.EnumerateFiles(dataPath, "*.bundle"))
         {
             try
             {
@@ -68,46 +94,72 @@ internal static class UnityIconExtractor
                 var bundle = manager.LoadBundleFile(bundlePath, true);
                 for (var fileIndex = 0; fileIndex < bundle.file.BlockAndDirInfo.DirectoryInfos.Count; fileIndex++)
                 {
+                    var cabName = bundle.file.BlockAndDirInfo.DirectoryInfos[fileIndex].Name;
+                    if (!wantedCabs.Contains(cabName)) continue;
                     var assetsFile = manager.LoadAssetsFileFromBundle(bundle, fileIndex, false);
                     if (assetsFile?.file is null) continue;
-                    foreach (var info in assetsFile.file.AssetInfos.Where(info => info.TypeId == (int)AssetClassID.MonoBehaviour))
+                    var infos = assetsFile.file.AssetInfos.ToDictionary(info => info.PathId);
+                    foreach (var pair in unresolved.Where(pair => pair.Value.IconCabName.Equals(cabName, StringComparison.OrdinalIgnoreCase)))
                     {
                         try
                         {
-                            var field = manager.GetBaseField(assetsFile, info, AssetReadFlags.None);
-                            var canonicalName = canonicalize(field["m_Name"].AsString);
-                            if (!wantedCanonicalNames.Contains(canonicalName)) continue;
-
-                            // qdb_assets contains several helper objects with the same m_Name and
-                            // their own AssetGuid. Only ItemData definitions expose item fields.
-                            if (field["ItemNameMsg"].IsDummy && field["ItemNameMsgRef"].IsDummy && field["ItemIcon"].IsDummy)
+                            if (!infos.TryGetValue(pair.Value.IconPathId, out var spriteInfo))
                             {
+                                SafeAppend(diagnosticPath, $"missing item={pair.Key} guid={pair.Value.Guid:X16} cab={cabName} path={pair.Value.IconPathId}");
                                 continue;
                             }
-
-                            var guidField = field["AssetGuid"]["Value"];
-                            if (guidField.IsDummy) continue;
-                            var guid = guidField.AsLong;
-                            if (guid != 0)
+                            if (spriteInfo.TypeId != (int)AssetClassID.Sprite)
                             {
-                                guids.TryAdd(canonicalName, guid);
+                                SafeAppend(diagnosticPath, $"type item={pair.Key} guid={pair.Value.Guid:X16} cab={cabName} path={pair.Value.IconPathId} type={spriteInfo.TypeId}");
+                                continue;
                             }
+                            var sprite = manager.GetBaseField(assetsFile, spriteInfo, AssetReadFlags.None);
+                            var textureReference = sprite["m_RD"]["texture"];
+                            var textureFileId = textureReference["m_FileID"].AsInt;
+                            if (textureFileId != 0)
+                            {
+                                var textureCab = textureFileId <= assetsFile.file.Metadata.Externals.Count
+                                    ? Path.GetFileName(assetsFile.file.Metadata.Externals[textureFileId - 1].PathName)
+                                    : "out-of-range";
+                                SafeAppend(diagnosticPath, $"external-texture item={pair.Key} guid={pair.Value.Guid:X16} spriteCab={cabName} textureCab={textureCab} texturePath={textureReference["m_PathID"].AsLong}");
+                                continue;
+                            }
+                            var texturePathId = textureReference["m_PathID"].AsLong;
+                            if (!infos.TryGetValue(texturePathId, out var textureInfo))
+                            {
+                                SafeAppend(diagnosticPath, $"missing-texture item={pair.Key} guid={pair.Value.Guid:X16} cab={cabName} path={texturePathId}");
+                                continue;
+                            }
+                            var safeKey = new string(pair.Key.Select(character => char.IsLetterOrDigit(character) ? character : '_').ToArray());
+                            var outPath = Path.Combine(cachePath, $"item-{safeKey}.png");
+                            if (new FileInfo(outPath) is not { Exists: true, Length: > 0 })
+                            {
+                                var textureField = manager.GetBaseField(assetsFile, textureInfo, AssetReadFlags.None);
+                                var texture = TextureFile.ReadTextureFile(textureField);
+                                var data = texture.FillPictureData(assetsFile);
+                                if (data.Length == 0 || !texture.DecodeTextureImage(data, outPath, ImageExportType.Png, 100))
+                                {
+                                    SafeAppend(diagnosticPath, $"decode-failed item={pair.Key} guid={pair.Value.Guid:X16} cab={cabName} path={texturePathId}");
+                                    continue;
+                                }
+                            }
+                            if (new FileInfo(outPath) is { Exists: true, Length: > 0 }) extracted[pair.Key] = outPath;
                         }
-                        catch
+                        catch (Exception exception)
                         {
-                            // Ignore unrelated MonoBehaviours with incomplete type metadata.
+                            SafeAppend(diagnosticPath, $"error item={pair.Key} guid={pair.Value.Guid:X16} cab={cabName} path={pair.Value.IconPathId}: {exception.Message}");
                         }
                     }
                 }
                 manager.UnloadAllAssetsFiles(true);
                 bundle.file.Close();
             }
-            catch
+            catch (Exception exception)
             {
-                // Keep unresolved entries disabled rather than publishing an unsafe identifier.
+                SafeAppend(diagnosticPath, $"bundle-error bundle={Path.GetFileName(bundlePath)}: {exception.Message}");
             }
         }
-        return guids;
+        return extracted;
     }
 
     public static IReadOnlyDictionary<string, string> ExtractSprites(

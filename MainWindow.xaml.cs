@@ -1219,7 +1219,7 @@ public partial class MainWindow : Window
             .Where(path => !string.IsNullOrWhiteSpace(path))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var local = _localGameItems
-            .Where(item => !capturedKeys.Contains(item.Key) && !string.IsNullOrWhiteSpace(item.IconPath))
+            .Where(item => !capturedKeys.Contains(item.Key))
             .Select(item => new IconCatalogEntry { LocalItem = item });
 
         var allItems = captured.Concat(local).ToArray();
