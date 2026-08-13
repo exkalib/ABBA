@@ -7,6 +7,63 @@ namespace NRftWManagerUI.Core;
 
 internal static class UnityIconExtractor
 {
+    public static IReadOnlyDictionary<string, long> ExtractItemGuids(
+        string installPath,
+        IReadOnlySet<string> wantedCanonicalNames,
+        Func<string, string> canonicalize)
+    {
+        var guids = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+        var dataPath = Path.Combine(installPath, "NoRestForTheWicked_Data", "StreamingAssets", "aa", "StandaloneWindows64");
+        foreach (var bundlePath in Directory.EnumerateFiles(dataPath, "qdb_assets*.bundle"))
+        {
+            try
+            {
+                var manager = new AssetsManager();
+                var bundle = manager.LoadBundleFile(bundlePath, true);
+                for (var fileIndex = 0; fileIndex < bundle.file.BlockAndDirInfo.DirectoryInfos.Count; fileIndex++)
+                {
+                    var assetsFile = manager.LoadAssetsFileFromBundle(bundle, fileIndex, false);
+                    if (assetsFile?.file is null) continue;
+                    foreach (var info in assetsFile.file.AssetInfos.Where(info => info.TypeId == (int)AssetClassID.MonoBehaviour))
+                    {
+                        try
+                        {
+                            var field = manager.GetBaseField(assetsFile, info, AssetReadFlags.None);
+                            var canonicalName = canonicalize(field["m_Name"].AsString);
+                            if (!wantedCanonicalNames.Contains(canonicalName)) continue;
+
+                            // qdb_assets contains several helper objects with the same m_Name and
+                            // their own AssetGuid. Only ItemData definitions expose item fields.
+                            if (field["ItemNameMsg"].IsDummy && field["ItemNameMsgRef"].IsDummy && field["ItemIcon"].IsDummy)
+                            {
+                                continue;
+                            }
+
+                            var guidField = field["AssetGuid"]["Value"];
+                            if (guidField.IsDummy) continue;
+                            var guid = guidField.AsLong;
+                            if (guid != 0)
+                            {
+                                guids.TryAdd(canonicalName, guid);
+                            }
+                        }
+                        catch
+                        {
+                            // Ignore unrelated MonoBehaviours with incomplete type metadata.
+                        }
+                    }
+                }
+                manager.UnloadAllAssetsFiles(true);
+                bundle.file.Close();
+            }
+            catch
+            {
+                // Keep unresolved entries disabled rather than publishing an unsafe identifier.
+            }
+        }
+        return guids;
+    }
+
     public static IReadOnlyDictionary<string, string> ExtractSprites(
         string installPath,
         IReadOnlySet<string> wantedCanonicalNames,

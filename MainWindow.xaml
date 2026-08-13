@@ -462,7 +462,7 @@
                         <TextBlock Text="生成数量" Foreground="{StaticResource MutedBrush}" FontSize="11" />
                         <TextBox x:Name="IconCatalogCreateCountBox" Height="42" Padding="12,7" Text="1" Margin="0,7,0,0" ToolTip="生成数量（1–99）" />
                         <Button x:Name="IconCatalogCreateButton" Style="{StaticResource ActionButton}" Content="生成预览物品" Click="OnCreateFromIconCatalog" HorizontalAlignment="Stretch" Margin="0,16,0,0" />
-                        <TextBlock Text="本地扫描项需要解析出真实 GUID 后才能生成；已捕获模板可直接生成。" Foreground="#717B8C" FontSize="10" TextWrapping="Wrap" Margin="0,10,0,0" />
+                        <TextBlock Text="已解析真实物品 GUID 的条目可直接生成；少量缺少完整 ItemData 的内部条目会保持禁用。" Foreground="#717B8C" FontSize="10" TextWrapping="Wrap" Margin="0,10,0,0" />
                       </StackPanel>
                     </Grid>
                   </Border>

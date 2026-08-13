@@ -18,7 +18,7 @@ public partial class App : Application
             Directory.CreateDirectory(cachePath);
             File.WriteAllText(
                 Path.Combine(cachePath, "scan-icons-result.txt"),
-                $"path={installPath}{Environment.NewLine}items={result.Items.Count} matchedIcons={result.MatchedIconResources} extractedIcons={result.ExtractedIcons}{Environment.NewLine}" +
+                $"path={installPath}{Environment.NewLine}items={result.Items.Count} matchedIcons={result.MatchedIconResources} extractedIcons={result.ExtractedIcons} guids={result.Items.Count(item => item.Guid != 0)}{Environment.NewLine}" +
                 string.Join(Environment.NewLine, result.Items.GroupBy(item => item.Category).Select(group => $"category.{group.Key}={group.Count()} icons={group.Count(item => !string.IsNullOrWhiteSpace(item.IconPath))}")) + Environment.NewLine +
                 string.Join(Environment.NewLine, result.Items.Take(20).Select(item => $"item={item.Name}|{item.Key}|{item.IconResourceName}")) + Environment.NewLine +
                 string.Join(Environment.NewLine, result.Items.Where(item => item.Category == "防具" && string.IsNullOrWhiteSpace(item.IconPath)).Take(30).Select(item => $"missingArmor={item.Name}|{item.Key}|{item.Description}")) + Environment.NewLine);

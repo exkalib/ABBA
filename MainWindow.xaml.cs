@@ -177,7 +177,9 @@ public partial class MainWindow : Window
         public string Metadata => Template?.Metadata ?? LocalItem?.Metadata ?? string.Empty;
         public string PreviewDescription => Template?.PreviewDescription ?? LocalItem?.Description ?? string.Empty;
         public string SearchText => $"{DisplayName} {Category} {Metadata} {PreviewDescription}";
-        public bool CanGenerate => Template is not null;
+        public long Guid => Template?.Guid ?? LocalItem?.Guid ?? 0;
+        public int Rarity => Template?.Rarity ?? LocalItem?.Rarity ?? 0;
+        public bool CanGenerate => Guid != 0;
         public string AvailabilityText => CanGenerate ? "可生成" : "待解析 GUID";
         public string CategoryIcon => GetCategoryIcon(Category);
     }
@@ -1437,9 +1439,9 @@ public partial class MainWindow : Window
 
     private void OnCreateFromIconCatalog(object sender, RoutedEventArgs e)
     {
-        if (IconCatalogList.SelectedItem is not IconCatalogEntry { Template: { } item })
+        if (IconCatalogList.SelectedItem is not IconCatalogEntry item || !item.CanGenerate)
         {
-            SetStatus("这个本地扫描项还没有解析出可生成 GUID。请先选择已捕获模板，或等资源 GUID 解析接入。", false);
+            SetStatus("这个条目在当前游戏资源中没有完整 ItemData GUID，已禁止生成。", false);
             return;
         }
 

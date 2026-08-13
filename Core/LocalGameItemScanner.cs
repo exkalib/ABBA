@@ -12,12 +12,11 @@ internal sealed class LocalGameItem
     public required string Source { get; init; }
     public string IconPath { get; init; } = string.Empty;
     public string IconResourceName { get; init; } = string.Empty;
+    public long Guid { get; init; }
     public string Description { get; init; } = "已从当前游戏资源包解析到物品名称；图标、中文描述与生成 GUID 还需要继续解析 Addressables/Unity 资源。";
     public int Rarity { get; init; }
     public int ItemType { get; init; }
-    public string Metadata => string.IsNullOrWhiteSpace(IconResourceName)
-        ? $"{Category}  ·  本地候选  ·  {Key}"
-        : $"{Category}  ·  图标资源 {IconResourceName}  ·  {Key}";
+    public string Metadata => $"{Category}  ·  GUID {Guid:X16}  ·  {Key}";
     public string DisplayName => Name;
 }
 
@@ -61,10 +60,11 @@ internal static partial class LocalGameItemScanner
         var iconResources = ScanIconResources(installPath, rawItemNames);
         var extractedIcons = UnityIconExtractor.Extract(installPath, iconResources.Values.Distinct(StringComparer.OrdinalIgnoreCase).ToArray());
         var spriteIcons = UnityIconExtractor.ExtractSprites(installPath, rawItemNames, CanonicalName);
+        var itemGuids = UnityIconExtractor.ExtractItemGuids(installPath, rawItemNames, CanonicalName);
         var found = new Dictionary<string, LocalGameItem>(StringComparer.OrdinalIgnoreCase);
         foreach (var (key, localizedName) in catalogLocalizedItems)
         {
-            if (TryCreateItem(key, "qdb_assets", iconResources, extractedIcons, spriteIcons, localizedName, out var item))
+            if (TryCreateItem(key, "qdb_assets", iconResources, extractedIcons, spriteIcons, itemGuids, localizedName, out var item))
             {
                 found.TryAdd(item.Key, item);
             }
@@ -266,6 +266,7 @@ internal static partial class LocalGameItemScanner
         IReadOnlyDictionary<string, string> iconResources,
         IReadOnlyDictionary<string, string> extractedIcons,
         IReadOnlyDictionary<string, string> spriteIcons,
+        IReadOnlyDictionary<string, long> itemGuids,
         LocalizedItemName localizedName,
         out LocalGameItem item)
     {
@@ -285,6 +286,7 @@ internal static partial class LocalGameItemScanner
         var category = Categorize(key);
         var rawCanonicalName = CanonicalName(rawName);
         var englishCanonicalName = CanonicalName(localizedName.English);
+        var guid = itemGuids.GetValueOrDefault(rawCanonicalName, itemGuids.GetValueOrDefault(englishCanonicalName));
         iconResources.TryGetValue(rawCanonicalName, out var iconResourceName);
         if (string.IsNullOrWhiteSpace(iconResourceName))
         {
@@ -302,6 +304,7 @@ internal static partial class LocalGameItemScanner
             Source = Path.GetFileName(source),
             IconPath = iconPath,
             IconResourceName = iconResourceName ?? string.Empty,
+            Guid = guid,
             ItemType = GetCategoryOrder(category),
             Rarity = 0,
             Description = string.IsNullOrWhiteSpace(iconResourceName)
