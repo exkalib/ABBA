@@ -86,6 +86,7 @@ public partial class MainWindow : Window
     private bool _stalePlayerContextHookDetected;
     private bool _isConnecting;
     private bool _isClosing;
+    private InstalledGame? _selectedGame;
     private string _selectedCurrency = "Gold";
     private readonly List<CapturedItemTemplate> _capturedItemTemplates = new();
     private readonly HashSet<long> _pendingTemplateCaptures = new();
@@ -135,6 +136,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         LoadItemCatalog();
+        Loaded += async (_, _) => await RefreshGameLibraryAsync();
         Closed += (_, _) =>
         {
             _isClosing = true;
@@ -143,10 +145,94 @@ public partial class MainWindow : Window
         AddLog("界面启动：尚未连接游戏。不会安装或加载任何游戏模组。");
     }
 
+    private async void OnRefreshGameLibrary(object sender, RoutedEventArgs e) => await RefreshGameLibraryAsync();
+
+    private async Task RefreshGameLibraryAsync()
+    {
+        var previousGame = _selectedGame;
+        RefreshGameLibraryButton.IsEnabled = false;
+        GameSelector.IsEnabled = false;
+        GameLibrarySummaryText.Text = "正在扫描 Steam 与 Epic…";
+
+        try
+        {
+            var games = await Task.Run(InstalledGameScanner.Scan);
+            if (_isClosing)
+            {
+                return;
+            }
+
+            GameSelector.ItemsSource = games;
+            GameLibrarySummaryText.Text = $"已发现 {games.Count(game => game.IsInstalled)} 个已安装游戏";
+            GameSelector.SelectedItem = games.FirstOrDefault(game => previousGame is not null &&
+                                                                     game.AppId == previousGame.AppId &&
+                                                                     game.Platform == previousGame.Platform)
+                                        ?? games.FirstOrDefault(game => game.IsSupported && game.IsInstalled)
+                                        ?? games.FirstOrDefault(game => game.IsSupported)
+                                        ?? games.FirstOrDefault();
+        }
+        catch (Exception exception)
+        {
+            GameLibrarySummaryText.Text = "游戏库扫描失败";
+            UnsupportedGameNameText.Text = "无法读取游戏库";
+            UnsupportedGameDetailText.Text = exception.Message;
+            GameSupportBadgeText.Text = "扫描失败";
+            SetStatus($"Steam / Epic 游戏库扫描失败：{exception.Message}", false);
+        }
+        finally
+        {
+            if (!_isClosing)
+            {
+                GameSelector.IsEnabled = true;
+                RefreshGameLibraryButton.IsEnabled = true;
+            }
+        }
+    }
+
+    private void OnGameSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (GameSelector.SelectedItem is not InstalledGame game)
+        {
+            return;
+        }
+
+        var changedGame = _selectedGame is null ||
+                          _selectedGame.AppId != game.AppId ||
+                          _selectedGame.Platform != game.Platform;
+        if (changedGame && _session is { IsAttached: true })
+        {
+            Disconnect();
+        }
+
+        _selectedGame = game;
+        ConnectButton.IsEnabled = !_isConnecting && game.IsSupported;
+        OperationSurface.Visibility = game.IsSupported ? Visibility.Visible : Visibility.Collapsed;
+        UnsupportedGamePanel.Visibility = game.IsSupported ? Visibility.Collapsed : Visibility.Visible;
+
+        if (game.IsSupported)
+        {
+            SetStatus(game.IsInstalled
+                ? $"已选择 {game.Name} · {game.Platform}"
+                : "已选择 No Rest for the Wicked；未从启动器检测到安装，运行游戏后仍可尝试连接。", true);
+            return;
+        }
+
+        UnsupportedGameNameText.Text = game.Name;
+        UnsupportedGameDetailText.Text = $"已通过 {game.Platform} 检测到安装 · 当前版本尚未适配";
+        GameSupportBadgeText.Text = "暂未支持";
+        SetStatus($"已选择 {game.Name}，当前仅支持 No Rest for the Wicked。", false);
+    }
+
     private async void OnConnectGame(object sender, RoutedEventArgs e)
     {
         if (_isConnecting)
         {
+            return;
+        }
+
+        if (_selectedGame?.IsSupported != true)
+        {
+            SetStatus("请先选择一个已支持的游戏。", false);
             return;
         }
 
@@ -251,7 +337,9 @@ public partial class MainWindow : Window
     private void SetConnectionBusy(bool busy, string progress = "")
     {
         _isConnecting = busy;
-        ConnectButton.IsEnabled = !busy;
+        ConnectButton.IsEnabled = !busy && _selectedGame?.IsSupported == true;
+        GameSelector.IsEnabled = !busy;
+        RefreshGameLibraryButton.IsEnabled = !busy;
         ConnectSpinner.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
         ConnectButtonLabel.Text = busy
             ? "正在验证"
@@ -1660,6 +1748,7 @@ public partial class MainWindow : Window
         ConnectionText.Text = "未连接";
         ConnectionText.Foreground = (Brush)FindResource("WarningBrush");
         ConnectionIndicator.Fill = (Brush)FindResource("WarningBrush");
+        ConnectButtonLabel.Text = "连接游戏";
     }
 
     private void SetStatus(string message, bool success = false)

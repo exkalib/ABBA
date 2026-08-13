@@ -18,10 +18,16 @@
             <Border Width="42" Height="42" Background="#27233E" CornerRadius="12" Margin="0,0,13,0">
               <Path Data="M8,30 L18,12 L27,12 L19,27 L32,27 L24,39 L11,39 Z" Fill="{StaticResource AccentBrush}" Stretch="Uniform" Margin="9" />
             </Border>
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock x:Name="PageTitle" Text="NRftW Manager" FontSize="20" FontWeight="SemiBold" />
-              <TextBlock x:Name="PageSubtitle" Text="外部模式 · 无需模组" FontSize="10" Foreground="{StaticResource MutedBrush}" Margin="0,2,0,0" />
+            <StackPanel Width="118" VerticalAlignment="Center">
+              <TextBlock x:Name="PageTitle" Text="ABBA" FontSize="20" FontWeight="SemiBold" />
+              <TextBlock x:Name="PageSubtitle" Text="游戏控制中心" FontSize="10" Foreground="{StaticResource MutedBrush}" Margin="0,2,0,0" />
             </StackPanel>
+            <Border Width="1" Height="34" Background="#303643" Margin="4,0,16,0" />
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock x:Name="GameLibrarySummaryText" Text="正在扫描游戏库…" Foreground="{StaticResource MutedBrush}" FontSize="9" Margin="2,0,0,4" />
+              <ComboBox x:Name="GameSelector" Width="300" Height="34" Padding="10,4" DisplayMemberPath="DisplayName" SelectionChanged="OnGameSelectionChanged" MaxDropDownHeight="360" />
+            </StackPanel>
+            <Button x:Name="RefreshGameLibraryButton" Style="{StaticResource SecondaryButton}" Content="↻" Click="OnRefreshGameLibrary" Width="36" Height="34" Padding="0" Margin="7,14,0,0" ToolTip="重新扫描 Steam 和 Epic 游戏库" />
           </StackPanel>
           <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
             <Border Background="#171B25" CornerRadius="10" Padding="12,9" Margin="0,0,10,0">
@@ -30,7 +36,7 @@
                 <TextBlock x:Name="ConnectionText" Text="未连接" Foreground="{StaticResource WarningBrush}" FontSize="11" FontWeight="SemiBold" />
               </StackPanel>
             </Border>
-            <Button x:Name="ConnectButton" Style="{StaticResource ActionButton}" Click="OnConnectGame" Padding="16,9">
+            <Button x:Name="ConnectButton" Style="{StaticResource ActionButton}" Click="OnConnectGame" Padding="16,9" IsEnabled="False">
               <StackPanel Orientation="Horizontal">
                 <Ellipse x:Name="ConnectSpinner" Width="14" Height="14" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2" StrokeDashArray="2,2" Visibility="Collapsed" Margin="0,0,8,0" RenderTransformOrigin="0.5,0.5">
                   <Ellipse.RenderTransform><RotateTransform /></Ellipse.RenderTransform>
@@ -92,7 +98,7 @@
             </StackPanel>
           </Grid>
         </Border>
-        <Grid x:Name="OperationSurface" Grid.Column="1" IsEnabled="False" Margin="26,22,26,20">
+        <Grid x:Name="OperationSurface" Grid.Column="1" IsEnabled="False" Visibility="Collapsed" Margin="26,22,26,20">
           <Grid.Style>
             <Style TargetType="Grid">
               <Setter Property="Opacity" Value="1" />
@@ -393,6 +399,24 @@
               </Border>
             </Grid>
         </Grid>
+      </Grid>
+
+      <Grid x:Name="UnsupportedGamePanel" Grid.Row="1" Margin="26,22,26,20">
+        <Border Style="{StaticResource Card}" VerticalAlignment="Top" Padding="28,24">
+          <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+            <Border Width="52" Height="52" Background="#28243F" CornerRadius="14">
+              <TextBlock Text="◇" Foreground="{StaticResource AccentBrush}" FontSize="25" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <StackPanel Grid.Column="1" Margin="17,0" VerticalAlignment="Center">
+              <TextBlock x:Name="UnsupportedGameNameText" Text="正在读取已安装游戏" FontSize="21" FontWeight="SemiBold" />
+              <TextBlock x:Name="UnsupportedGameDetailText" Text="正在扫描 Steam 与 Epic 游戏库…" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,5,0,0" />
+            </StackPanel>
+            <Border Grid.Column="2" Background="#1B202C" CornerRadius="9" Padding="12,8" VerticalAlignment="Center">
+              <TextBlock x:Name="GameSupportBadgeText" Text="等待选择" Foreground="{StaticResource WarningBrush}" FontSize="11" FontWeight="SemiBold" />
+            </Border>
+          </Grid>
+        </Border>
       </Grid>
 
       <Border x:Name="ConnectionOverlay" Grid.Row="1" Background="#B8060911" Visibility="Collapsed" IsHitTestVisible="True">
