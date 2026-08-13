@@ -69,6 +69,9 @@ internal static partial class LocalGameItemScanner
         }
 
         var items = found.Values
+            // The localization bundles also contain skills, blueprints, affixes and internal
+            // text keys. An icon catalog must only expose entries backed by a real item icon.
+            .Where(item => !string.IsNullOrWhiteSpace(item.IconPath))
             .OrderBy(item => GetCategoryOrder(item.Category))
             .ThenBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToArray();

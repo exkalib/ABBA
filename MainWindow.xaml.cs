@@ -172,6 +172,7 @@ public partial class MainWindow : Window
                 return Path.IsPathRooted(path) ? new Uri(path).AbsoluteUri : path;
             }
         }
+        public bool HasIcon => !string.IsNullOrWhiteSpace(IconSource);
         public string Metadata => Template?.Metadata ?? LocalItem?.Metadata ?? string.Empty;
         public string PreviewDescription => Template?.PreviewDescription ?? LocalItem?.Description ?? string.Empty;
         public string SearchText => $"{DisplayName} {Category} {Metadata} {PreviewDescription}";

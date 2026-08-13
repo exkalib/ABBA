@@ -377,7 +377,18 @@
                                   <Grid.RowDefinitions><RowDefinition Height="44" /><RowDefinition Height="*" /></Grid.RowDefinitions>
                                   <Border Width="42" Height="42" CornerRadius="8" Background="#171C28" BorderBrush="#303A52" BorderThickness="1" HorizontalAlignment="Center">
                                     <Grid>
-                                      <TextBlock Text="{Binding CategoryIcon}" FontSize="18" Foreground="#BDAEFF" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                      <TextBlock Text="{Binding CategoryIcon}" FontSize="18" Foreground="#BDAEFF" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock.Style>
+                                          <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Style.Triggers>
+                                              <DataTrigger Binding="{Binding HasIcon}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                              </DataTrigger>
+                                            </Style.Triggers>
+                                          </Style>
+                                        </TextBlock.Style>
+                                      </TextBlock>
                                       <Image Source="{Binding IconSource}" Stretch="Uniform" Margin="2" />
                                     </Grid>
                                   </Border>
@@ -400,7 +411,18 @@
                       <StackPanel>
                         <Border Width="72" Height="72" CornerRadius="12" Background="#171C28" BorderBrush="#333B52" BorderThickness="1" HorizontalAlignment="Left" ClipToBounds="True">
                           <Grid>
-                            <TextBlock Text="{Binding ElementName=IconCatalogList, Path=SelectedItem.CategoryIcon}" FontSize="28" Foreground="#BDAEFF" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding ElementName=IconCatalogList, Path=SelectedItem.CategoryIcon}" FontSize="28" Foreground="#BDAEFF" HorizontalAlignment="Center" VerticalAlignment="Center">
+                              <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                  <Setter Property="Visibility" Value="Visible" />
+                                  <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ElementName=IconCatalogList, Path=SelectedItem.HasIcon}" Value="True">
+                                      <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                  </Style.Triggers>
+                                </Style>
+                              </TextBlock.Style>
+                            </TextBlock>
                             <Image Source="{Binding ElementName=IconCatalogList, Path=SelectedItem.IconSource}" Stretch="Uniform" Margin="3" />
                           </Grid>
                         </Border>
