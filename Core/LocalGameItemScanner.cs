@@ -39,13 +39,14 @@ internal static partial class LocalGameItemScanner
         }
 
         var iconResources = ScanIconResources(installPath);
+        var extractedIcons = UnityIconExtractor.Extract(installPath, iconResources.Values.Distinct(StringComparer.OrdinalIgnoreCase).ToArray());
         var found = new Dictionary<string, LocalGameItem>(StringComparer.OrdinalIgnoreCase);
         foreach (var bundle in Directory.EnumerateFiles(dataPath, "*.bundle")
                      .Where(path => ItemBundleHints.Any(hint => Path.GetFileName(path).Contains(hint, StringComparison.OrdinalIgnoreCase))))
         {
             foreach (var token in ExtractAsciiTokens(bundle))
             {
-                if (!TryCreateItem(token, bundle, iconResources, out var item))
+                if (!TryCreateItem(token, bundle, iconResources, extractedIcons, out var item))
                 {
                     continue;
                 }
@@ -126,7 +127,12 @@ internal static partial class LocalGameItemScanner
         return icons;
     }
 
-    private static bool TryCreateItem(string token, string source, IReadOnlyDictionary<string, string> iconResources, out LocalGameItem item)
+    private static bool TryCreateItem(
+        string token,
+        string source,
+        IReadOnlyDictionary<string, string> iconResources,
+        IReadOnlyDictionary<string, string> extractedIcons,
+        out LocalGameItem item)
     {
         item = default!;
         var match = ItemLocalizationKeyRegex().Match(token);
@@ -144,12 +150,17 @@ internal static partial class LocalGameItemScanner
         var rawName = GetRawItemName(key);
         var category = Categorize(key);
         iconResources.TryGetValue(NormalizeName(rawName), out var iconResourceName);
+        var iconPath = !string.IsNullOrWhiteSpace(iconResourceName) &&
+                       extractedIcons.TryGetValue(Path.GetFileNameWithoutExtension(iconResourceName), out var extractedIconPath)
+            ? extractedIconPath
+            : string.Empty;
         item = new LocalGameItem
         {
             Key = key,
             Name = ToDisplayName(rawName),
             Category = category,
             Source = Path.GetFileName(source),
+            IconPath = iconPath,
             IconResourceName = iconResourceName ?? string.Empty,
             ItemType = GetCategoryOrder(category),
             Rarity = 0,

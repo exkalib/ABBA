@@ -14,4 +14,7 @@
     <Resource Include="Assets\riftctrl-icon.png" />
     <Resource Include="Assets\riftctrl.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="AssetsTools.NET.Texture" Version="3.*" />
+  </ItemGroup>
 </Project>
