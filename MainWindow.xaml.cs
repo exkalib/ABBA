@@ -280,10 +280,6 @@ public partial class MainWindow : Window
             SetStatus(game.IsInstalled
                 ? $"已选择 {game.Name} · {game.Platform}"
                 : "已选择 No Rest for the Wicked；未从启动器检测到安装，运行游戏后仍可尝试连接。", true);
-            if (game.IsInstalled)
-            {
-                _ = ScanLocalItemsAsync(game);
-            }
             return;
         }
 
@@ -382,6 +378,25 @@ public partial class MainWindow : Window
             OnStartItemCapture(this, new RoutedEventArgs());
             OnStartItemSelection(this, new RoutedEventArgs());
             StartQuantumCommandHook();
+
+            if (_selectedGame is { IsInstalled: true } connectedGame &&
+                !string.IsNullOrWhiteSpace(connectedGame.InstallPath))
+            {
+                ConnectionProgressText.Text = "正在加载物品资源与图标…";
+                SetStatus("游戏已连接，正在加载物品资源与图标…", true);
+                try
+                {
+                    await ScanLocalItemsAsync(connectedGame);
+                }
+                catch (IOException exception)
+                {
+                    SetStatus($"游戏已连接，但读取物品资源失败：{exception.Message}", false);
+                }
+                catch (UnauthorizedAccessException exception)
+                {
+                    SetStatus($"游戏已连接，但没有权限读取物品资源：{exception.Message}", false);
+                }
+            }
         }
         catch (Exception exception)
         {
