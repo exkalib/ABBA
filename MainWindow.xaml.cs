@@ -85,6 +85,7 @@ public partial class MainWindow : Window
     private long? _selectedItemEntity;
     private bool _stalePlayerContextHookDetected;
     private bool _isConnecting;
+    private bool _isScanningLocalItems;
     private bool _isClosing;
     private InstalledGame? _selectedGame;
     private string _selectedCurrency = "Gold";
@@ -1075,14 +1076,16 @@ public partial class MainWindow : Window
 
     private async void OnScanLocalItems(object sender, RoutedEventArgs e)
     {
+        if (_isScanningLocalItems)
+        {
+            return;
+        }
         if (_selectedGame is not { IsInstalled: true } game || string.IsNullOrWhiteSpace(game.InstallPath))
         {
             SetStatus("请先选择一个已安装游戏。", false);
             return;
         }
 
-        ScanLocalItemsButton.IsEnabled = false;
-        IconCatalogSummaryText.Text = "正在扫描当前游戏资源…";
         try
         {
             await ScanLocalItemsAsync(game);
@@ -1095,30 +1098,51 @@ public partial class MainWindow : Window
         {
             SetStatus($"没有权限读取游戏资源：{exception.Message}", false);
         }
-        finally
-        {
-            ScanLocalItemsButton.IsEnabled = true;
-        }
     }
 
     private async Task ScanLocalItemsAsync(InstalledGame game)
     {
-        if (string.IsNullOrWhiteSpace(game.InstallPath))
+        if (string.IsNullOrWhiteSpace(game.InstallPath) || _isScanningLocalItems)
         {
             return;
         }
 
+        _isScanningLocalItems = true;
+        SetIconCatalogLoading(true);
         IconCatalogSummaryText.Text = "正在扫描当前游戏资源…";
-        var scanResult = await Task.Run(() => LocalGameItemScanner.Scan(game.InstallPath));
-        if (!ReferenceEquals(_selectedGame, game) && (_selectedGame?.AppId != game.AppId || _selectedGame?.Platform != game.Platform))
+        try
         {
-            return;
-        }
+            // Resource decoding is long-running CPU and disk work. A dedicated worker prevents
+            // it from competing with WPF's dispatcher through thread-pool starvation.
+            var scanResult = await Task.Factory.StartNew(
+                () => LocalGameItemScanner.Scan(game.InstallPath),
+                CancellationToken.None,
+                TaskCreationOptions.LongRunning,
+                TaskScheduler.Default);
+            if (!ReferenceEquals(_selectedGame, game) && (_selectedGame?.AppId != game.AppId || _selectedGame?.Platform != game.Platform))
+            {
+                return;
+            }
 
-        _localGameItems.Clear();
-        _localGameItems.AddRange(scanResult.Items);
-        RefreshIconCatalogList();
-        SetStatus($"已从游戏资源解析 {_localGameItems.Count} 件物品；官方简中名称已载入，真实图标 {scanResult.ExtractedIcons} 个。", _localGameItems.Count > 0);
+            _localGameItems.Clear();
+            _localGameItems.AddRange(scanResult.Items);
+            RefreshIconCatalogList();
+            SetStatus($"已从游戏资源解析 {_localGameItems.Count} 件物品；官方简中名称已载入，真实图标 {scanResult.ExtractedIcons} 个。", _localGameItems.Count > 0);
+        }
+        finally
+        {
+            _isScanningLocalItems = false;
+            SetIconCatalogLoading(false);
+        }
+    }
+
+    private void SetIconCatalogLoading(bool loading)
+    {
+        IconCatalogTabSpinner.Visibility = loading ? Visibility.Visible : Visibility.Collapsed;
+        ScanLocalItemsSpinner.Visibility = loading ? Visibility.Visible : Visibility.Collapsed;
+        IconCatalogLoadingOverlay.Visibility = loading ? Visibility.Visible : Visibility.Collapsed;
+        ScanLocalItemsButtonText.Text = loading ? "扫描中" : "扫描";
+        ScanLocalItemsButton.IsEnabled = !loading && _selectedGame?.IsInstalled == true;
     }
 
     private void RefreshCapturedItemList()
