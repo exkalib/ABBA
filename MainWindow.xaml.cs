@@ -1219,7 +1219,7 @@ public partial class MainWindow : Window
             .Where(path => !string.IsNullOrWhiteSpace(path))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var local = _localGameItems
-            .Where(item => !capturedKeys.Contains(item.Key))
+            .Where(item => !capturedKeys.Contains(item.Key) && !string.IsNullOrWhiteSpace(item.IconPath))
             .Select(item => new IconCatalogEntry { LocalItem = item });
 
         var allItems = captured.Concat(local).ToArray();
@@ -1237,7 +1237,8 @@ public partial class MainWindow : Window
         IconCatalogList.Items.Clear();
 
         var localIconCount = _localGameItems.Count(item => !string.IsNullOrWhiteSpace(item.IconPath));
-        IconCatalogSummaryText.Text = $"{visibleItems.Length} 个 · 名称 {_localGameItems.Count} · 图标 {localIconCount} · 可生成 {_capturedItemTemplates.Count}";
+        var localGeneratableCount = _localGameItems.Count(item => !string.IsNullOrWhiteSpace(item.IconPath) && item.Guid != 0);
+        IconCatalogSummaryText.Text = $"{visibleItems.Length} 个 · 真实图标 {localIconCount} · 可生成 {localGeneratableCount}";
 
         if (!string.IsNullOrWhiteSpace(selectedName))
         {

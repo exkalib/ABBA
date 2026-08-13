@@ -7,6 +7,52 @@ namespace NRftWManagerUI.Core;
 
 internal static class UnityIconExtractor
 {
+    internal sealed record ItemDefinition(long Guid, int IconFileId, long IconPathId);
+
+    public static IReadOnlyDictionary<string, ItemDefinition> ExtractItemDefinitions(
+        string installPath,
+        IReadOnlySet<string> wantedCanonicalNames,
+        Func<string, string> canonicalize)
+    {
+        var definitions = new Dictionary<string, ItemDefinition>(StringComparer.OrdinalIgnoreCase);
+        var dataPath = Path.Combine(installPath, "NoRestForTheWicked_Data", "StreamingAssets", "aa", "StandaloneWindows64");
+        foreach (var bundlePath in Directory.EnumerateFiles(dataPath, "qdb_assets*.bundle"))
+        {
+            try
+            {
+                var manager = new AssetsManager();
+                var bundle = manager.LoadBundleFile(bundlePath, true);
+                for (var fileIndex = 0; fileIndex < bundle.file.BlockAndDirInfo.DirectoryInfos.Count; fileIndex++)
+                {
+                    var assetsFile = manager.LoadAssetsFileFromBundle(bundle, fileIndex, false);
+                    if (assetsFile?.file is null) continue;
+                    foreach (var info in assetsFile.file.AssetInfos.Where(info => info.TypeId == (int)AssetClassID.MonoBehaviour))
+                    {
+                        try
+                        {
+                            var field = manager.GetBaseField(assetsFile, info, AssetReadFlags.None);
+                            var canonicalName = canonicalize(field["m_Name"].AsString);
+                            if (!wantedCanonicalNames.Contains(canonicalName)) continue;
+                            var itemIcon = field["ItemIcon"];
+                            if (field["ItemNameMsg"].IsDummy && field["ItemNameMsgRef"].IsDummy && itemIcon.IsDummy) continue;
+                            var guidField = field["AssetGuid"]["Value"];
+                            if (guidField.IsDummy || guidField.AsLong == 0) continue;
+                            definitions.TryAdd(canonicalName, new ItemDefinition(
+                                guidField.AsLong,
+                                itemIcon.IsDummy ? 0 : itemIcon["m_FileID"].AsInt,
+                                itemIcon.IsDummy ? 0 : itemIcon["m_PathID"].AsLong));
+                        }
+                        catch { }
+                    }
+                }
+                manager.UnloadAllAssetsFiles(true);
+                bundle.file.Close();
+            }
+            catch { }
+        }
+        return definitions;
+    }
+
     public static IReadOnlyDictionary<string, long> ExtractItemGuids(
         string installPath,
         IReadOnlySet<string> wantedCanonicalNames,

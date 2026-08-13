@@ -60,11 +60,11 @@ internal static partial class LocalGameItemScanner
         var iconResources = ScanIconResources(installPath, rawItemNames);
         var extractedIcons = UnityIconExtractor.Extract(installPath, iconResources.Values.Distinct(StringComparer.OrdinalIgnoreCase).ToArray());
         var spriteIcons = UnityIconExtractor.ExtractSprites(installPath, rawItemNames, CanonicalName);
-        var itemGuids = UnityIconExtractor.ExtractItemGuids(installPath, rawItemNames, CanonicalName);
+        var itemDefinitions = UnityIconExtractor.ExtractItemDefinitions(installPath, rawItemNames, CanonicalName);
         var found = new Dictionary<string, LocalGameItem>(StringComparer.OrdinalIgnoreCase);
         foreach (var (key, localizedName) in catalogLocalizedItems)
         {
-            if (TryCreateItem(key, "qdb_assets", iconResources, extractedIcons, spriteIcons, itemGuids, localizedName, out var item))
+            if (TryCreateItem(key, "qdb_assets", iconResources, extractedIcons, spriteIcons, itemDefinitions, localizedName, out var item))
             {
                 found.TryAdd(item.Key, item);
             }
@@ -266,7 +266,7 @@ internal static partial class LocalGameItemScanner
         IReadOnlyDictionary<string, string> iconResources,
         IReadOnlyDictionary<string, string> extractedIcons,
         IReadOnlyDictionary<string, string> spriteIcons,
-        IReadOnlyDictionary<string, long> itemGuids,
+        IReadOnlyDictionary<string, UnityIconExtractor.ItemDefinition> itemDefinitions,
         LocalizedItemName localizedName,
         out LocalGameItem item)
     {
@@ -286,7 +286,12 @@ internal static partial class LocalGameItemScanner
         var category = Categorize(key);
         var rawCanonicalName = CanonicalName(rawName);
         var englishCanonicalName = CanonicalName(localizedName.English);
-        var guid = itemGuids.GetValueOrDefault(rawCanonicalName, itemGuids.GetValueOrDefault(englishCanonicalName));
+        itemDefinitions.TryGetValue(rawCanonicalName, out var definition);
+        if (definition is null)
+        {
+            itemDefinitions.TryGetValue(englishCanonicalName, out definition);
+        }
+        var guid = definition?.Guid ?? 0;
         iconResources.TryGetValue(rawCanonicalName, out var iconResourceName);
         if (string.IsNullOrWhiteSpace(iconResourceName))
         {
