@@ -146,6 +146,12 @@
                     <TextBlock Text="TARGET ACQUIRED" Style="{StaticResource MicroLabel}" />
                     <TextBlock x:Name="SelectedItemText" Text="尚未选择物品" Style="{StaticResource DisplayTitle}" FontSize="31" FontWeight="SemiBold" Margin="0,9,0,0" TextWrapping="Wrap" />
                     <TextBlock Text="在游戏背包中切换物品，目标会自动更新并读取中文名称。" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,9,0,0" />
+                    <WrapPanel Margin="0,16,0,0">
+                      <Button Style="{StaticResource RarityButton}" BorderBrush="#AFC3D1" Foreground="#EAF4F8" Content="白色" Tag="Common" Click="OnQueueRarity" Margin="0,0,8,0" />
+                      <Button Style="{StaticResource RarityButton}" BorderBrush="{StaticResource AccentBrush}" Foreground="{StaticResource AccentBrush}" Content="蓝色" Tag="Magical" Click="OnQueueRarity" Margin="0,0,8,0" />
+                      <Button Style="{StaticResource RarityButton}" BorderBrush="{StaticResource PurpleBrush}" Foreground="#CBB9FF" Content="紫色" Tag="Plagued" Click="OnQueueRarity" Margin="0,0,8,0" />
+                      <Button Style="{StaticResource ActionButton}" Content="复制一件" Click="OnCreateFromSelectedTemplate" />
+                    </WrapPanel>
                     <Expander Header="诊断与最近目标" IsExpanded="False" Margin="0,14,0,0" Foreground="#7890AA">
                       <StackPanel Margin="0,8,0,0">
                         <ListBox x:Name="SelectedItemHistoryList" Height="72" FontFamily="Consolas" FontSize="11" />
@@ -185,36 +191,38 @@
                       <TextBlock Grid.Column="1" x:Name="CapturedItemCatalogSummary" Text="等待物品数据" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Bottom" Margin="0,0,0,3" />
                     </Grid>
                     <Grid Margin="0,6,0,10">
-                      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="190" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="70" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                      <TextBox x:Name="CapturedItemSearchBox" Height="40" Padding="12,6" TextChanged="OnFilterCapturedItems" ToolTip="按中文名、内部路径或 GUID 搜索物品" />
-                      <TextBox x:Name="CapturedItemNameBox" Grid.Column="1" Height="40" Padding="12,6" Margin="10,0,0,0" ToolTip="给列表中选中的物品填写中文名称" />
-                      <Button Grid.Column="2" Style="{StaticResource SecondaryButton}" Content="手工改名" Click="OnSaveCapturedItemName" Margin="8,0,0,0" />
-                      <TextBox x:Name="CatalogCreateCountBox" Grid.Column="3" Height="40" Padding="12,6" Text="1" Margin="8,0,0,0" ToolTip="生成数量（1–99）" />
-                      <Button Grid.Column="4" Style="{StaticResource ActionButton}" Content="生成选中物品" Click="OnCreateFromCapturedTemplate" Margin="8,0,0,0" />
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="90" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                      <StackPanel>
+                        <TextBlock Text="搜索物品" Foreground="#8FA2BB" FontSize="11" Margin="2,0,0,6" />
+                        <TextBox x:Name="CapturedItemSearchBox" Height="40" Padding="12,6" TextChanged="OnFilterCapturedItems" ToolTip="输入中文名、内部路径或 GUID" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                        <TextBlock Text="生成数量" Foreground="#8FA2BB" FontSize="11" Margin="2,0,0,6" />
+                        <TextBox x:Name="CatalogCreateCountBox" Height="40" Padding="12,6" Text="1" ToolTip="生成数量（1–99）" />
+                      </StackPanel>
+                      <Button Grid.Column="2" Style="{StaticResource ActionButton}" Content="生成选中物品" Click="OnCreateFromCapturedTemplate" Margin="10,20,0,0" />
                     </Grid>
-                    <ListBox x:Name="CapturedItemCatalogList" Height="188" FontFamily="Segoe UI Variable Text" FontSize="13" SelectionChanged="OnCapturedItemSelectionChanged" />
+                    <ListBox x:Name="CapturedItemCatalogList" Height="142" SelectionChanged="OnCapturedItemSelectionChanged" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                      <ListBox.ItemTemplate>
+                        <DataTemplate>
+                          <Grid Margin="2,2">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding DisplayName}" FontSize="13" FontWeight="SemiBold" Foreground="#EFF7FF" />
+                            <TextBlock Grid.Column="1" Text="{Binding Metadata}" FontFamily="Consolas" FontSize="10" Foreground="#647A96" Margin="18,0,4,0" />
+                          </Grid>
+                        </DataTemplate>
+                      </ListBox.ItemTemplate>
+                    </ListBox>
+                    <Expander Header="维护物品名称" IsExpanded="False" Foreground="#7890AA" Margin="2,9,0,0">
+                      <Grid Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <TextBox x:Name="CapturedItemNameBox" Height="38" Padding="12,6" ToolTip="给列表中选中的物品填写中文名称" />
+                        <Button Grid.Column="1" Style="{StaticResource SecondaryButton}" Content="保存名称" Click="OnSaveCapturedItemName" Margin="8,0,0,0" />
+                      </Grid>
+                    </Expander>
                   </StackPanel>
                 </Border>
-                <Grid Margin="0,16,0,0">
-                  <Border Style="{StaticResource Card}" Padding="26,20">
-                    <StackPanel>
-                      <TextBlock Text="RARITY FORGE / 03" Style="{StaticResource MicroLabel}" />
-                      <Grid Margin="0,6,0,0">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                        <StackPanel>
-                          <TextBlock Text="品质重构" Style="{StaticResource SectionTitle}" FontSize="23" />
-                          <TextBlock Text="原生路径 · 单次执行 · 自动持久化" Foreground="{StaticResource MutedBrush}" Margin="0,7,0,0" />
-                        </StackPanel>
-                      <WrapPanel Grid.Column="1" Margin="28,0,0,0" VerticalAlignment="Center">
-                        <Button Style="{StaticResource RarityButton}" BorderBrush="#AFC3D1" Foreground="#EAF4F8" Content="COMMON / 白" Tag="Common" Click="OnQueueRarity" Margin="0,0,8,8" />
-                        <Button Style="{StaticResource RarityButton}" BorderBrush="{StaticResource AccentBrush}" Foreground="{StaticResource AccentBrush}" Content="MAGICAL / 蓝" Tag="Magical" Click="OnQueueRarity" Margin="0,0,8,8" />
-                        <Button Style="{StaticResource RarityButton}" BorderBrush="{StaticResource PurpleBrush}" Foreground="#CBB9FF" Content="PLAGUED / 紫" Tag="Plagued" Click="OnQueueRarity" Margin="0,0,8,8" />
-                        <Button Style="{StaticResource ActionButton}" Content="按模板重建" Click="OnCreateFromSelectedTemplate" Margin="12,0,0,8" />
-                      </WrapPanel>
-                      </Grid>
-                      <TextBlock Text="金装必须使用已有固定金装作为模板。" Foreground="{StaticResource WarningBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0" />
-                    </StackPanel>
-                  </Border>
+                <Grid Margin="0">
                   <Border Grid.Column="1" Visibility="Collapsed">
                     <StackPanel>
                       <TextBlock Text="FABRICATION / LOCKED" Style="{StaticResource MicroLabel}" Foreground="{StaticResource WarningBrush}" />

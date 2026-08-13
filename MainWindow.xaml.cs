@@ -123,6 +123,9 @@ public partial class MainWindow : Window
             }
         }
 
+        [JsonIgnore]
+        public string Metadata => $"类型 {ItemType}  ·  品质 {Rarity}  ·  {Guid:X16}";
+
         public override string ToString() => $"{DisplayName}  · 类型 {ItemType}  · 品质 {Rarity}  · GUID 0x{Guid:X16}";
     }
 
@@ -614,7 +617,7 @@ public partial class MainWindow : Window
                 _session!.GameAssemblyBase + GetLocalizedItemNameRva,
                 AobPattern.Parse(ItemSelectionEntry).Bytes.Select(value => value ?? throw new InvalidOperationException("物品详情入口签名不能包含通配符。")).ToArray());
             var result = _itemSelectionHook.Arm();
-            SelectedItemText.Text = result;
+            SelectedItemText.Text = "等待选择物品";
             SetStatus(result);
             var activeHook = _itemSelectionHook;
             for (var attempt = 0; attempt < 18_000 && ReferenceEquals(_itemSelectionHook, activeHook); attempt++)
@@ -630,10 +633,10 @@ public partial class MainWindow : Window
                 _selectedItemEntity = itemEntity;
                 activeHook.ClearSelection();
                 RecordSelectedItem(itemEntity, localizedName);
-                SelectedItemText.Text = string.IsNullOrWhiteSpace(localizedName)
+                SelectedItemText.Text = string.IsNullOrWhiteSpace(localizedName) ? "未识别物品名称" : localizedName;
+                SetStatus(string.IsNullOrWhiteSpace(localizedName)
                     ? $"名称解析失败：物品 0x{itemEntity:X}，资源 0x{itemAsset:X}，名称指针 0x{localizedNameAddress:X}。"
-                    : $"已自动选中：{localizedName}（0x{itemEntity:X}）。";
-                SetStatus(SelectedItemText.Text, !string.IsNullOrWhiteSpace(localizedName));
+                    : $"已选中 {localizedName}。", !string.IsNullOrWhiteSpace(localizedName));
             }
         }
         catch (Exception exception)
@@ -656,10 +659,10 @@ public partial class MainWindow : Window
         _selectedItemEntity = itemEntity;
         _itemSelectionHook.ClearSelection();
         RecordSelectedItem(itemEntity, localizedName);
-        SelectedItemText.Text = string.IsNullOrWhiteSpace(localizedName)
+        SelectedItemText.Text = string.IsNullOrWhiteSpace(localizedName) ? "未识别物品名称" : localizedName;
+        SetStatus(string.IsNullOrWhiteSpace(localizedName)
             ? $"名称解析失败：物品 0x{itemEntity:X}，资源 0x{itemAsset:X}，名称指针 0x{localizedNameAddress:X}。"
-            : $"已选中：{localizedName}（0x{itemEntity:X}）。";
-        SetStatus(SelectedItemText.Text, !string.IsNullOrWhiteSpace(localizedName));
+            : $"已选中 {localizedName}。", !string.IsNullOrWhiteSpace(localizedName));
     }
 
     private string ReadResolvedItemName(long localizedNameAddress)
