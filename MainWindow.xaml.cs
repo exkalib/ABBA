@@ -150,6 +150,16 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (_session is { IsAttached: true })
+        {
+            Disconnect();
+            SetConnectionBusy(false);
+            SelectedItemText.Text = "尚未选择物品";
+            ItemCaptureText.Text = "连接游戏后自动跟踪最近一次数量变化";
+            SetStatus("已断开游戏，并恢复所有临时捕获入口。", true);
+            return;
+        }
+
         Disconnect();
         SetConnectionBusy(true, "正在查找游戏进程…");
         var session = new GameSession();
@@ -243,7 +253,11 @@ public partial class MainWindow : Window
         _isConnecting = busy;
         ConnectButton.IsEnabled = !busy;
         ConnectSpinner.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
-        ConnectButtonLabel.Text = busy ? "正在验证" : "连接并验证游戏";
+        ConnectButtonLabel.Text = busy
+            ? "正在验证"
+            : _session is { IsAttached: true }
+                ? "断开游戏"
+                : "连接并验证游戏";
         ConnectionOverlay.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
         OperationSurface.IsEnabled = !busy &&
                                      _session is { IsAttached: true } &&
