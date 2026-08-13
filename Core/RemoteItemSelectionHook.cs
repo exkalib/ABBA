@@ -7,6 +7,7 @@ internal sealed class RemoteItemSelectionHook : IDisposable
     private const int ItemAssetOffset = 0x808;
     private const int LocalizedNameOffset = 0x810;
     private const int PendingItemOffset = 0x818;
+    private const int ItemSlotOffset = 0x820;
 
     private readonly GameSession _session;
     private readonly long _site;
@@ -47,6 +48,8 @@ internal sealed class RemoteItemSelectionHook : IDisposable
         code.AddRange(new byte[] { 0x48, 0x31, 0xC0 }); // xor rax,rax
         AddStoreRipRelative(code, trampolineAddress, ItemOffset, new byte[] { 0x48, 0x89, 0x05 });
         AddStoreRipRelative(code, trampolineAddress, LocalizedNameOffset, new byte[] { 0x48, 0x89, 0x05 });
+        code.AddRange(new byte[] { 0x48, 0x89, 0xC8 }); // mov rax,rcx
+        AddStoreRipRelative(code, trampolineAddress, ItemSlotOffset, new byte[] { 0x48, 0x89, 0x05 });
         code.AddRange(new byte[] { 0x48, 0x8B, 0x81, 0x38, 0x05, 0x00, 0x00 }); // mov rax,[rcx+0x538] HeroItemDataAsset
         AddStoreRipRelative(code, trampolineAddress, ItemAssetOffset, new byte[] { 0x48, 0x89, 0x05 });
         code.AddRange(new byte[] { 0x48, 0x8B, 0x81, 0x00, 0x01, 0x00, 0x00 }); // mov rax,[rcx+0x100] ItemRef.Entity
@@ -104,9 +107,10 @@ internal sealed class RemoteItemSelectionHook : IDisposable
         return "物品选择捕获已开启。回游戏在背包中点击目标物品，地址会自动更新。";
     }
 
-    public bool TryReadSelection(out long itemEntity, out long itemAsset, out long localizedName)
+    public bool TryReadSelection(out long itemEntity, out long itemSlot, out long itemAsset, out long localizedName)
     {
         itemEntity = 0;
+        itemSlot = 0;
         itemAsset = 0;
         localizedName = 0;
         if (!IsArmed)
@@ -114,6 +118,7 @@ internal sealed class RemoteItemSelectionHook : IDisposable
             return false;
         }
 
+        _session.TryReadInt64(_trampoline.ToInt64() + ItemSlotOffset, out itemSlot);
         _session.TryReadInt64(_trampoline.ToInt64() + ItemAssetOffset, out itemAsset);
         _session.TryReadInt64(_trampoline.ToInt64() + LocalizedNameOffset, out localizedName);
         return _session.TryReadInt64(_trampoline.ToInt64() + ItemOffset, out itemEntity) && itemEntity != 0;
@@ -130,6 +135,7 @@ internal sealed class RemoteItemSelectionHook : IDisposable
         _session.WriteInt64(_trampoline.ToInt64() + ItemAssetOffset, 0);
         _session.WriteInt64(_trampoline.ToInt64() + LocalizedNameOffset, 0);
         _session.WriteInt64(_trampoline.ToInt64() + PendingItemOffset, 0);
+        _session.WriteInt64(_trampoline.ToInt64() + ItemSlotOffset, 0);
     }
 
     public void Dispose()

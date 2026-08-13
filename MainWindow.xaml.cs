@@ -584,6 +584,7 @@ public partial class MainWindow : Window
         _itemSelectionHook?.Dispose();
         _selectedItemEntity = null;
         SelectedItemHistoryList.Items.Clear();
+        ItemNameDiagnosticBox.Text = "尚无物品名称诊断。";
         try
         {
             _itemSelectionHook = new RemoteItemSelectionHook(
@@ -598,12 +599,13 @@ public partial class MainWindow : Window
             for (var attempt = 0; attempt < 18_000 && ReferenceEquals(_itemSelectionHook, activeHook); attempt++)
             {
                 await Task.Delay(100);
-                if (!activeHook.TryReadSelection(out var itemEntity, out var itemAsset, out var localizedNameAddress) || itemEntity == _selectedItemEntity)
+                if (!activeHook.TryReadSelection(out var itemEntity, out var itemSlot, out var itemAsset, out var localizedNameAddress) || itemEntity == _selectedItemEntity)
                 {
                     continue;
                 }
 
                 var localizedName = ReadResolvedItemName(localizedNameAddress);
+                AppendItemNameDiagnostic(itemEntity, itemSlot, itemAsset, localizedNameAddress, localizedName);
                 _selectedItemEntity = itemEntity;
                 activeHook.ClearSelection();
                 RecordSelectedItem(itemEntity, localizedName);
@@ -622,13 +624,14 @@ public partial class MainWindow : Window
 
     private void OnReadItemSelection(object sender, RoutedEventArgs e)
     {
-        if (_itemSelectionHook is null || !_itemSelectionHook.TryReadSelection(out var itemEntity, out var itemAsset, out var localizedNameAddress))
+        if (_itemSelectionHook is null || !_itemSelectionHook.TryReadSelection(out var itemEntity, out var itemSlot, out var itemAsset, out var localizedNameAddress))
         {
             SetStatus("尚未捕获物品。请先开启物品选择捕获，再回游戏打开背包并点击目标物品详情。", false);
             return;
         }
 
         var localizedName = ReadResolvedItemName(localizedNameAddress);
+        AppendItemNameDiagnostic(itemEntity, itemSlot, itemAsset, localizedNameAddress, localizedName);
         _selectedItemEntity = itemEntity;
         _itemSelectionHook.ClearSelection();
         RecordSelectedItem(itemEntity, localizedName);
@@ -643,6 +646,47 @@ public partial class MainWindow : Window
         return _session?.TryReadIl2CppString(localizedNameAddress, out var value) == true
             ? value.Trim()
             : string.Empty;
+    }
+
+    private void AppendItemNameDiagnostic(long itemEntity, long itemSlot, long capturedAsset, long nameAddress, string resolvedName)
+    {
+        var delayedAsset = 0L;
+        var directMessage = 0L;
+        var simplifiedChinese = 0L;
+        var referenceId = 0L;
+        if (_session is { IsAttached: true } && itemSlot != 0)
+        {
+            _session.TryReadInt64(itemSlot + 0x538, out delayedAsset);
+            var asset = delayedAsset != 0 ? delayedAsset : capturedAsset;
+            if (asset != 0)
+            {
+                _session.TryReadInt64(asset + 0x50, out directMessage);
+                _session.TryReadInt64(asset + 0x98, out referenceId);
+                if (directMessage != 0)
+                {
+                    _session.TryReadInt64(directMessage + 0x58, out simplifiedChinese);
+                }
+            }
+        }
+
+        var line = $"{DateTime.Now:HH:mm:ss.fff}\tEntity=0x{itemEntity:X16}\tSlot=0x{itemSlot:X}\tAssetAtHook=0x{capturedAsset:X}\tAssetDelayed=0x{delayedAsset:X}\tNamePtr=0x{nameAddress:X}\tDirectMsg=0x{directMessage:X}\tZhCN=0x{simplifiedChinese:X}\tNameRefId=0x{referenceId:X}\tText={resolvedName}";
+        if (ItemNameDiagnosticBox.Text == "尚无物品名称诊断。")
+        {
+            ItemNameDiagnosticBox.Clear();
+        }
+        ItemNameDiagnosticBox.AppendText((ItemNameDiagnosticBox.Text.Length == 0 ? string.Empty : Environment.NewLine) + line);
+        ItemNameDiagnosticBox.ScrollToEnd();
+    }
+
+    private async void OnCopyItemNameDiagnostic(object sender, RoutedEventArgs e)
+    {
+        if (await TryCopyTextAsync(ItemNameDiagnosticBox.Text))
+        {
+            SetStatus("物品名称诊断已复制。直接把文字粘贴给我即可。", true);
+            return;
+        }
+
+        SetStatus("剪贴板正被占用；诊断仍保留在文本框中，可以点进去按 Ctrl+A、Ctrl+C。", false);
     }
 
     private void RecordSelectedItem(long itemEntity, string localizedName)

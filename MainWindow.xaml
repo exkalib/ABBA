@@ -115,6 +115,12 @@
                     <TextBlock x:Name="SelectedItemText" Text="尚未选择物品。" Foreground="{StaticResource MutedBrush}" Margin="0,11,0,0" TextWrapping="Wrap" />
                     <TextBlock Text="最近 5 次不同的捕获值" Foreground="{StaticResource MutedBrush}" Margin="0,10,0,5" />
                     <ListBox x:Name="SelectedItemHistoryList" Height="82" FontFamily="Consolas" FontSize="12" />
+                    <Grid Margin="0,10,0,0">
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                      <TextBlock Text="物品名称诊断（自动记录，可直接复制给我）" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" />
+                      <Button Grid.Column="1" Style="{StaticResource SecondaryButton}" Content="复制名称诊断" Click="OnCopyItemNameDiagnostic" />
+                    </Grid>
+                    <TextBox x:Name="ItemNameDiagnosticBox" Text="尚无物品名称诊断。" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Height="92" Padding="8,6" Margin="0,6,0,0" FontFamily="Consolas" FontSize="11" />
                     <Grid Margin="0,13,0,6">
                       <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="190" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                       <TextBox x:Name="CapturedItemSearchBox" Height="34" Padding="9,5" TextChanged="OnFilterCapturedItems" ToolTip="按中文名、内部路径或 GUID 搜索物品" />
