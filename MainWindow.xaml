@@ -299,7 +299,7 @@
                       <StackPanel Grid.Row="1" Margin="0,28,0,0">
                         <TextBlock Text="物品名称" Foreground="{StaticResource MutedBrush}" FontSize="11" />
                         <TextBox x:Name="CapturedItemNameBox" Height="42" Padding="12,7" Margin="0,7,0,0" ToolTip="选中物品的中文名称" />
-                        <TextBlock Text="生成数量" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,18,0,0" />
+                        <TextBlock x:Name="CatalogCreateCountLabel" Text="生成数量" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,18,0,0" />
                         <TextBox x:Name="CatalogCreateCountBox" Height="42" Padding="12,7" Text="1" Margin="0,7,0,0" ToolTip="生成数量（1–99）" />
                         <Button Style="{StaticResource ActionButton}" Content="生成选中物品" Click="OnCreateFromCapturedTemplate" HorizontalAlignment="Stretch" Margin="0,16,0,0" />
                       </StackPanel>
@@ -468,7 +468,7 @@
                       </StackPanel>
 
                       <StackPanel Grid.Row="2" Margin="0,18,0,0">
-                        <TextBlock Text="生成数量" Foreground="{StaticResource MutedBrush}" FontSize="11" />
+                        <TextBlock x:Name="IconCatalogCreateCountLabel" Text="生成数量" Foreground="{StaticResource MutedBrush}" FontSize="11" />
                         <TextBox x:Name="IconCatalogCreateCountBox" Height="42" Padding="12,7" Text="1" Margin="0,7,0,0" ToolTip="生成数量（1–99）" />
                         <Button x:Name="IconCatalogCreateButton" Style="{StaticResource ActionButton}" Content="生成预览物品" Click="OnCreateFromIconCatalog" HorizontalAlignment="Stretch" Margin="0,16,0,0" />
                         <TextBlock Text="已解析真实物品 GUID 的条目可直接生成；少量缺少完整 ItemData 的内部条目会保持禁用。" Foreground="#717B8C" FontSize="10" TextWrapping="Wrap" Margin="0,10,0,0" />

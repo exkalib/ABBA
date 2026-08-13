@@ -184,6 +184,7 @@ public partial class MainWindow : Window
         public long Guid => Template?.Guid ?? LocalItem?.Guid ?? 0;
         public int Rarity => Template?.Rarity ?? LocalItem?.Rarity ?? 0;
         public bool CanGenerate => Guid != 0;
+        public bool IsStackable => IsStackableCategory(Category);
         public string AvailabilityText => CanGenerate ? "可生成" : "待解析 GUID";
         public string CategoryIcon => GetCategoryIcon(Category);
     }
@@ -1464,9 +1465,11 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (!TryParseInt32(CatalogCreateCountBox.Text, out var count) || count is < 1 or > 99)
+        var count = 1;
+        if (IsStackableCategory(item.Category) &&
+            (!TryParseInt32(CatalogCreateCountBox.Text, out count) || count is < 1 or > 9999))
         {
-            SetStatus("生成数量请输入 1 至 99。", false);
+            SetStatus("堆叠数量请输入 1 至 9999。", false);
             return;
         }
 
@@ -1484,6 +1487,7 @@ public partial class MainWindow : Window
         if (CapturedItemCatalogList.SelectedItem is CapturedItemTemplate item)
         {
             CapturedItemNameBox.Text = item.CustomName;
+            UpdateCreateCountControls(IsStackableCategory(item.Category), CatalogCreateCountLabel, CatalogCreateCountBox);
         }
     }
 
@@ -1496,6 +1500,7 @@ public partial class MainWindow : Window
         }
 
         IconCatalogCreateButton.IsEnabled = entry.CanGenerate;
+        UpdateCreateCountControls(entry.IsStackable, IconCatalogCreateCountLabel, IconCatalogCreateCountBox);
         if (entry.Template is { } item)
         {
             CapturedItemCatalogList.SelectedItem = item;
@@ -1517,9 +1522,11 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (!TryParseInt32(IconCatalogCreateCountBox.Text, out var count) || count is < 1 or > 99)
+        var count = 1;
+        if (item.IsStackable &&
+            (!TryParseInt32(IconCatalogCreateCountBox.Text, out count) || count is < 1 or > 9999))
         {
-            SetStatus("生成数量请输入 1 至 99。", false);
+            SetStatus("堆叠数量请输入 1 至 9999。", false);
             return;
         }
 
@@ -1657,46 +1664,40 @@ public partial class MainWindow : Window
 
     private async void CreateFromTemplate(long ownerItem, string templateName, long templateGuid, int rarity, int count = 1)
     {
-        var createdCount = 0;
-        for (var index = 0; index < count; index++)
+        var queued = templateGuid == 0
+            ? _quantumCommandHook?.QueueCreateFromTemplate(ownerItem, count) == true
+            : _quantumCommandHook?.QueueCreateFromGuid(ownerItem, templateGuid, rarity, count) == true;
+        if (!queued)
         {
-            var queued = templateGuid == 0
-                ? _quantumCommandHook?.QueueCreateFromTemplate(ownerItem) == true
-                : _quantumCommandHook?.QueueCreateFromGuid(ownerItem, templateGuid, rarity) == true;
-            if (!queued)
-            {
-                SetStatus($"已生成 {createdCount}/{count} 件；下一条命令无法排队，请稍后重试。", false);
-                return;
-            }
-
-            SetStatus($"正在生成 {templateName}：{index + 1}/{count}…", true);
-            var commandCompleted = false;
-            for (var attempt = 0; attempt < 20; attempt++)
-            {
-                await Task.Delay(100);
-                if (_quantumCommandHook?.TryReadCreateCompletion(out var completed, out var succeeded, out _) != true || !completed)
-                {
-                    continue;
-                }
-
-                commandCompleted = true;
-                if (!succeeded)
-                {
-                    SetStatus($"已生成 {createdCount}/{count} 件；游戏拒绝继续生成，没有重复执行失败命令。", false);
-                    return;
-                }
-                createdCount++;
-                break;
-            }
-
-            if (!commandCompleted)
-            {
-                SetStatus($"已生成 {createdCount}/{count} 件；等待第 {index + 1} 件超时，未重复执行。", false);
-                return;
-            }
+            SetStatus("生成命令无法排队，请稍后重试。", false);
+            return;
         }
 
-        SetStatus($"已按“{templateName}”生成 {createdCount} 件并加入当前角色背包。", true);
+        SetStatus(count == 1 ? $"正在生成 {templateName}…" : $"正在生成 {templateName} × {count}…", true);
+        for (var attempt = 0; attempt < 20; attempt++)
+        {
+            await Task.Delay(100);
+            if (_quantumCommandHook?.TryReadCreateCompletion(out var completed, out var succeeded, out _) != true || !completed)
+            {
+                continue;
+            }
+            SetStatus(succeeded
+                ? (count == 1 ? $"已生成“{templateName}”并加入背包。" : $"已生成“{templateName}”× {count}；游戏已按正常入包规则合并堆栈。")
+                : "游戏拒绝生成物品，命令没有重复执行。", succeeded);
+            return;
+        }
+        SetStatus("等待生成完成超时，命令没有重复执行。", false);
+    }
+
+    private static bool IsStackableCategory(string category) =>
+        category is not ("武器" or "防具" or "饰品");
+
+    private static void UpdateCreateCountControls(bool stackable, TextBlock label, TextBox box)
+    {
+        box.IsEnabled = stackable;
+        if (!stackable) box.Text = "1";
+        label.Text = stackable ? "堆叠数量" : "装备固定生成 1 件";
+        box.ToolTip = stackable ? "一次创建该数量，并由游戏自动合并已有堆栈" : "装备每件独占一个背包格，固定生成 1 件";
     }
 
     private void OnAddSelectedItemEnchantment(object sender, RoutedEventArgs e)

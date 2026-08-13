@@ -29,6 +29,7 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
     private const int CreateTemplateGuidOffset = 0x8B0;
     private const int CreateTemplateRarityOffset = 0x8B8;
     private const int InspectedRarityOffset = 0x8BC;
+    private const int CreateCountOffset = 0x8C0;
 
     private readonly GameSession _session;
     private readonly long _site;
@@ -200,10 +201,11 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
         AddLoadRipRelative(code, root, CreateTemplateRarityOffset, new byte[] { 0x44, 0x8B, 0x0D });
         var rarityResolvedOffset = code.Count;
 
-        // ItemsAPI.Create(Frame, HeroItemData, 1, currentRarity, Cheat) creates fresh persistent data.
+        // ItemsAPI.Create receives the requested stack count once. AddItemToInventory then follows
+        // the game's normal pickup/purchase path and merges stackable items when possible.
         AddLoadRipRelative(code, root, FrameOffset, new byte[] { 0x48, 0x8B, 0x0D });
         AddLoadRipRelative(code, root, ItemTemplateOffset, new byte[] { 0x48, 0x8B, 0x15 });
-        code.AddRange(new byte[] { 0x41, 0xB8, 0x01, 0x00, 0x00, 0x00 }); // r8d = count 1
+        AddLoadRipRelative(code, root, CreateCountOffset, new byte[] { 0x44, 0x8B, 0x05 });
         code.AddRange(new byte[] { 0xC7, 0x44, 0x24, 0x20, 0x04, 0x00, 0x00, 0x00 }); // source = Cheat
         AddCallAbsolute(code, _createItem);
         AddStoreRipRelative(code, root, CreatedItemOffset, new byte[] { 0x48, 0x89, 0x05 });
@@ -461,9 +463,9 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
                _session.WriteInt32(root + CommandOffset, RarityCommand);
     }
 
-    public bool QueueCreateFromTemplate(long selectedItem)
+    public bool QueueCreateFromTemplate(long selectedItem, int count = 1)
     {
-        if (!IsArmed || selectedItem == 0)
+        if (!IsArmed || selectedItem == 0 || count is < 1 or > 9999)
         {
             return false;
         }
@@ -482,12 +484,13 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
                _session.WriteInt64(root + ItemTemplateOffset, 0) &&
                _session.WriteInt64(root + CreateTemplateGuidOffset, 0) &&
                _session.WriteInt32(root + CreateTemplateRarityOffset, 0) &&
+               _session.WriteInt32(root + CreateCountOffset, count) &&
                _session.WriteInt32(root + CommandOffset, CreateFromTemplateCommand);
     }
 
-    public bool QueueCreateFromGuid(long ownerItem, long templateGuid, int rarity)
+    public bool QueueCreateFromGuid(long ownerItem, long templateGuid, int rarity, int count = 1)
     {
-        if (!IsArmed || ownerItem == 0 || templateGuid == 0 || rarity is < 0 or > 3)
+        if (!IsArmed || ownerItem == 0 || templateGuid == 0 || rarity is < 0 or > 3 || count is < 1 or > 9999)
         {
             return false;
         }
@@ -506,6 +509,7 @@ internal sealed class RemoteQuantumCommandHook : IDisposable
                _session.WriteInt64(root + ItemTemplateOffset, 0) &&
                _session.WriteInt64(root + CreateTemplateGuidOffset, templateGuid) &&
                _session.WriteInt32(root + CreateTemplateRarityOffset, rarity) &&
+               _session.WriteInt32(root + CreateCountOffset, count) &&
                _session.WriteInt32(root + CommandOffset, CreateFromTemplateCommand);
     }
 
