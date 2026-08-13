@@ -375,11 +375,8 @@
                               <Border Width="88" Height="102" Background="#10141D" BorderBrush="#263046" BorderThickness="1" CornerRadius="8" Padding="7" Margin="4">
                                 <Grid>
                                   <Grid.RowDefinitions><RowDefinition Height="44" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-                                  <Border Width="42" Height="42" CornerRadius="8" Background="#1A1F2B" BorderBrush="#333B52" BorderThickness="1" HorizontalAlignment="Center" ClipToBounds="True">
-                                    <Grid>
-                                      <TextBlock Text="无图" FontSize="9" Foreground="#59657A" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                      <Image Source="{Binding IconPath}" Stretch="UniformToFill" />
-                                    </Grid>
+                                  <Border Width="42" Height="42" CornerRadius="8" Background="#171C28" BorderBrush="#303A52" BorderThickness="1" HorizontalAlignment="Center">
+                                    <TextBlock Text="{Binding CategoryIcon}" FontSize="18" Foreground="#BDAEFF" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                   </Border>
                                   <Border HorizontalAlignment="Right" VerticalAlignment="Top" Background="#20283A" CornerRadius="7" Padding="5,2">
                                     <TextBlock Text="{Binding AvailabilityText}" FontSize="8" Foreground="#AEB8CC" />
@@ -400,7 +397,7 @@
                       <StackPanel>
                         <Border Width="72" Height="72" CornerRadius="12" Background="#171C28" BorderBrush="#333B52" BorderThickness="1" HorizontalAlignment="Left" ClipToBounds="True">
                           <Grid>
-                            <TextBlock Text="无图标" FontSize="11" Foreground="#59657A" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding ElementName=IconCatalogList, Path=SelectedItem.CategoryIcon}" FontSize="28" Foreground="#BDAEFF" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             <Image Source="{Binding ElementName=IconCatalogList, Path=SelectedItem.IconPath}" Stretch="UniformToFill" />
                           </Grid>
                         </Border>

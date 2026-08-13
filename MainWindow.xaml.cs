@@ -164,6 +164,7 @@ public partial class MainWindow : Window
         public string SearchText => $"{DisplayName} {Category} {Metadata} {PreviewDescription}";
         public bool CanGenerate => Template is not null;
         public string AvailabilityText => CanGenerate ? "可生成" : "待解析 GUID";
+        public string CategoryIcon => GetCategoryIcon(Category);
     }
 
     private sealed class IconCatalogCategoryFilter
