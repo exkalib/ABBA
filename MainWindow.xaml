@@ -1,47 +1,81 @@
 <Window x:Class="NRftWManagerUI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="NRftW — External Control" Height="920" Width="1500" MinHeight="760" MinWidth="1180"
-        WindowStartupLocation="CenterScreen" Background="{StaticResource SciFiGridBrush}">
-  <Grid Margin="34,24,34,20">
+        Title="NRftW — External Control" Height="860" Width="1360" MinHeight="720" MinWidth="1100"
+        WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="CanResize" Background="#060812">
+  <Border Background="{StaticResource SciFiGridBrush}" BorderBrush="#36536F" BorderThickness="1" CornerRadius="12">
+  <Grid>
       <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
         <RowDefinition Height="Auto" />
         <RowDefinition Height="*" />
         <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
 
-      <Border Grid.Row="0" Margin="0,0,0,26" Background="Transparent" BorderThickness="0" Padding="2,4">
+      <Canvas Grid.RowSpan="4" ClipToBounds="True" IsHitTestVisible="False">
+        <Ellipse Width="560" Height="560" Canvas.Right="-170" Canvas.Top="40" Opacity="0.24">
+          <Ellipse.Fill>
+            <RadialGradientBrush>
+              <GradientStop Color="#5538E8FF" Offset="0" />
+              <GradientStop Color="#182663FF" Offset="0.48" />
+              <GradientStop Color="#00060812" Offset="1" />
+            </RadialGradientBrush>
+          </Ellipse.Fill>
+        </Ellipse>
+        <Path Data="M 920,0 L 1120,0 L 780,860 L 580,860 Z" Fill="#070E1A2C" />
+        <Path Data="M 980,0 L 986,0 L 646,860 L 640,860 Z" Fill="#2438E8FF" />
+        <Path Data="M 1090,0 L 1092,0 L 752,860 L 750,860 Z" Fill="#267D65FF" />
+      </Canvas>
+
+      <Border Grid.Row="0" Height="38" Background="#D9080C16" BorderBrush="#18273B" BorderThickness="0,0,0,1" CornerRadius="12,12,0,0" MouseLeftButtonDown="OnTitleBarMouseDown">
         <Grid>
           <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-          <Border Width="46" Height="46" Background="#152526" BorderBrush="#426764" BorderThickness="1" CornerRadius="10" Margin="0,0,17,0">
-            <Grid>
-              <Path Data="M8,30 L18,12 L26,12 L18,28 L32,28 L26,38 L12,38 Z" Fill="{StaticResource AccentBrush}" Stretch="Uniform" Margin="8" />
-            </Grid>
-          </Border>
-          <StackPanel Grid.Column="1" VerticalAlignment="Center">
-            <StackPanel Orientation="Horizontal">
-              <TextBlock x:Name="PageTitle" Style="{StaticResource DisplayTitle}" Text="NRftW" FontSize="29" FontWeight="SemiBold" />
-              <Border Background="#182329" BorderBrush="#2B4446" BorderThickness="1" CornerRadius="8" Margin="13,4,0,0" Padding="9,3">
-                <TextBlock Text="EXTERNAL CONTROL" Style="{StaticResource MicroLabel}" FontSize="8" />
-              </Border>
-            </StackPanel>
-            <TextBlock x:Name="PageSubtitle" Text="LOCAL MEMORY INTERFACE  /  NO MOD  /  VERIFIED BUILD" FontFamily="Bahnschrift" FontSize="10" Foreground="{StaticResource MutedBrush}" Margin="1,4,0,0" />
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+            <Rectangle Width="16" Height="3" Fill="{StaticResource AccentBrush}" RadiusX="2" RadiusY="2" />
+            <TextBlock Text="NRftW CONTROL // BUILD 1.45" FontFamily="Bahnschrift" FontSize="10" Foreground="#9CB0C9" Margin="10,0,0,0" />
           </StackPanel>
-          <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-            <Border Background="#A60D141C" BorderBrush="#273744" BorderThickness="1" CornerRadius="8" Padding="13,9">
-              <StackPanel Orientation="Horizontal">
-                <Ellipse x:Name="ConnectionIndicator" Width="7" Height="7" Fill="{StaticResource WarningBrush}" VerticalAlignment="Center" Margin="0,0,8,0">
-                  <Ellipse.Effect><DropShadowEffect Color="#FFBE55" BlurRadius="8" ShadowDepth="0" Opacity="0.7" /></Ellipse.Effect>
-                </Ellipse>
-                <TextBlock x:Name="ConnectionText" Text="LINK OFFLINE" Foreground="{StaticResource WarningBrush}" FontFamily="Consolas" FontSize="12" FontWeight="Bold" />
-              </StackPanel>
-            </Border>
-            <Button Style="{StaticResource ActionButton}" Content="连接并验证" Click="OnConnectGame" Margin="10,0,0,0" />
+          <TextBlock Grid.Column="1" Text="EXTERNAL MEMORY INTERFACE" FontFamily="Consolas" FontSize="9" Foreground="#4F6683" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          <StackPanel Grid.Column="2" Orientation="Horizontal">
+            <Button Content="—" Click="OnMinimizeWindow" Width="46" Background="Transparent" BorderThickness="0" Foreground="#91A4BC" FontSize="15" />
+            <Button Content="×" Click="OnCloseWindow" Width="46" Background="Transparent" BorderThickness="0" Foreground="#91A4BC" FontSize="18" />
           </StackPanel>
         </Grid>
       </Border>
 
-      <Grid Grid.Row="1">
+      <Border Grid.Row="1" Padding="28,20,28,17" Background="#72090E19" BorderBrush="#17263B" BorderThickness="0,0,0,1">
+        <Grid>
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+          <StackPanel Orientation="Horizontal">
+            <Border Width="50" Height="50" Background="#173848" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1" CornerRadius="14" Margin="0,0,16,0">
+              <Grid>
+                <Border Width="34" Height="34" Background="#163040" CornerRadius="9" />
+                <Path Data="M8,30 L18,12 L27,12 L19,27 L32,27 L24,39 L11,39 Z" Fill="{StaticResource AccentBrush}" Stretch="Uniform" Margin="9" />
+              </Grid>
+            </Border>
+            <StackPanel VerticalAlignment="Center">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock x:Name="PageTitle" Text="NRftW" Style="{StaticResource DisplayTitle}" FontSize="28" FontWeight="SemiBold" />
+                <TextBlock Text="//" FontSize="18" Foreground="#344B66" Margin="10,4" />
+                <TextBlock Text="物品控制台" Style="{StaticResource DisplayTitle}" FontSize="20" Foreground="#C8D5E7" VerticalAlignment="Center" />
+              </StackPanel>
+              <TextBlock x:Name="PageSubtitle" Text="NO MOD · LOCAL PROCESS · VERIFIED NATIVE ROUTE" FontFamily="Consolas" FontSize="9" Foreground="#58708F" Margin="1,3,0,0" />
+            </StackPanel>
+          </StackPanel>
+          <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+            <Border Background="#C20B1422" BorderBrush="#2D4663" BorderThickness="1" CornerRadius="10" Padding="13,10" Margin="0,0,10,0">
+              <StackPanel Orientation="Horizontal">
+                <Ellipse x:Name="ConnectionIndicator" Width="8" Height="8" Fill="{StaticResource WarningBrush}" VerticalAlignment="Center" Margin="0,0,8,0">
+                  <Ellipse.Effect><DropShadowEffect Color="#FFBE55" BlurRadius="10" ShadowDepth="0" Opacity="0.8" /></Ellipse.Effect>
+                </Ellipse>
+                <TextBlock x:Name="ConnectionText" Text="LINK OFFLINE" Foreground="{StaticResource WarningBrush}" FontFamily="Consolas" FontSize="11" FontWeight="Bold" />
+              </StackPanel>
+            </Border>
+            <Button Style="{StaticResource ActionButton}" Content="连接并验证游戏" Click="OnConnectGame" />
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <Grid Grid.Row="2">
         <Grid.ColumnDefinitions><ColumnDefinition Width="0" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
         <Border Grid.Column="0" Style="{StaticResource Card}" Visibility="Collapsed">
           <Grid>
@@ -82,106 +116,103 @@
             </StackPanel>
           </Grid>
         </Border>
-        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,10,0">
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="28,22,22,20">
           <StackPanel>
             <Grid x:Name="OverviewView" Visibility="Collapsed" />
 
-            <Grid Margin="0,0,0,22">
+            <Grid Margin="2,0,2,18">
               <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
               <StackPanel>
-                <TextBlock Text="INVENTORY CONTROL" Style="{StaticResource MicroLabel}" />
-                <TextBlock Text="物品操作台" Style="{StaticResource DisplayTitle}" FontSize="36" Margin="0,5,0,0" />
-                <TextBlock Text="选择、重构与生成。所有写入均通过当前版本验证的游戏原生路径执行。" Foreground="{StaticResource MutedBrush}" FontSize="13" Margin="1,7,0,0" />
+                <TextBlock Text="COMMAND DECK / 01" Style="{StaticResource MicroLabel}" />
+                <TextBlock Text="装备与物品" Style="{StaticResource DisplayTitle}" FontSize="30" FontWeight="SemiBold" Margin="0,4,0,0" />
               </StackPanel>
-              <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-                <TextBlock Text="CURRENT SESSION" Style="{StaticResource MicroLabel}" HorizontalAlignment="Right" />
-                <TextBlock Text="LOCAL / SAFE" FontFamily="Bahnschrift" FontSize="16" Foreground="#AAB7C0" Margin="0,5,0,0" />
+              <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="实时捕获" Foreground="#8DA0BA" VerticalAlignment="Center" Margin="0,0,10,0" />
+                <Border Background="#162C35" BorderBrush="#2D6670" BorderThickness="1" CornerRadius="10" Padding="11,5">
+                  <TextBlock Text="ACTIVE" Foreground="{StaticResource AccentBrush}" FontFamily="Consolas" FontSize="10" FontWeight="Bold" />
+                </Border>
               </StackPanel>
             </Grid>
 
-            <Grid x:Name="ItemsView" Margin="0,0,0,16">
-              <StackPanel>
-                <Border Style="{StaticResource Card}" Padding="24,20">
-                  <Grid>
+            <Grid Margin="0,0,0,16">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="1.45*" /><ColumnDefinition Width="0.85*" /></Grid.ColumnDefinitions>
+              <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,8,0" Padding="26,22">
+                <Grid>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="6" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                  <Border Background="{StaticResource AccentBrush}" CornerRadius="3" Margin="0,2,0,2">
+                    <Border.Effect><DropShadowEffect Color="#38E8FF" BlurRadius="16" ShadowDepth="0" Opacity="0.65" /></Border.Effect>
+                  </Border>
+                  <StackPanel Grid.Column="1" Margin="20,0,0,0">
+                    <TextBlock Text="TARGET ACQUIRED" Style="{StaticResource MicroLabel}" />
+                    <TextBlock x:Name="SelectedItemText" Text="尚未选择物品" Style="{StaticResource DisplayTitle}" FontSize="31" FontWeight="SemiBold" Margin="0,9,0,0" TextWrapping="Wrap" />
+                    <TextBlock Text="在游戏背包中切换物品，目标会自动更新并读取中文名称。" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,9,0,0" />
+                    <Expander Header="诊断与最近目标" IsExpanded="False" Margin="0,14,0,0" Foreground="#7890AA">
+                      <StackPanel Margin="0,8,0,0">
+                        <ListBox x:Name="SelectedItemHistoryList" Height="72" FontFamily="Consolas" FontSize="11" />
+                        <Button Style="{StaticResource SecondaryButton}" Content="复制名称诊断" Click="OnCopyItemNameDiagnostic" HorizontalAlignment="Right" Margin="0,7,0,0" />
+                        <TextBox x:Name="ItemNameDiagnosticBox" Text="尚无物品名称诊断。" IsReadOnly="True" AcceptsReturn="True" Height="76" Margin="0,7,0,0" Visibility="Collapsed" />
+                      </StackPanel>
+                    </Expander>
+                  </StackPanel>
+                </Grid>
+              </Border>
+
+              <Border Grid.Column="1" x:Name="ItemsView" Style="{StaticResource Card}" Margin="8,0,0,0" Padding="24,22">
+                <StackPanel>
+                  <TextBlock Text="QUANTITY" Style="{StaticResource MicroLabel}" />
+                  <TextBlock Text="物品数量" Style="{StaticResource SectionTitle}" Margin="0,5,0,0" />
+                  <TextBlock x:Name="ItemCaptureText" Text="等待最近一次数量变化" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,7,0,0" TextWrapping="Wrap" />
+                  <Grid Margin="0,18,0,0">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                    <StackPanel>
-                      <TextBlock Text="QUANTITY STREAM" Style="{StaticResource MicroLabel}" />
-                      <TextBlock Text="最近物品数量" Style="{StaticResource SectionTitle}" Margin="0,5,0,0" />
-                      <TextBlock x:Name="ItemCaptureText" Text="连接游戏后自动跟踪最近发生数量变化的物品。" Foreground="{StaticResource MutedBrush}" Margin="0,8,0,0" TextWrapping="Wrap" />
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="30,0,0,0">
-                      <CheckBox x:Name="KeepLastItemCheck" Content="最后 1 个保留" IsChecked="True" Click="OnKeepLastItemChanged" VerticalAlignment="Center" Margin="0,0,18,0" />
-                      <TextBox x:Name="ItemQuantityBox" Width="110" Height="34" Padding="9,5" Text="20" />
-                      <Button Style="{StaticResource ActionButton}" Content="写入数量" Click="OnWriteItemQuantity" Margin="10,0,0,0" />
-                    </StackPanel>
+                    <TextBox x:Name="ItemQuantityBox" Height="40" Padding="12,6" Text="20" FontSize="15" />
+                    <Button Grid.Column="1" Style="{StaticResource ActionButton}" Content="写入" Click="OnWriteItemQuantity" Margin="9,0,0,0" />
                   </Grid>
-                </Border>
-              </StackPanel>
+                  <CheckBox x:Name="KeepLastItemCheck" Content="保留最后 1 个" IsChecked="True" Click="OnKeepLastItemChanged" Margin="0,13,0,0" />
+                </StackPanel>
+              </Border>
             </Grid>
 
             <Grid x:Name="EquipmentView" Margin="0,0,0,12">
               <StackPanel>
-                <Border Style="{StaticResource Card}">
+                <Border Style="{StaticResource Card}" Padding="26,22">
                   <StackPanel>
-                    <TextBlock Text="TARGET LOCK" Style="{StaticResource MicroLabel}" />
-                    <Grid Margin="0,8,0,22">
-                      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="360" /></Grid.ColumnDefinitions>
-                      <Border Background="#85070B10" BorderBrush="#23343F" BorderThickness="1" CornerRadius="10" Padding="20,17" Margin="0,0,14,0">
-                        <StackPanel>
-                          <TextBlock Text="当前物品" Foreground="{StaticResource MutedBrush}" FontSize="11" />
-                          <TextBlock x:Name="SelectedItemText" Text="尚未选择物品" Style="{StaticResource DisplayTitle}" FontSize="25" Foreground="{StaticResource TextBrush}" Margin="0,7,0,0" TextWrapping="Wrap" />
-                          <Rectangle Height="2" Width="44" Fill="{StaticResource AccentBrush}" HorizontalAlignment="Left" Margin="0,14,0,0" />
-                          <TextBlock Text="在游戏背包中切换物品，这里会实时锁定目标。" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,10,0,0" />
-                        </StackPanel>
-                      </Border>
-                      <StackPanel Grid.Column="1">
-                        <TextBlock Text="RECENT TARGETS" Style="{StaticResource MicroLabel}" Margin="2,0,0,7" />
-                        <ListBox x:Name="SelectedItemHistoryList" Height="94" FontFamily="Consolas" FontSize="11" />
-                        <Expander Header="名称诊断" IsExpanded="False" Margin="2,8,0,0" Foreground="{StaticResource MutedBrush}">
-                          <StackPanel Margin="0,6,0,0">
-                            <Button Style="{StaticResource SecondaryButton}" Content="复制诊断" Click="OnCopyItemNameDiagnostic" HorizontalAlignment="Right" />
-                            <TextBox x:Name="ItemNameDiagnosticBox" Text="尚无物品名称诊断。" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Height="92" Padding="8,6" Margin="0,6,0,0" FontFamily="Consolas" FontSize="11" />
-                          </StackPanel>
-                        </Expander>
-                      </StackPanel>
-                    </Grid>
-                    <Grid Margin="0,0,0,8">
+                    <Grid Margin="0,0,0,12">
                       <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                       <StackPanel>
-                        <TextBlock Text="ITEM ARCHIVE" Style="{StaticResource MicroLabel}" />
-                        <TextBlock Text="永久物品库" Style="{StaticResource SectionTitle}" Margin="0,5,0,0" />
+                        <TextBlock Text="ITEM VAULT / 02" Style="{StaticResource MicroLabel}" />
+                        <TextBlock Text="永久物品库" Style="{StaticResource SectionTitle}" FontSize="23" Margin="0,5,0,0" />
                       </StackPanel>
                       <TextBlock Grid.Column="1" x:Name="CapturedItemCatalogSummary" Text="等待物品数据" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Bottom" Margin="0,0,0,3" />
                     </Grid>
-                    <Grid Margin="0,8,0,8">
+                    <Grid Margin="0,6,0,10">
                       <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="190" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="70" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                      <TextBox x:Name="CapturedItemSearchBox" Height="34" Padding="9,5" TextChanged="OnFilterCapturedItems" ToolTip="按中文名、内部路径或 GUID 搜索物品" />
-                      <TextBox x:Name="CapturedItemNameBox" Grid.Column="1" Height="34" Padding="9,5" Margin="10,0,0,0" ToolTip="给列表中选中的物品填写中文名称" />
+                      <TextBox x:Name="CapturedItemSearchBox" Height="40" Padding="12,6" TextChanged="OnFilterCapturedItems" ToolTip="按中文名、内部路径或 GUID 搜索物品" />
+                      <TextBox x:Name="CapturedItemNameBox" Grid.Column="1" Height="40" Padding="12,6" Margin="10,0,0,0" ToolTip="给列表中选中的物品填写中文名称" />
                       <Button Grid.Column="2" Style="{StaticResource SecondaryButton}" Content="手工改名" Click="OnSaveCapturedItemName" Margin="8,0,0,0" />
-                      <TextBox x:Name="CatalogCreateCountBox" Grid.Column="3" Height="34" Padding="9,5" Text="1" Margin="8,0,0,0" ToolTip="生成数量（1–99）" />
+                      <TextBox x:Name="CatalogCreateCountBox" Grid.Column="3" Height="40" Padding="12,6" Text="1" Margin="8,0,0,0" ToolTip="生成数量（1–99）" />
                       <Button Grid.Column="4" Style="{StaticResource ActionButton}" Content="生成选中物品" Click="OnCreateFromCapturedTemplate" Margin="8,0,0,0" />
                     </Grid>
-                    <ListBox x:Name="CapturedItemCatalogList" Height="172" FontFamily="Segoe UI Variable Text" FontSize="13" SelectionChanged="OnCapturedItemSelectionChanged" />
+                    <ListBox x:Name="CapturedItemCatalogList" Height="188" FontFamily="Segoe UI Variable Text" FontSize="13" SelectionChanged="OnCapturedItemSelectionChanged" />
                   </StackPanel>
                 </Border>
                 <Grid Margin="0,16,0,0">
-                  <Border Style="{StaticResource Card}">
+                  <Border Style="{StaticResource Card}" Padding="26,20">
                     <StackPanel>
-                      <TextBlock Text="RARITY RECONSTRUCTION" Style="{StaticResource MicroLabel}" />
+                      <TextBlock Text="RARITY FORGE / 03" Style="{StaticResource MicroLabel}" />
                       <Grid Margin="0,6,0,0">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <StackPanel>
-                          <TextBlock Text="品质重构" Style="{StaticResource SectionTitle}" />
-                          <TextBlock Text="调用游戏原生物品 API；每次操作只执行一次。" Foreground="{StaticResource MutedBrush}" Margin="0,7,0,0" />
+                          <TextBlock Text="品质重构" Style="{StaticResource SectionTitle}" FontSize="23" />
+                          <TextBlock Text="原生路径 · 单次执行 · 自动持久化" Foreground="{StaticResource MutedBrush}" Margin="0,7,0,0" />
                         </StackPanel>
                       <WrapPanel Grid.Column="1" Margin="28,0,0,0" VerticalAlignment="Center">
                         <Button Style="{StaticResource RarityButton}" BorderBrush="#AFC3D1" Foreground="#EAF4F8" Content="COMMON / 白" Tag="Common" Click="OnQueueRarity" Margin="0,0,8,8" />
                         <Button Style="{StaticResource RarityButton}" BorderBrush="{StaticResource AccentBrush}" Foreground="{StaticResource AccentBrush}" Content="MAGICAL / 蓝" Tag="Magical" Click="OnQueueRarity" Margin="0,0,8,8" />
                         <Button Style="{StaticResource RarityButton}" BorderBrush="{StaticResource PurpleBrush}" Foreground="#CBB9FF" Content="PLAGUED / 紫" Tag="Plagued" Click="OnQueueRarity" Margin="0,0,8,8" />
-                        <Button Style="{StaticResource ActionButton}" Content="重建一件" Click="OnCreateFromSelectedTemplate" Margin="12,0,0,8" />
+                        <Button Style="{StaticResource ActionButton}" Content="按模板重建" Click="OnCreateFromSelectedTemplate" Margin="12,0,0,8" />
                       </WrapPanel>
                       </Grid>
-                      <TextBlock Text="模板新建只继承物品类型与当前品质，由游戏生成全新实体、种子和持久化数据；金装必须以已有固定金装作为模板。" Foreground="{StaticResource WarningBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0" />
+                      <TextBlock Text="金装必须使用已有固定金装作为模板。" Foreground="{StaticResource WarningBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0" />
                     </StackPanel>
                   </Border>
                   <Border Grid.Column="1" Visibility="Collapsed">
@@ -210,15 +241,15 @@
               </StackPanel>
             </Grid>
 
-            <Grid Margin="0,4,0,16">
+            <Grid Margin="0,4,0,8">
               <Grid.ColumnDefinitions><ColumnDefinition Width="1.05*" /><ColumnDefinition Width="0.95*" /></Grid.ColumnDefinitions>
             <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,8,0">
               <Grid>
                 <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                 <StackPanel>
-                  <TextBlock Text="WALLET" Style="{StaticResource MicroLabel}" />
-                  <TextBlock Text="货币注入" Style="{StaticResource SectionTitle}" Margin="0,5,0,0" />
+                  <TextBlock Text="WALLET / 04" Style="{StaticResource MicroLabel}" />
+                  <TextBlock Text="货币注入" Style="{StaticResource SectionTitle}" FontSize="23" Margin="0,5,0,0" />
                   <TextBlock x:Name="CurrencyCaptureText" Text="先在角色背包里点击任意物品；程序会在模拟线程静默增加所选货币。" Foreground="{StaticResource MutedBrush}" Margin="0,7,0,0" TextWrapping="Wrap" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0,0,0">
@@ -236,8 +267,8 @@
             <Border Grid.Column="1" Style="{StaticResource Card}" Margin="8,0,0,0">
               <Grid>
                 <StackPanel>
-                  <TextBlock Text="VITAL OVERRIDE" Style="{StaticResource MicroLabel}" />
-                  <TextBlock Text="生命与能量" Style="{StaticResource SectionTitle}" Margin="0,5,0,0" />
+                  <TextBlock Text="VITAL OVERRIDE / 05" Style="{StaticResource MicroLabel}" />
+                  <TextBlock Text="生命与能量" Style="{StaticResource SectionTitle}" FontSize="23" Margin="0,5,0,0" />
                   <TextBlock Text="通过当前选中物品识别角色，并在游戏模拟线程调用原生无限状态。" Foreground="{StaticResource MutedBrush}" Margin="0,7,0,0" TextWrapping="Wrap" />
                 <WrapPanel Margin="0,22,0,0">
                   <CheckBox Content="无限生命" Tag="health" Click="OnToggleInfiniteStat" Margin="0,0,18,0" />
@@ -373,7 +404,7 @@
         </ScrollViewer>
       </Grid>
 
-      <Border Grid.Row="2" Margin="0,16,0,0" Background="#B8090D13" BorderBrush="#1D2832" BorderThickness="1" CornerRadius="9" Padding="14,10">
+      <Border Grid.Row="3" Background="#E7080C16" BorderBrush="#1D3049" BorderThickness="0,1,0,0" CornerRadius="0,0,12,12" Padding="18,11">
         <Grid>
           <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
           <StackPanel Orientation="Horizontal">
@@ -387,4 +418,5 @@
         </Grid>
       </Border>
   </Grid>
+  </Border>
 </Window>
