@@ -809,14 +809,20 @@ public partial class MainWindow : Window
 
         var search = CapturedItemSearchBox?.Text.Trim() ?? string.Empty;
         CapturedItemCatalogList.Items.Clear();
-        foreach (var item in _capturedItemTemplates.Where(item =>
+        var visibleItems = _capturedItemTemplates.Where(item =>
                      search.Length == 0 ||
                      item.DisplayName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
                      item.Path.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                     item.Guid.ToString("X").Contains(search, StringComparison.OrdinalIgnoreCase)))
+                     item.Guid.ToString("X").Contains(search, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(item => item.DisplayName, StringComparer.CurrentCultureIgnoreCase)
+            .ToArray();
+        foreach (var item in visibleItems)
         {
             CapturedItemCatalogList.Items.Add(item);
         }
+        CapturedItemCatalogSummary.Text = search.Length == 0
+            ? $"永久物品模板列表 · 已保存 {_capturedItemTemplates.Count} 件 · 自动读取游戏简体中文名"
+            : $"搜索结果 {visibleItems.Length} / {_capturedItemTemplates.Count} 件";
     }
 
     private void LoadItemCatalog()
@@ -879,7 +885,13 @@ public partial class MainWindow : Window
             return;
         }
 
-        CreateFromTemplate(ownerItem, item.DisplayName, item.Guid, item.Rarity);
+        if (!TryParseInt32(CatalogCreateCountBox.Text, out var count) || count is < 1 or > 99)
+        {
+            SetStatus("生成数量请输入 1 至 99。", false);
+            return;
+        }
+
+        CreateFromTemplate(ownerItem, item.DisplayName, item.Guid, item.Rarity, count);
     }
 
     private void OnCapturedItemSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -1019,33 +1031,48 @@ public partial class MainWindow : Window
         CreateFromTemplate(selectedItem, $"0x{selectedItem:X}", 0, 0);
     }
 
-    private async void CreateFromTemplate(long ownerItem, string templateName, long templateGuid, int rarity)
+    private async void CreateFromTemplate(long ownerItem, string templateName, long templateGuid, int rarity, int count = 1)
     {
-        var queued = templateGuid == 0
-            ? _quantumCommandHook?.QueueCreateFromTemplate(ownerItem) == true
-            : _quantumCommandHook?.QueueCreateFromGuid(ownerItem, templateGuid, rarity) == true;
-        if (!queued)
+        var createdCount = 0;
+        for (var index = 0; index < count; index++)
         {
-            SetStatus("模板新建命令无法排队；请重新点击“连接 / 扫描系统”后重试。", false);
-            return;
-        }
-
-        SetStatus($"已排队按 {templateName} 的静态模板新建一件物品，等待游戏模拟线程执行。", true);
-        for (var attempt = 0; attempt < 20; attempt++)
-        {
-            await Task.Delay(100);
-            if (_quantumCommandHook?.TryReadCreateCompletion(out var completed, out var succeeded, out var createdItem) != true || !completed)
+            var queued = templateGuid == 0
+                ? _quantumCommandHook?.QueueCreateFromTemplate(ownerItem) == true
+                : _quantumCommandHook?.QueueCreateFromGuid(ownerItem, templateGuid, rarity) == true;
+            if (!queued)
             {
-                continue;
+                SetStatus($"已生成 {createdCount}/{count} 件；下一条命令无法排队，请稍后重试。", false);
+                return;
             }
 
-            SetStatus(succeeded
-                ? $"已由游戏创建全新物品实体 0x{createdItem:X} 并加入原背包；它不是运行时实体克隆。"
-                : "游戏未能按当前模板创建或加入物品；没有重复执行。", succeeded);
-            return;
+            SetStatus($"正在生成 {templateName}：{index + 1}/{count}…", true);
+            var commandCompleted = false;
+            for (var attempt = 0; attempt < 20; attempt++)
+            {
+                await Task.Delay(100);
+                if (_quantumCommandHook?.TryReadCreateCompletion(out var completed, out var succeeded, out _) != true || !completed)
+                {
+                    continue;
+                }
+
+                commandCompleted = true;
+                if (!succeeded)
+                {
+                    SetStatus($"已生成 {createdCount}/{count} 件；游戏拒绝继续生成，没有重复执行失败命令。", false);
+                    return;
+                }
+                createdCount++;
+                break;
+            }
+
+            if (!commandCompleted)
+            {
+                SetStatus($"已生成 {createdCount}/{count} 件；等待第 {index + 1} 件超时，未重复执行。", false);
+                return;
+            }
         }
 
-        SetStatus("2 秒内没有收到模板新建命令完成确认；未重复执行，请保持角色在游戏中后重试。", false);
+        SetStatus($"已按“{templateName}”生成 {createdCount} 件并加入当前角色背包。", true);
     }
 
     private void OnAddSelectedItemEnchantment(object sender, RoutedEventArgs e)

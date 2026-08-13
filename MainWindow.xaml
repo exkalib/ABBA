@@ -115,20 +115,21 @@
                     <TextBlock x:Name="SelectedItemText" Text="尚未选择物品。" Foreground="{StaticResource MutedBrush}" Margin="0,11,0,0" TextWrapping="Wrap" />
                     <TextBlock Text="最近 5 次不同的捕获值" Foreground="{StaticResource MutedBrush}" Margin="0,10,0,5" />
                     <ListBox x:Name="SelectedItemHistoryList" Height="82" FontFamily="Consolas" FontSize="12" />
-                    <Grid Margin="0,10,0,0">
-                      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                      <TextBlock Text="物品名称诊断（自动记录，可直接复制给我）" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" />
-                      <Button Grid.Column="1" Style="{StaticResource SecondaryButton}" Content="复制名称诊断" Click="OnCopyItemNameDiagnostic" />
-                    </Grid>
-                    <TextBox x:Name="ItemNameDiagnosticBox" Text="尚无物品名称诊断。" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Height="92" Padding="8,6" Margin="0,6,0,0" FontFamily="Consolas" FontSize="11" />
+                    <Expander Header="名称诊断（仅排错时展开）" IsExpanded="False" Margin="0,10,0,0" Foreground="{StaticResource MutedBrush}">
+                      <StackPanel Margin="0,6,0,0">
+                        <Button Style="{StaticResource SecondaryButton}" Content="复制名称诊断" Click="OnCopyItemNameDiagnostic" HorizontalAlignment="Right" />
+                        <TextBox x:Name="ItemNameDiagnosticBox" Text="尚无物品名称诊断。" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Height="92" Padding="8,6" Margin="0,6,0,0" FontFamily="Consolas" FontSize="11" />
+                      </StackPanel>
+                    </Expander>
                     <Grid Margin="0,13,0,6">
-                      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="190" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="190" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="70" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                       <TextBox x:Name="CapturedItemSearchBox" Height="34" Padding="9,5" TextChanged="OnFilterCapturedItems" ToolTip="按中文名、内部路径或 GUID 搜索物品" />
                       <TextBox x:Name="CapturedItemNameBox" Grid.Column="1" Height="34" Padding="9,5" Margin="10,0,0,0" ToolTip="给列表中选中的物品填写中文名称" />
                       <Button Grid.Column="2" Style="{StaticResource SecondaryButton}" Content="手工改名" Click="OnSaveCapturedItemName" Margin="8,0,0,0" />
-                      <Button Grid.Column="3" Style="{StaticResource ActionButton}" Content="按列表模板新建" Click="OnCreateFromCapturedTemplate" Margin="8,0,0,0" />
+                      <TextBox x:Name="CatalogCreateCountBox" Grid.Column="3" Height="34" Padding="9,5" Text="1" Margin="8,0,0,0" ToolTip="生成数量（1–99）" />
+                      <Button Grid.Column="4" Style="{StaticResource ActionButton}" Content="生成选中物品" Click="OnCreateFromCapturedTemplate" Margin="8,0,0,0" />
                     </Grid>
-                    <TextBlock Text="永久物品模板列表 · 自动读取并保存游戏简体中文名；手工改名仅作纠正" Foreground="{StaticResource AccentBrush}" Margin="0,3,0,5" />
+                    <TextBlock x:Name="CapturedItemCatalogSummary" Text="永久物品模板列表 · 自动读取并保存游戏简体中文名" Foreground="{StaticResource AccentBrush}" Margin="0,3,0,5" />
                     <ListBox x:Name="CapturedItemCatalogList" Height="112" FontFamily="Consolas" FontSize="12" SelectionChanged="OnCapturedItemSelectionChanged" />
                   </StackPanel>
                 </Border>
