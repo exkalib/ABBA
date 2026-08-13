@@ -289,8 +289,8 @@ public partial class MainWindow : Window
             RuntimeStateText.Text = "已连接";
             RuntimeDetailText.Text = result;
             ConnectionText.Text = "已连接";
-            ConnectionText.Foreground = (Brush)FindResource("AccentBrush");
-            ConnectionIndicator.Fill = (Brush)FindResource("AccentBrush");
+            ConnectionText.Foreground = (Brush)FindResource("NodeBrush");
+            ConnectionIndicator.Fill = (Brush)FindResource("NodeBrush");
 
             var summary = $"数量入口：{scanResult.ItemMatches.Count} 个匹配；物品选择：{scanResult.ItemSelectionMatches.Count} 个匹配。";
             var verified = _itemQuantitySite.HasValue && _itemSelectionSite.HasValue;
@@ -354,8 +354,8 @@ public partial class MainWindow : Window
         if (busy)
         {
             ConnectionText.Text = "连接中";
-            ConnectionText.Foreground = (Brush)FindResource("AccentBrush");
-            ConnectionIndicator.Fill = (Brush)FindResource("AccentBrush");
+            ConnectionText.Foreground = (Brush)FindResource("NodeBrush");
+            ConnectionIndicator.Fill = (Brush)FindResource("NodeBrush");
             ConnectionProgressText.Text = progress;
             SetStatus(progress);
         }
