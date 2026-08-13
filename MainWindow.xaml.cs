@@ -95,7 +95,7 @@ public partial class MainWindow : Window
         "NRftWManagerUI",
         "item-catalog.json");
 
-    private sealed class CapturedItemTemplate
+    internal sealed class CapturedItemTemplate
     {
         public long Guid { get; set; }
         public int ItemType { get; set; }
@@ -129,7 +129,17 @@ public partial class MainWindow : Window
         [JsonIgnore]
         public string Metadata => $"类型 {ItemType}  ·  品质 {Rarity}  ·  {Guid:X16}";
 
+        [JsonIgnore]
+        public string Category => CategorizeItem(ItemType, Path, DisplayName);
+
         public override string ToString() => $"{DisplayName}  · 类型 {ItemType}  · 品质 {Rarity}  · GUID 0x{Guid:X16}";
+    }
+
+    internal sealed class CapturedItemCategoryHeader
+    {
+        public required string Category { get; init; }
+        public required int Count { get; init; }
+        public string DisplayName => $"{Category}  ·  {Count}";
     }
 
     public MainWindow()
@@ -1002,16 +1012,85 @@ public partial class MainWindow : Window
                      item.DisplayName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
                      item.Path.Contains(search, StringComparison.OrdinalIgnoreCase) ||
                      item.Guid.ToString("X").Contains(search, StringComparison.OrdinalIgnoreCase))
-            .OrderBy(item => item.DisplayName, StringComparer.CurrentCultureIgnoreCase)
             .ToArray();
-        foreach (var item in visibleItems)
+
+        var groups = visibleItems
+            .GroupBy(item => item.Category)
+            .OrderBy(group => GetCategoryOrder(group.Key))
+            .ThenBy(group => group.Key, StringComparer.CurrentCultureIgnoreCase)
+            .ToArray();
+
+        foreach (var group in groups)
         {
-            CapturedItemCatalogList.Items.Add(item);
+            var items = group.OrderBy(item => item.DisplayName, StringComparer.CurrentCultureIgnoreCase).ToArray();
+            CapturedItemCatalogList.Items.Add(new CapturedItemCategoryHeader { Category = group.Key, Count = items.Length });
+            foreach (var item in items)
+            {
+                CapturedItemCatalogList.Items.Add(item);
+            }
         }
         CapturedItemCatalogSummary.Text = search.Length == 0
-            ? $"{_capturedItemTemplates.Count} 个物品"
-            : $"找到 {visibleItems.Length} 个";
+            ? $"{_capturedItemTemplates.Count} 个物品 · {groups.Length} 类"
+            : $"找到 {visibleItems.Length} 个 · {groups.Length} 类";
     }
+
+    private static string CategorizeItem(int itemType, string path, string displayName)
+    {
+        var text = $"{path} {displayName}".Replace('\\', '/');
+        if (ContainsAny(text, "Weapon", "Weapons", "Sword", "Axe", "Bow", "Dagger", "Staff", "Spear", "Mace", "Hammer", "Wand", "双手", "单手", "巨棒", "剑", "斧", "弓", "杖", "矛"))
+        {
+            return "武器";
+        }
+
+        if (ContainsAny(text, "Armor", "Armour", "Helmet", "Chest", "Glove", "Pants", "Boot", "Shield", "Head", "防具", "头盔", "胸甲", "手套", "裤", "靴", "盾"))
+        {
+            return "防具";
+        }
+
+        if (ContainsAny(text, "Ring", "Amulet", "Jewelry", "Accessory", "Trinket", "戒指", "项链", "护符", "饰品"))
+        {
+            return "饰品";
+        }
+
+        if (ContainsAny(text, "Potion", "Food", "Consumable", "Bomb", "Elixir", "药", "食物", "消耗", "炸弹"))
+        {
+            return "消耗品";
+        }
+
+        if (ContainsAny(text, "Material", "Resource", "Ingredient", "Craft", "Ore", "Hide", "Herb", "Wood", "材料", "资源", "矿", "皮", "草", "木"))
+        {
+            return "材料";
+        }
+
+        if (ContainsAny(text, "Key", "Quest", "Token", "钥匙", "任务"))
+        {
+            return "任务/钥匙";
+        }
+
+        return itemType switch
+        {
+            1 or 2 or 3 => "武器",
+            4 or 5 or 6 => "防具",
+            7 or 8 => "饰品",
+            9 or 10 => "消耗品",
+            11 or 12 => "材料",
+            _ => "其他"
+        };
+    }
+
+    private static bool ContainsAny(string text, params string[] values) =>
+        values.Any(value => text.Contains(value, StringComparison.OrdinalIgnoreCase));
+
+    private static int GetCategoryOrder(string category) => category switch
+    {
+        "武器" => 0,
+        "防具" => 1,
+        "饰品" => 2,
+        "消耗品" => 3,
+        "材料" => 4,
+        "任务/钥匙" => 5,
+        _ => 9
+    };
 
     private void LoadItemCatalog()
     {
@@ -1084,6 +1163,12 @@ public partial class MainWindow : Window
 
     private void OnCapturedItemSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (CapturedItemCatalogList.SelectedItem is CapturedItemCategoryHeader)
+        {
+            CapturedItemCatalogList.SelectedItem = null;
+            return;
+        }
+
         if (CapturedItemCatalogList.SelectedItem is CapturedItemTemplate item)
         {
             CapturedItemNameBox.Text = item.CustomName;
