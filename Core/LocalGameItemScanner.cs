@@ -30,6 +30,7 @@ internal sealed class LocalGameItemScanResult
 
 internal static partial class LocalGameItemScanner
 {
+    private sealed record LocalizedItemName(string English, string SimplifiedChinese);
     private static readonly string[] ItemBundleHints =
     {
         "qdb_assets",
@@ -50,38 +51,44 @@ internal static partial class LocalGameItemScanner
             };
         }
 
-        var rawItemNames = ScanRawItemNames(dataPath);
+        var localizedItems = ScanLocalizedItems(dataPath);
+        var catalogLocalizedItems = localizedItems
+            .Where(pair => IsCatalogItem(pair.Key))
+            .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase);
+        var rawItemNames = catalogLocalizedItems
+            .SelectMany(pair => new[] { CanonicalName(GetRawItemName(pair.Key)), CanonicalName(pair.Value.English) })
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var iconResources = ScanIconResources(installPath, rawItemNames);
         var extractedIcons = UnityIconExtractor.Extract(installPath, iconResources.Values.Distinct(StringComparer.OrdinalIgnoreCase).ToArray());
+        var spriteIcons = UnityIconExtractor.ExtractSprites(installPath, rawItemNames, CanonicalName);
         var found = new Dictionary<string, LocalGameItem>(StringComparer.OrdinalIgnoreCase);
-        foreach (var bundle in Directory.EnumerateFiles(dataPath, "*.bundle")
-                     .Where(path => ItemBundleHints.Any(hint => Path.GetFileName(path).Contains(hint, StringComparison.OrdinalIgnoreCase))))
+        foreach (var (key, localizedName) in catalogLocalizedItems)
         {
-            foreach (var token in ExtractAsciiTokens(bundle))
+            if (TryCreateItem(key, "qdb_assets", iconResources, extractedIcons, spriteIcons, localizedName, out var item))
             {
-                if (!TryCreateItem(token, bundle, iconResources, extractedIcons, out var item))
-                {
-                    continue;
-                }
-
                 found.TryAdd(item.Key, item);
             }
         }
 
         var items = found.Values
-            // The localization bundles also contain skills, blueprints, affixes and internal
-            // text keys. An icon catalog must only expose entries backed by a real item icon.
-            .Where(item => !string.IsNullOrWhiteSpace(item.IconPath))
+            .Where(item => IsCatalogItem(item.Key))
             .OrderBy(item => GetCategoryOrder(item.Category))
             .ThenBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToArray();
         return new LocalGameItemScanResult
         {
             Items = items,
-            MatchedIconResources = items.Count(item => !string.IsNullOrWhiteSpace(item.IconResourceName)),
+            MatchedIconResources = items.Count(item => !string.IsNullOrWhiteSpace(item.IconPath)),
             ExtractedIcons = items.Count(item => !string.IsNullOrWhiteSpace(item.IconPath))
         };
     }
+
+    private static bool IsCatalogItem(string key) =>
+        key.StartsWith("items.gear.", StringComparison.OrdinalIgnoreCase) ||
+        key.StartsWith("items.consumables.", StringComparison.OrdinalIgnoreCase) ||
+        key.StartsWith("items.craftingMaterials.", StringComparison.OrdinalIgnoreCase) ||
+        key.StartsWith("items.quest", StringComparison.OrdinalIgnoreCase) ||
+        key.StartsWith("items.keys.", StringComparison.OrdinalIgnoreCase);
 
     private static IEnumerable<string> ExtractAsciiTokens(string path)
     {
@@ -124,23 +131,108 @@ internal static partial class LocalGameItemScanner
         }
     }
 
-    private static IReadOnlySet<string> ScanRawItemNames(string dataPath)
+    private static IReadOnlyDictionary<string, LocalizedItemName> ScanLocalizedItems(string dataPath)
     {
-        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var bundle in Directory.EnumerateFiles(dataPath, "*.bundle")
-                     .Where(path => ItemBundleHints.Any(hint => Path.GetFileName(path).Contains(hint, StringComparison.OrdinalIgnoreCase))))
+        var names = new Dictionary<string, LocalizedItemName>(StringComparer.OrdinalIgnoreCase);
+        foreach (var bundle in Directory.EnumerateFiles(dataPath, "qdb_assets*.bundle"))
         {
-            foreach (var token in ExtractAsciiTokens(bundle))
-            {
-                var match = ItemLocalizationKeyRegex().Match(token);
-                if (match.Success)
-                {
-                    names.Add(NormalizeName(GetRawItemName(match.Value.Trim('.'))));
-                }
-            }
+            ScanLocalizationBundle(bundle, names);
         }
 
         return names;
+    }
+
+    private static void ScanLocalizationBundle(string path, IDictionary<string, LocalizedItemName> names)
+    {
+        const int blockSize = 8 * 1024 * 1024;
+        const int overlap = 16 * 1024;
+        var marker = "items."u8;
+        using var stream = File.OpenRead(path);
+        var buffer = new byte[blockSize + overlap];
+        var carried = 0;
+        while (true)
+        {
+            var read = stream.Read(buffer, carried, blockSize);
+            if (read == 0)
+            {
+                break;
+            }
+
+            var length = carried + read;
+            var search = buffer.AsSpan(0, length);
+            var consumed = 0;
+            while (true)
+            {
+                var relative = search[consumed..].IndexOf(marker);
+                if (relative < 0)
+                {
+                    break;
+                }
+
+                var start = consumed + relative;
+                if (TryReadLocalizationRow(search, start, out var key, out var english, out var simplifiedChinese))
+                {
+                    names.TryAdd(key, new LocalizedItemName(english, simplifiedChinese));
+                }
+                consumed = start + marker.Length;
+            }
+
+            carried = Math.Min(overlap, length);
+            buffer.AsSpan(length - carried, carried).CopyTo(buffer);
+        }
+    }
+
+    private static bool TryReadLocalizationRow(ReadOnlySpan<byte> data, int start, out string key, out string english, out string simplifiedChinese)
+    {
+        key = string.Empty;
+        english = string.Empty;
+        simplifiedChinese = string.Empty;
+        var keyEnd = data[start..].IndexOf((byte)0);
+        if (keyEnd <= 0 || keyEnd > 260)
+        {
+            return false;
+        }
+
+        key = Encoding.UTF8.GetString(data.Slice(start, keyEnd)).Trim('.');
+        if (!ItemLocalizationKeyRegex().IsMatch(key) || key.EndsWith(".Description", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var position = start + keyEnd + 1;
+        while ((position & 3) != 0 && position < data.Length && data[position] == 0)
+        {
+            position++;
+        }
+
+        for (var languageIndex = 0; languageIndex < 8; languageIndex++)
+        {
+            if (position + sizeof(int) > data.Length)
+            {
+                return false;
+            }
+            var textLength = System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian(data.Slice(position, sizeof(int)));
+            position += sizeof(int);
+            if (textLength < 0 || textLength > 4096 || position + textLength > data.Length)
+            {
+                return false;
+            }
+            if (languageIndex == 7)
+            {
+                simplifiedChinese = Encoding.UTF8.GetString(data.Slice(position, textLength));
+            }
+            else if (languageIndex == 0)
+            {
+                english = Encoding.UTF8.GetString(data.Slice(position, textLength));
+            }
+            position += textLength;
+            while ((position & 3) != 0 && position < data.Length && data[position] == 0)
+            {
+                position++;
+            }
+        }
+
+        return !string.IsNullOrWhiteSpace(simplifiedChinese);
     }
 
     private static IReadOnlyDictionary<string, string> ScanIconResources(string installPath, IReadOnlySet<string> rawItemNames)
@@ -157,7 +249,7 @@ internal static partial class LocalGameItemScanner
             foreach (Match match in IconResourceRegex().Matches(token))
             {
                 var resourceName = match.Value;
-                var normalizedName = NormalizeName(StripIconPrefix(Path.GetFileNameWithoutExtension(resourceName)));
+                var normalizedName = CanonicalName(StripIconPrefix(Path.GetFileNameWithoutExtension(resourceName)));
                 if (normalizedName.Length > 0 && rawItemNames.Contains(normalizedName))
                 {
                     icons.TryAdd(normalizedName, resourceName);
@@ -169,20 +261,21 @@ internal static partial class LocalGameItemScanner
     }
 
     private static bool TryCreateItem(
-        string token,
+        string key,
         string source,
         IReadOnlyDictionary<string, string> iconResources,
         IReadOnlyDictionary<string, string> extractedIcons,
+        IReadOnlyDictionary<string, string> spriteIcons,
+        LocalizedItemName localizedName,
         out LocalGameItem item)
     {
         item = default!;
-        var match = ItemLocalizationKeyRegex().Match(token);
-        if (!match.Success)
+        if (!ItemLocalizationKeyRegex().IsMatch(key))
         {
             return false;
         }
 
-        var key = match.Value.Trim('.');
+        key = key.Trim('.');
         if (key.EndsWith(".Description", StringComparison.OrdinalIgnoreCase))
         {
             return false;
@@ -190,15 +283,21 @@ internal static partial class LocalGameItemScanner
 
         var rawName = GetRawItemName(key);
         var category = Categorize(key);
-        iconResources.TryGetValue(NormalizeName(rawName), out var iconResourceName);
+        var rawCanonicalName = CanonicalName(rawName);
+        var englishCanonicalName = CanonicalName(localizedName.English);
+        iconResources.TryGetValue(rawCanonicalName, out var iconResourceName);
+        if (string.IsNullOrWhiteSpace(iconResourceName))
+        {
+            iconResources.TryGetValue(englishCanonicalName, out iconResourceName);
+        }
         var iconPath = !string.IsNullOrWhiteSpace(iconResourceName) &&
                        extractedIcons.TryGetValue(Path.GetFileNameWithoutExtension(iconResourceName), out var extractedIconPath)
             ? extractedIconPath
-            : string.Empty;
+            : spriteIcons.GetValueOrDefault(rawCanonicalName, spriteIcons.GetValueOrDefault(englishCanonicalName, string.Empty));
         item = new LocalGameItem
         {
             Key = key,
-            Name = ToDisplayName(rawName),
+            Name = string.IsNullOrWhiteSpace(localizedName.SimplifiedChinese) ? ToDisplayName(rawName) : localizedName.SimplifiedChinese,
             Category = category,
             Source = Path.GetFileName(source),
             IconPath = iconPath,
@@ -231,6 +330,20 @@ internal static partial class LocalGameItemScanner
 
     private static string NormalizeName(string value) =>
         new(value.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray());
+
+    private static string CanonicalName(string value)
+    {
+        var normalized = NormalizeName(value);
+        foreach (var noise in new[] { "hero", "male", "female" })
+        {
+            normalized = normalized.Replace(noise, string.Empty, StringComparison.OrdinalIgnoreCase);
+        }
+        if (normalized.StartsWith("icon", StringComparison.OrdinalIgnoreCase))
+        {
+            normalized = normalized["icon".Length..];
+        }
+        return normalized;
+    }
 
     private static string StripIconPrefix(string name)
     {

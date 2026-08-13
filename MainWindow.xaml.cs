@@ -1118,7 +1118,7 @@ public partial class MainWindow : Window
         _localGameItems.Clear();
         _localGameItems.AddRange(scanResult.Items);
         RefreshIconCatalogList();
-        SetStatus($"已扫描 {_localGameItems.Count} 个候选物品；匹配图标资源 {scanResult.MatchedIconResources} 个，实际导出图标 {scanResult.ExtractedIcons} 个。", _localGameItems.Count > 0);
+        SetStatus($"已从游戏资源解析 {_localGameItems.Count} 件物品；官方简中名称已载入，真实图标 {scanResult.ExtractedIcons} 个。", _localGameItems.Count > 0);
     }
 
     private void RefreshCapturedItemList()

@@ -7,6 +7,82 @@ namespace NRftWManagerUI.Core;
 
 internal static class UnityIconExtractor
 {
+    public static IReadOnlyDictionary<string, string> ExtractSprites(
+        string installPath,
+        IReadOnlySet<string> wantedCanonicalNames,
+        Func<string, string> canonicalize)
+    {
+        var extracted = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (wantedCanonicalNames.Count == 0)
+        {
+            return extracted;
+        }
+
+        var dataPath = Path.Combine(installPath, "NoRestForTheWicked_Data", "StreamingAssets", "aa", "StandaloneWindows64");
+        var cachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NRftWManagerUI", "item-icons");
+        Directory.CreateDirectory(cachePath);
+        foreach (var bundlePath in Directory.EnumerateFiles(dataPath, "qdb_assets*.bundle"))
+        {
+            try
+            {
+                var manager = new AssetsManager();
+                var bundle = manager.LoadBundleFile(bundlePath, true);
+                for (var fileIndex = 0; fileIndex < bundle.file.BlockAndDirInfo.DirectoryInfos.Count; fileIndex++)
+                {
+                    var assetsFile = manager.LoadAssetsFileFromBundle(bundle, fileIndex, false);
+                    if (assetsFile?.file is null) continue;
+                    var assetsByPathId = assetsFile.file.AssetInfos.ToDictionary(info => info.PathId);
+                    foreach (var spriteInfo in assetsFile.file.AssetInfos.Where(info => info.TypeId == (int)AssetClassID.Sprite))
+                    {
+                        try
+                        {
+                            var sprite = manager.GetBaseField(assetsFile, spriteInfo, AssetReadFlags.None);
+                            var spriteName = sprite["m_Name"].AsString;
+                            var canonicalName = canonicalize(spriteName);
+                            if (!wantedCanonicalNames.Contains(canonicalName)) continue;
+
+                            var outputPath = Path.Combine(cachePath, spriteName + ".png");
+                            if (new FileInfo(outputPath) is not { Exists: true, Length: > 0 })
+                            {
+                                var textureReference = sprite["m_RD"]["texture"];
+                                var textureFileId = textureReference["m_FileID"].AsInt;
+                                var texturePathId = textureReference["m_PathID"].AsLong;
+                                if (textureFileId != 0)
+                                {
+                                    continue;
+                                }
+                                if (texturePathId == 0 || !assetsByPathId.TryGetValue(texturePathId, out var textureInfo))
+                                {
+                                    continue;
+                                }
+                                var textureField = manager.GetBaseField(assetsFile, textureInfo, AssetReadFlags.None);
+                                var textureFile = TextureFile.ReadTextureFile(textureField);
+                                var data = textureFile.FillPictureData(assetsFile);
+                                if (data.Length == 0 || !textureFile.DecodeTextureImage(data, outputPath, ImageExportType.Png, 100)) continue;
+                            }
+
+                            if (new FileInfo(outputPath) is { Exists: true, Length: > 0 })
+                            {
+                                extracted[canonicalName] = outputPath;
+                            }
+                        }
+                        catch
+                        {
+                            // A malformed sprite must not prevent the rest of the catalog loading.
+                        }
+                    }
+                }
+                manager.UnloadAllAssetsFiles(true);
+                bundle.file.Close();
+            }
+            catch
+            {
+                // Leave unresolved icons blank and continue with the localized item catalog.
+            }
+        }
+        return extracted;
+    }
+
     public static IReadOnlyDictionary<string, string> Extract(
         string installPath,
         IReadOnlyCollection<string> iconResourceNames)
@@ -47,6 +123,15 @@ internal static class UnityIconExtractor
             return extracted;
         }
 
+
+        // A completed first scan leaves a cache. Avoid reopening multi-gigabyte Unity bundles
+        // on every refresh merely for resources that are Sprite/Atlas-backed rather than direct
+        // Texture2D assets; the sprite extractor handles those separately.
+        if (extracted.Count > 0)
+        {
+            return extracted;
+        }
+
         foreach (var bundlePath in FindCandidateBundles(dataPath, wanted))
         {
             TryExtractFromBundle(bundlePath, cachePath, diagnosticsPath, wanted, extracted);
@@ -61,25 +146,13 @@ internal static class UnityIconExtractor
 
     private static IEnumerable<string> FindCandidateBundles(string dataPath, IReadOnlySet<string> wanted)
     {
-        var candidates = new List<string>();
-        foreach (var bundlePath in Directory.EnumerateFiles(dataPath, "*.bundle")
-                     .OrderBy(path => new FileInfo(path).Length))
-        {
-            var fileName = Path.GetFileName(bundlePath);
-            if (fileName.Contains("world_scenes", StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            if (FileContainsAny(bundlePath, wanted))
-            {
-                candidates.Add(bundlePath);
-            }
-        }
-
-        return candidates
-            .OrderBy(path => Path.GetFileName(path).Contains("qdb_assets", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
-            .ThenBy(path => new FileInfo(path).Length);
+        // Item UI textures live in these shared asset bundles. Probing every 7–20 GB world
+        // bundle byte-by-byte made a local refresh take several minutes.
+        return Directory.EnumerateFiles(dataPath, "*.bundle")
+            .Where(path =>
+                Path.GetFileName(path).Contains("qdb_assets", StringComparison.OrdinalIgnoreCase) ||
+                Path.GetFileName(path).Contains("duplicateassetisolation", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(path => Path.GetFileName(path).Contains("qdb_assets", StringComparison.OrdinalIgnoreCase) ? 0 : 1);
     }
 
     private static bool FileContainsAny(string path, IReadOnlySet<string> wanted)
