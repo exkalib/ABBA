@@ -1353,7 +1353,7 @@ public partial class MainWindow : Window
     private static string CategorizeItem(int itemType, string path, string displayName)
     {
         var text = $"{path} {displayName}".Replace('\\', '/');
-        if (ContainsAny(path, "items.craftingMaterials.", "/craftingMaterials/"))
+        if (ContainsAny(path, "items.craftingMaterials.", "/craftingMaterials/", "items.gems.", "/gems/"))
         {
             return "材料";
         }

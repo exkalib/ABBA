@@ -92,6 +92,7 @@ internal static partial class LocalGameItemScanner
         key.StartsWith("items.gear.", StringComparison.OrdinalIgnoreCase) ||
         key.StartsWith("items.consumables.", StringComparison.OrdinalIgnoreCase) ||
         key.StartsWith("items.craftingMaterials.", StringComparison.OrdinalIgnoreCase) ||
+        key.StartsWith("items.gems.", StringComparison.OrdinalIgnoreCase) ||
         key.StartsWith("items.quest", StringComparison.OrdinalIgnoreCase) ||
         key.StartsWith("items.keys.", StringComparison.OrdinalIgnoreCase);
 
@@ -382,7 +383,8 @@ internal static partial class LocalGameItemScanner
         // The localization key mirrors the game's own item folders. Use that structure before
         // looking at individual words: material names such as "blood ring/stone" must not become
         // jewelry merely because their final name contains "ring".
-        if (key.StartsWith("items.craftingMaterials.", StringComparison.OrdinalIgnoreCase))
+        if (key.StartsWith("items.craftingMaterials.", StringComparison.OrdinalIgnoreCase) ||
+            key.StartsWith("items.gems.", StringComparison.OrdinalIgnoreCase))
         {
             return "材料";
         }
