@@ -132,6 +132,14 @@ public partial class MainWindow : Window
         [JsonIgnore]
         public string Category => CategorizeItem(ItemType, Path, DisplayName);
 
+        [JsonIgnore]
+        public string IconPath => "Assets/riftctrl-icon.png";
+
+        [JsonIgnore]
+        public string PreviewDescription => string.IsNullOrWhiteSpace(Path)
+            ? "等待资源导入器解析描述与图标。"
+            : Path;
+
         public override string ToString() => $"{DisplayName}  · 类型 {ItemType}  · 品质 {Rarity}  · GUID 0x{Guid:X16}";
     }
 
@@ -982,6 +990,7 @@ public partial class MainWindow : Window
                 }
                 SaveItemCatalog();
                 RefreshCapturedItemList();
+                RefreshIconCatalogList();
                 if (CapturedItemCatalogList.Items.Contains(existing))
                 {
                     CapturedItemCatalogList.SelectedItem = existing;
@@ -997,6 +1006,8 @@ public partial class MainWindow : Window
     }
 
     private void OnFilterCapturedItems(object sender, TextChangedEventArgs e) => RefreshCapturedItemList();
+
+    private void OnFilterIconCatalogItems(object sender, TextChangedEventArgs e) => RefreshIconCatalogList();
 
     private void RefreshCapturedItemList()
     {
@@ -1032,6 +1043,38 @@ public partial class MainWindow : Window
         CapturedItemCatalogSummary.Text = search.Length == 0
             ? $"{_capturedItemTemplates.Count} 个物品 · {groups.Length} 类"
             : $"找到 {visibleItems.Length} 个 · {groups.Length} 类";
+
+        RefreshIconCatalogList();
+    }
+
+    private void RefreshIconCatalogList()
+    {
+        if (IconCatalogList is null)
+        {
+            return;
+        }
+
+        var selectedGuid = (IconCatalogList.SelectedItem as CapturedItemTemplate)?.Guid;
+        var search = IconCatalogSearchBox?.Text.Trim() ?? string.Empty;
+        var visibleItems = _capturedItemTemplates.Where(item =>
+                 search.Length == 0 ||
+                 item.DisplayName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                 item.Path.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                 item.Guid.ToString("X").Contains(search, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(item => GetCategoryOrder(item.Category))
+            .ThenBy(item => item.DisplayName, StringComparer.CurrentCultureIgnoreCase)
+            .ToArray();
+
+        IconCatalogList.Items.Clear();
+        foreach (var item in visibleItems)
+        {
+            IconCatalogList.Items.Add(item);
+        }
+
+        if (selectedGuid is { } guid)
+        {
+            IconCatalogList.SelectedItem = visibleItems.FirstOrDefault(item => item.Guid == guid);
+        }
     }
 
     private static string CategorizeItem(int itemType, string path, string displayName)
@@ -1173,6 +1216,38 @@ public partial class MainWindow : Window
         {
             CapturedItemNameBox.Text = item.CustomName;
         }
+    }
+
+    private void OnIconCatalogSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (IconCatalogList.SelectedItem is CapturedItemTemplate item)
+        {
+            CapturedItemCatalogList.SelectedItem = item;
+            CapturedItemNameBox.Text = item.CustomName;
+        }
+    }
+
+    private void OnCreateFromIconCatalog(object sender, RoutedEventArgs e)
+    {
+        if (IconCatalogList.SelectedItem is not CapturedItemTemplate item)
+        {
+            SetStatus("请先在图标物品库中选择一项。", false);
+            return;
+        }
+
+        if (_selectedItemEntity is not { } ownerItem || ownerItem == 0)
+        {
+            SetStatus("生成前请在当前角色背包里点击任意一件物品，用于识别接收角色。", false);
+            return;
+        }
+
+        if (!TryParseInt32(IconCatalogCreateCountBox.Text, out var count) || count is < 1 or > 99)
+        {
+            SetStatus("生成数量请输入 1 至 99。", false);
+            return;
+        }
+
+        CreateFromTemplate(ownerItem, item.DisplayName, item.Guid, item.Rarity, count);
     }
 
     private void OnSaveCapturedItemName(object sender, RoutedEventArgs e)

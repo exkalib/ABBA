@@ -319,6 +319,81 @@
                 </Grid>
               </TabItem>
 
+              <TabItem Header="图标物品库">
+                <Grid Margin="0,2,0,0">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="1.45*" /><ColumnDefinition Width="0.9*" /></Grid.ColumnDefinitions>
+
+                  <Border Style="{StaticResource Card}" Margin="0,0,7,0" Padding="22,20">
+                    <Grid>
+                      <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                      <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <StackPanel>
+                          <TextBlock Text="图标物品库" Style="{StaticResource SectionTitle}" />
+                          <TextBlock Text="实验版：先使用已捕获模板，后续接入全量资源导入" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,6,0,0" />
+                        </StackPanel>
+                        <Border Grid.Column="1" Background="#1B202C" CornerRadius="9" Padding="11,7" VerticalAlignment="Center">
+                          <TextBlock Text="{Binding ElementName=CapturedItemCatalogSummary, Path=Text}" Foreground="{StaticResource MutedBrush}" FontSize="11" />
+                        </Border>
+                      </Grid>
+
+                      <Grid Grid.Row="1" Margin="0,18,0,12">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <Path Data="M2,2 L12,12 M7,2 A5,5 0 1 0 7,12 A5,5 0 1 0 7,2" Stroke="#78849A" StrokeThickness="1.6" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,10,0" />
+                        <TextBox Grid.Column="1" x:Name="IconCatalogSearchBox" Height="42" Padding="12,7" TextChanged="OnFilterIconCatalogItems" ToolTip="输入物品名称、路径或 GUID" />
+                      </Grid>
+
+                      <ListBox Grid.Row="2" x:Name="IconCatalogList" SelectionChanged="OnIconCatalogSelectionChanged" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemsPanel>
+                          <ItemsPanelTemplate>
+                            <WrapPanel />
+                          </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
+                          <DataTemplate>
+                            <Border Width="86" Height="102" Background="#10141D" BorderBrush="#263046" BorderThickness="1" CornerRadius="8" Padding="8" Margin="4">
+                              <Grid>
+                                <Grid.RowDefinitions><RowDefinition Height="46" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                                <Border Width="44" Height="44" CornerRadius="8" Background="#1A1F2B" BorderBrush="#333B52" BorderThickness="1" HorizontalAlignment="Center" ClipToBounds="True">
+                                  <Image Source="{Binding IconPath}" Stretch="UniformToFill" />
+                                </Border>
+                                <TextBlock Grid.Row="1" Text="{Binding DisplayName}" FontSize="10" FontWeight="SemiBold" Foreground="#EFF7FF" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,7,0,0" />
+                              </Grid>
+                            </Border>
+                          </DataTemplate>
+                        </ListBox.ItemTemplate>
+                      </ListBox>
+                    </Grid>
+                  </Border>
+
+                  <Border Grid.Column="1" Style="{StaticResource Card}" Margin="7,0,0,0" Padding="24,22">
+                    <Grid>
+                      <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                      <StackPanel>
+                        <Border Width="72" Height="72" CornerRadius="12" Background="#171C28" BorderBrush="#333B52" BorderThickness="1" HorizontalAlignment="Left" ClipToBounds="True">
+                          <Image Source="{Binding ElementName=IconCatalogList, Path=SelectedItem.IconPath}" Stretch="UniformToFill" />
+                        </Border>
+                        <TextBlock Text="{Binding ElementName=IconCatalogList, Path=SelectedItem.DisplayName, TargetNullValue=选择一个物品}" Style="{StaticResource SectionTitle}" FontSize="20" Margin="0,14,0,0" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding ElementName=IconCatalogList, Path=SelectedItem.Category}" Foreground="#BDAEFF" FontSize="12" FontWeight="SemiBold" Margin="0,6,0,0" />
+                      </StackPanel>
+
+                      <StackPanel Grid.Row="1" Margin="0,22,0,0">
+                        <TextBlock Text="属性预览" Foreground="{StaticResource MutedBrush}" FontSize="11" />
+                        <TextBlock Text="{Binding ElementName=IconCatalogList, Path=SelectedItem.Metadata}" FontFamily="Consolas" FontSize="11" Foreground="#DDE7F7" Margin="0,7,0,0" TextWrapping="Wrap" />
+                        <TextBlock Text="描述" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,20,0,0" />
+                        <TextBlock Text="{Binding ElementName=IconCatalogList, Path=SelectedItem.PreviewDescription}" Foreground="#8E98AA" FontSize="11" TextWrapping="Wrap" Margin="0,7,0,0" LineHeight="17" />
+                      </StackPanel>
+
+                      <StackPanel Grid.Row="2" Margin="0,18,0,0">
+                        <TextBlock Text="生成数量" Foreground="{StaticResource MutedBrush}" FontSize="11" />
+                        <TextBox x:Name="IconCatalogCreateCountBox" Height="42" Padding="12,7" Text="1" Margin="0,7,0,0" ToolTip="生成数量（1–99）" />
+                        <Button Style="{StaticResource ActionButton}" Content="生成预览物品" Click="OnCreateFromIconCatalog" HorizontalAlignment="Stretch" Margin="0,16,0,0" />
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                </Grid>
+              </TabItem>
+
             </TabControl>
 
             <Grid x:Name="CharacterView" Visibility="Collapsed">
