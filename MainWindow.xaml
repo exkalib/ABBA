@@ -7,17 +7,42 @@
   <Grid>
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto" />
-        <RowDefinition Height="Auto" />
         <RowDefinition Height="*" />
         <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
 
-      <Border Grid.Row="0" Height="38" Background="#EC0B0E15" BorderBrush="#222733" BorderThickness="0,0,0,1" CornerRadius="12,12,0,0" MouseLeftButtonDown="OnTitleBarMouseDown">
+      <Border Grid.Row="0" Height="74" Padding="20,0,8,0" Background="#F20E1119" BorderBrush="#262B36" BorderThickness="0,0,0,1" CornerRadius="12,12,0,0" MouseLeftButtonDown="OnTitleBarMouseDown">
         <Grid>
-          <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-          <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
-            <Ellipse Width="7" Height="7" Fill="{StaticResource AccentBrush}" />
-            <TextBlock Text="NRftW Manager" FontSize="11" Foreground="#AEB5C2" Margin="9,0,0,0" />
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <Border Width="42" Height="42" Background="#27233E" CornerRadius="12" Margin="0,0,13,0">
+              <Path Data="M8,30 L18,12 L27,12 L19,27 L32,27 L24,39 L11,39 Z" Fill="{StaticResource AccentBrush}" Stretch="Uniform" Margin="9" />
+            </Border>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock x:Name="PageTitle" Text="NRftW Manager" FontSize="20" FontWeight="SemiBold" />
+              <TextBlock x:Name="PageSubtitle" Text="外部模式 · 无需模组" FontSize="10" Foreground="{StaticResource MutedBrush}" Margin="0,2,0,0" />
+            </StackPanel>
+          </StackPanel>
+          <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+            <Border Background="#171B25" CornerRadius="10" Padding="12,9" Margin="0,0,10,0">
+              <StackPanel Orientation="Horizontal">
+                <Ellipse x:Name="ConnectionIndicator" Width="8" Height="8" Fill="{StaticResource WarningBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <TextBlock x:Name="ConnectionText" Text="未连接" Foreground="{StaticResource WarningBrush}" FontSize="11" FontWeight="SemiBold" />
+              </StackPanel>
+            </Border>
+            <Button x:Name="ConnectButton" Style="{StaticResource ActionButton}" Click="OnConnectGame" Padding="16,9">
+              <StackPanel Orientation="Horizontal">
+                <Ellipse x:Name="ConnectSpinner" Width="14" Height="14" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2" StrokeDashArray="2,2" Visibility="Collapsed" Margin="0,0,8,0" RenderTransformOrigin="0.5,0.5">
+                  <Ellipse.RenderTransform><RotateTransform /></Ellipse.RenderTransform>
+                  <Ellipse.Triggers>
+                    <EventTrigger RoutedEvent="Loaded">
+                      <BeginStoryboard><Storyboard RepeatBehavior="Forever"><DoubleAnimation Storyboard.TargetProperty="RenderTransform.Angle" From="0" To="360" Duration="0:0:0.8" /></Storyboard></BeginStoryboard>
+                    </EventTrigger>
+                  </Ellipse.Triggers>
+                </Ellipse>
+                <TextBlock x:Name="ConnectButtonLabel" Text="连接游戏" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+              </StackPanel>
+            </Button>
           </StackPanel>
           <StackPanel Grid.Column="2" Orientation="Horizontal">
             <Button Content="—" Click="OnMinimizeWindow" Width="46" Background="Transparent" BorderThickness="0" Foreground="#91A4BC" FontSize="15" />
@@ -26,51 +51,7 @@
         </Grid>
       </Border>
 
-      <Border Grid.Row="1" Padding="26,16" Background="#9410151E" BorderBrush="#252A35" BorderThickness="0,0,0,1">
-        <Grid>
-          <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-          <StackPanel Orientation="Horizontal">
-            <Border Width="42" Height="42" Background="#27233E" BorderBrush="#5C527F" BorderThickness="1" CornerRadius="12" Margin="0,0,13,0">
-              <Grid>
-                <Path Data="M8,30 L18,12 L27,12 L19,27 L32,27 L24,39 L11,39 Z" Fill="{StaticResource AccentBrush}" Stretch="Uniform" Margin="9" />
-              </Grid>
-            </Border>
-            <StackPanel VerticalAlignment="Center">
-              <TextBlock x:Name="PageTitle" Text="NRftW Manager" Style="{StaticResource DisplayTitle}" FontSize="24" FontWeight="SemiBold" />
-              <TextBlock x:Name="PageSubtitle" Text="游戏物品与角色管理" FontSize="11" Foreground="{StaticResource MutedBrush}" Margin="1,2,0,0" />
-            </StackPanel>
-          </StackPanel>
-          <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-            <Border Background="#171B25" BorderBrush="#303643" BorderThickness="1" CornerRadius="10" Padding="12,9" Margin="0,0,10,0">
-              <StackPanel Orientation="Horizontal">
-                <Ellipse x:Name="ConnectionIndicator" Width="8" Height="8" Fill="{StaticResource WarningBrush}" VerticalAlignment="Center" Margin="0,0,8,0">
-                  <Ellipse.Effect><DropShadowEffect Color="#FFBE55" BlurRadius="10" ShadowDepth="0" Opacity="0.8" /></Ellipse.Effect>
-                </Ellipse>
-                <TextBlock x:Name="ConnectionText" Text="未连接" Foreground="{StaticResource WarningBrush}" FontSize="11" FontWeight="SemiBold" />
-              </StackPanel>
-            </Border>
-            <Button x:Name="ConnectButton" Style="{StaticResource ActionButton}" Click="OnConnectGame">
-              <StackPanel Orientation="Horizontal">
-                <Ellipse x:Name="ConnectSpinner" Width="14" Height="14" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2" StrokeDashArray="2,2" Visibility="Collapsed" Margin="0,0,8,0" RenderTransformOrigin="0.5,0.5">
-                  <Ellipse.RenderTransform><RotateTransform /></Ellipse.RenderTransform>
-                  <Ellipse.Triggers>
-                    <EventTrigger RoutedEvent="Loaded">
-                      <BeginStoryboard>
-                        <Storyboard RepeatBehavior="Forever">
-                          <DoubleAnimation Storyboard.TargetProperty="RenderTransform.Angle" From="0" To="360" Duration="0:0:0.8" />
-                        </Storyboard>
-                      </BeginStoryboard>
-                    </EventTrigger>
-                  </Ellipse.Triggers>
-                </Ellipse>
-                <TextBlock x:Name="ConnectButtonLabel" Text="连接并验证游戏" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
-              </StackPanel>
-            </Button>
-          </StackPanel>
-        </Grid>
-      </Border>
-
-      <Grid Grid.Row="2">
+      <Grid Grid.Row="1">
         <Grid.ColumnDefinitions><ColumnDefinition Width="0" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
         <Border Grid.Column="0" Style="{StaticResource Card}" Visibility="Collapsed">
           <Grid>
@@ -123,166 +104,169 @@
 
             <TabControl Grid.Row="0">
               <TabItem Header="物品修改">
-                <Grid Margin="0,10,0,0">
-            <Grid Margin="0,0,0,16">
-              <Grid.ColumnDefinitions><ColumnDefinition Width="1.45*" /><ColumnDefinition Width="0.85*" /></Grid.ColumnDefinitions>
-              <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,8,0" Padding="26,22">
-                <Grid>
-                  <Grid.ColumnDefinitions><ColumnDefinition Width="6" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                  <Border Background="{StaticResource AccentBrush}" CornerRadius="3" Margin="0,2,0,2" />
-                  <StackPanel Grid.Column="1" Margin="20,0,0,0">
-                    <TextBlock Text="TARGET ACQUIRED" Style="{StaticResource MicroLabel}" />
-                    <TextBlock x:Name="SelectedItemText" Text="尚未选择物品" Style="{StaticResource DisplayTitle}" FontSize="31" FontWeight="SemiBold" Margin="0,9,0,0" TextWrapping="Wrap" />
-                    <TextBlock Text="在游戏背包中选择物品后即可修改" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,9,0,0" />
-                    <WrapPanel Margin="0,16,0,0">
-                      <Button Style="{StaticResource RarityButton}" BorderBrush="#AFC3D1" Foreground="#EAF4F8" Content="白色" Tag="Common" Click="OnQueueRarity" Margin="0,0,8,0" />
-                      <Button Style="{StaticResource RarityButton}" BorderBrush="#5AB8FF" Foreground="#8CCBFF" Content="蓝色" Tag="Magical" Click="OnQueueRarity" Margin="0,0,8,0" />
-                      <Button Style="{StaticResource RarityButton}" BorderBrush="{StaticResource PurpleBrush}" Foreground="#CBB9FF" Content="紫色" Tag="Plagued" Click="OnQueueRarity" Margin="0,0,8,0" />
-                      <Button Style="{StaticResource ActionButton}" Content="复制一件" Click="OnCreateFromSelectedTemplate" />
-                    </WrapPanel>
-                    <Expander Header="高级" IsExpanded="False" Margin="0,14,0,0" Foreground="#737D8F">
-                      <StackPanel Margin="0,8,0,0">
-                        <ListBox x:Name="SelectedItemHistoryList" Height="72" FontFamily="Consolas" FontSize="11" />
-                        <Button Style="{StaticResource SecondaryButton}" Content="复制名称诊断" Click="OnCopyItemNameDiagnostic" HorizontalAlignment="Right" Margin="0,7,0,0" />
-                        <TextBox x:Name="ItemNameDiagnosticBox" Text="尚无物品名称诊断。" IsReadOnly="True" AcceptsReturn="True" Height="76" Margin="0,7,0,0" Visibility="Collapsed" />
+                <Grid Margin="0,2,0,0">
+                  <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                  <Border Style="{StaticResource Card}" Padding="24,20" Margin="0,0,0,14">
+                    <Grid>
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                      <Border Width="48" Height="48" Background="#28243F" CornerRadius="14" VerticalAlignment="Center">
+                        <Path Data="M12,8 H36 V40 H12 Z M18,15 H30 M18,22 H30 M18,29 H26" Stroke="{StaticResource AccentBrush}" StrokeThickness="2" Stretch="Uniform" Margin="12" />
+                      </Border>
+                      <StackPanel Grid.Column="1" Margin="16,0" VerticalAlignment="Center">
+                        <TextBlock Text="当前物品" Foreground="{StaticResource MutedBrush}" FontSize="11" />
+                        <TextBlock x:Name="SelectedItemText" Text="尚未选择物品" FontSize="25" FontWeight="SemiBold" Margin="0,4,0,0" TextWrapping="Wrap" />
                       </StackPanel>
-                    </Expander>
-                  </StackPanel>
-                </Grid>
-              </Border>
+                      <Expander Grid.Column="2" Header="高级" IsExpanded="False" Foreground="#737D8F" VerticalAlignment="Center">
+                        <StackPanel Width="300" Margin="0,8,0,0">
+                          <ListBox x:Name="SelectedItemHistoryList" Height="72" FontFamily="Consolas" FontSize="11" />
+                          <Button Style="{StaticResource SecondaryButton}" Content="复制诊断" Click="OnCopyItemNameDiagnostic" HorizontalAlignment="Right" Margin="0,7,0,0" />
+                          <TextBox x:Name="ItemNameDiagnosticBox" Text="尚无物品名称诊断。" IsReadOnly="True" Visibility="Collapsed" />
+                        </StackPanel>
+                      </Expander>
+                    </Grid>
+                  </Border>
 
-              <Border Grid.Column="1" x:Name="ItemsView" Style="{StaticResource Card}" Margin="8,0,0,0" Padding="24,22">
-                <StackPanel>
-                  <TextBlock Text="QUANTITY" Style="{StaticResource MicroLabel}" />
-                  <TextBlock Text="物品数量" Style="{StaticResource SectionTitle}" Margin="0,5,0,0" />
-                    <TextBlock x:Name="ItemCaptureText" Text="等待数量变化" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,7,0,0" TextWrapping="Wrap" />
-                  <Grid Margin="0,18,0,0">
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                    <TextBox x:Name="ItemQuantityBox" Height="40" Padding="12,6" Text="20" FontSize="15" />
-                    <Button Grid.Column="1" Style="{StaticResource ActionButton}" Content="写入" Click="OnWriteItemQuantity" Margin="9,0,0,0" />
+                  <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="0.85*" /><ColumnDefinition Width="1.15*" /></Grid.ColumnDefinitions>
+                    <Border x:Name="ItemsView" Style="{StaticResource Card}" Margin="0,0,7,0" Padding="24">
+                      <StackPanel>
+                        <TextBlock Text="修改数量" Style="{StaticResource SectionTitle}" />
+                        <TextBlock x:Name="ItemCaptureText" Text="等待数量变化" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,7,0,0" TextWrapping="Wrap" />
+                        <Grid Margin="0,24,0,0">
+                          <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                          <TextBox x:Name="ItemQuantityBox" Height="44" Padding="13,7" Text="20" FontSize="16" />
+                          <Button Grid.Column="1" Style="{StaticResource ActionButton}" Content="写入数量" Click="OnWriteItemQuantity" Margin="10,0,0,0" />
+                        </Grid>
+                        <CheckBox x:Name="KeepLastItemCheck" Content="保留最后 1 个" IsChecked="True" Click="OnKeepLastItemChanged" Margin="0,18,0,0" />
+                      </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="1" Style="{StaticResource Card}" Margin="7,0,0,0" Padding="24">
+                      <StackPanel>
+                        <TextBlock Text="品质与复制" Style="{StaticResource SectionTitle}" />
+                        <TextBlock Text="选择品质会直接应用到当前物品" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,7,0,0" />
+                        <UniformGrid Columns="3" Margin="0,24,0,0">
+                          <Button Style="{StaticResource RarityButton}" BorderBrush="#AFC3D1" Foreground="#EAF4F8" Content="白色" Tag="Common" Click="OnQueueRarity" Margin="0,0,7,0" />
+                          <Button Style="{StaticResource RarityButton}" BorderBrush="#5AB8FF" Foreground="#8CCBFF" Content="蓝色" Tag="Magical" Click="OnQueueRarity" Margin="7,0" />
+                          <Button Style="{StaticResource RarityButton}" BorderBrush="{StaticResource PurpleBrush}" Foreground="#F1ACFF" Content="紫色" Tag="Plagued" Click="OnQueueRarity" Margin="7,0,0,0" />
+                        </UniformGrid>
+                        <Button Style="{StaticResource ActionButton}" Content="复制当前物品" Click="OnCreateFromSelectedTemplate" HorizontalAlignment="Stretch" Margin="0,16,0,0" />
+                      </StackPanel>
+                    </Border>
                   </Grid>
-                  <CheckBox x:Name="KeepLastItemCheck" Content="保留最后 1 个" IsChecked="True" Click="OnKeepLastItemChanged" Margin="0,13,0,0" />
-                </StackPanel>
-              </Border>
-            </Grid>
                 </Grid>
               </TabItem>
 
               <TabItem Header="物品库">
-                <Grid Margin="0,10,0,0">
-            <Grid x:Name="EquipmentView" Margin="0,0,0,12">
-              <StackPanel>
-                <Border Style="{StaticResource Card}" Padding="26,22">
-                  <StackPanel>
-                    <Grid Margin="0,0,0,12">
-                      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                      <StackPanel>
-                        <TextBlock Text="ITEM VAULT / 02" Style="{StaticResource MicroLabel}" />
-                        <TextBlock Text="搜索并生成物品" Style="{StaticResource SectionTitle}" FontSize="23" />
-                      </StackPanel>
-                      <TextBlock Grid.Column="1" x:Name="CapturedItemCatalogSummary" Text="等待物品数据" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Bottom" Margin="0,0,0,3" />
-                    </Grid>
-                    <Grid Margin="0,6,0,10">
-                      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="90" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                      <StackPanel>
-                        <TextBlock Text="搜索物品" Foreground="#8FA2BB" FontSize="11" Margin="2,0,0,6" />
-                        <TextBox x:Name="CapturedItemSearchBox" Height="40" Padding="12,6" TextChanged="OnFilterCapturedItems" ToolTip="输入中文名、内部路径或 GUID" />
-                      </StackPanel>
-                      <StackPanel Grid.Column="1" Margin="10,0,0,0">
-                        <TextBlock Text="生成数量" Foreground="#8FA2BB" FontSize="11" Margin="2,0,0,6" />
-                        <TextBox x:Name="CatalogCreateCountBox" Height="40" Padding="12,6" Text="1" ToolTip="生成数量（1–99）" />
-                      </StackPanel>
-                      <Button Grid.Column="2" Style="{StaticResource ActionButton}" Content="生成选中物品" Click="OnCreateFromCapturedTemplate" Margin="10,20,0,0" />
-                    </Grid>
-                    <ListBox x:Name="CapturedItemCatalogList" Height="142" SelectionChanged="OnCapturedItemSelectionChanged" ScrollViewer.VerticalScrollBarVisibility="Auto">
-                      <ListBox.ItemTemplate>
-                        <DataTemplate>
-                          <Grid Margin="2,2">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                            <TextBlock Text="{Binding DisplayName}" FontSize="13" FontWeight="SemiBold" Foreground="#EFF7FF" />
-                            <TextBlock Grid.Column="1" Text="{Binding Metadata}" Visibility="Collapsed" />
-                          </Grid>
-                        </DataTemplate>
-                      </ListBox.ItemTemplate>
-                    </ListBox>
-                    <Expander Header="维护物品名称" IsExpanded="False" Foreground="#7890AA" Margin="2,9,0,0">
-                      <Grid Margin="0,8,0,0">
+                <Grid x:Name="EquipmentView" Margin="0,2,0,0">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="1.55*" /><ColumnDefinition Width="0.85*" /></Grid.ColumnDefinitions>
+
+                  <Border Style="{StaticResource Card}" Margin="0,0,7,0" Padding="24,22">
+                    <Grid>
+                      <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                      <Grid>
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                        <TextBox x:Name="CapturedItemNameBox" Height="38" Padding="12,6" ToolTip="给列表中选中的物品填写中文名称" />
-                        <Button Grid.Column="1" Style="{StaticResource SecondaryButton}" Content="保存名称" Click="OnSaveCapturedItemName" Margin="8,0,0,0" />
+                        <StackPanel>
+                          <TextBlock Text="物品库" Style="{StaticResource SectionTitle}" />
+                          <TextBlock Text="从已保存模板中选择物品" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,6,0,0" />
+                        </StackPanel>
+                        <Border Grid.Column="1" Background="#1B202C" CornerRadius="9" Padding="11,7" VerticalAlignment="Center">
+                          <TextBlock x:Name="CapturedItemCatalogSummary" Text="等待物品数据" Foreground="{StaticResource MutedBrush}" FontSize="11" />
+                        </Border>
                       </Grid>
-                    </Expander>
-                  </StackPanel>
-                </Border>
-                <Grid Margin="0">
-                  <Border Grid.Column="1" Visibility="Collapsed">
-                    <StackPanel>
-                      <TextBlock Text="FABRICATION / LOCKED" Style="{StaticResource MicroLabel}" Foreground="{StaticResource WarningBrush}" />
-                      <TextBlock Text="创建与等级" Style="{StaticResource SectionTitle}" Margin="0,4,0,0" />
-                      <TextBlock Text="以当前选中物品的数据为模板创建新物品；这不会修改原物品。品质下拉项依次为白、蓝、紫、金。" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Margin="0,9,0,0" />
-                      <StackPanel Orientation="Horizontal" Margin="0,13,0,0">
-                        <TextBox x:Name="CreateItemCountBox" Width="92" Height="34" Padding="9,5" Text="1" />
-                        <ComboBox x:Name="CreateItemRarityBox" Width="126" Height="34" SelectedIndex="0" Margin="9,0,0,0">
-                          <ComboBoxItem Content="Common（白）" />
-                          <ComboBoxItem Content="Magical（蓝）" />
-                          <ComboBoxItem Content="Plagued（紫）" />
-                          <ComboBoxItem Content="Gold（金）" />
-                        </ComboBox>
-                        <Button Style="{StaticResource ActionButton}" Content="创建" Click="OnCreateSelectedItem" Margin="9,0,0,0" />
-                      </StackPanel>
-                      <TextBlock Text="物品等级（1–100）" Foreground="{StaticResource MutedBrush}" Margin="0,14,0,0" />
-                      <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
-                        <TextBox x:Name="ItemLevelBox" Width="112" Height="34" Padding="9,5" Text="30" />
-                        <Button Style="{StaticResource SecondaryButton}" Content="设置选中物品等级" Click="OnSetSelectedItemLevel" Margin="9,0,0,0" />
-                      </StackPanel>
-                    </StackPanel>
+                      <Grid Grid.Row="1" Margin="0,18,0,12">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <Path Data="M2,2 L12,12 M7,2 A5,5 0 1 0 7,12 A5,5 0 1 0 7,2" Stroke="#78849A" StrokeThickness="1.6" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,10,0" />
+                        <TextBox Grid.Column="1" x:Name="CapturedItemSearchBox" Height="42" Padding="12,7" TextChanged="OnFilterCapturedItems" ToolTip="输入中文名、内部路径或 GUID" />
+                      </Grid>
+                      <ListBox Grid.Row="2" x:Name="CapturedItemCatalogList" SelectionChanged="OnCapturedItemSelectionChanged" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListBox.ItemTemplate>
+                          <DataTemplate>
+                            <Grid Margin="2,3">
+                              <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                              <TextBlock Text="{Binding DisplayName}" FontSize="13" FontWeight="SemiBold" Foreground="#EFF7FF" TextTrimming="CharacterEllipsis" />
+                              <TextBlock Grid.Column="1" Text="{Binding Metadata}" Visibility="Collapsed" />
+                            </Grid>
+                          </DataTemplate>
+                        </ListBox.ItemTemplate>
+                      </ListBox>
+                    </Grid>
                   </Border>
-                </Grid>
-              </StackPanel>
-            </Grid>
+
+                  <Border Grid.Column="1" Style="{StaticResource Card}" Margin="7,0,0,0" Padding="24,22">
+                    <Grid>
+                      <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                      <StackPanel>
+                        <TextBlock Text="生成物品" Style="{StaticResource SectionTitle}" />
+                        <TextBlock Text="以左侧选中模板创建新物品" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,6,0,0" />
+                      </StackPanel>
+                      <StackPanel Grid.Row="1" Margin="0,28,0,0">
+                        <TextBlock Text="物品名称" Foreground="{StaticResource MutedBrush}" FontSize="11" />
+                        <TextBox x:Name="CapturedItemNameBox" Height="42" Padding="12,7" Margin="0,7,0,0" ToolTip="选中物品的中文名称" />
+                        <TextBlock Text="生成数量" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,18,0,0" />
+                        <TextBox x:Name="CatalogCreateCountBox" Height="42" Padding="12,7" Text="1" Margin="0,7,0,0" ToolTip="生成数量（1–99）" />
+                        <Button Style="{StaticResource ActionButton}" Content="生成选中物品" Click="OnCreateFromCapturedTemplate" HorizontalAlignment="Stretch" Margin="0,16,0,0" />
+                      </StackPanel>
+                      <Grid Grid.Row="2" Margin="0,18,0,0">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <TextBlock Text="名称不正确时可直接修改" Foreground="#717B8C" FontSize="10" VerticalAlignment="Center" />
+                        <Button Grid.Column="1" Style="{StaticResource SecondaryButton}" Content="保存名称" Click="OnSaveCapturedItemName" Padding="12,7" />
+                      </Grid>
+                    </Grid>
+                  </Border>
+
+                  <Grid Visibility="Collapsed">
+                    <TextBox x:Name="CreateItemCountBox" Text="1" />
+                    <ComboBox x:Name="CreateItemRarityBox" SelectedIndex="0"><ComboBoxItem Content="Common（白）" /><ComboBoxItem Content="Magical（蓝）" /><ComboBoxItem Content="Plagued（紫）" /><ComboBoxItem Content="Gold（金）" /></ComboBox>
+                    <TextBox x:Name="ItemLevelBox" Text="30" />
+                  </Grid>
                 </Grid>
               </TabItem>
 
               <TabItem Header="常规功能">
-                <Grid Margin="0,10,0,0">
-            <Grid Margin="0,4,0,8">
-              <Grid.ColumnDefinitions><ColumnDefinition Width="1.05*" /><ColumnDefinition Width="0.95*" /></Grid.ColumnDefinitions>
-            <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,8,0">
-              <Grid>
-                <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                <StackPanel>
-                  <TextBlock Text="WALLET / 04" Style="{StaticResource MicroLabel}" />
-                  <TextBlock Text="货币注入" Style="{StaticResource SectionTitle}" FontSize="23" Margin="0,5,0,0" />
-                  <TextBlock x:Name="CurrencyCaptureText" Text="选择币种并输入增加数量" Foreground="{StaticResource MutedBrush}" Margin="0,7,0,0" TextWrapping="Wrap" />
-                </StackPanel>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0,0,0">
-                  <Button x:Name="CurrencyCopperButton" Style="{StaticResource SecondaryButton}" Content="铜币" Tag="Copper" Click="OnCurrencyClick" Padding="11,7" Margin="0,0,7,0" />
-                  <Button x:Name="CurrencySilverButton" Style="{StaticResource SecondaryButton}" Content="银币" Tag="Silver" Click="OnCurrencyClick" Padding="11,7" Margin="0,0,7,0" />
-                  <Button x:Name="CurrencyGoldButton" Style="{StaticResource SecondaryButton}" Content="金币" Tag="Gold" Click="OnCurrencyClick" Padding="11,7" Background="#8B7CFF" BorderBrush="#8B7CFF" Foreground="#FFFFFF" />
-                </StackPanel>
-                <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,14,0,0">
-                  <TextBox x:Name="CurrencyValueBox" Width="140" Height="34" Padding="9,5" Text="1000" />
-                  <Button Style="{StaticResource ActionButton}" Content="增加所选货币" Click="OnWriteCurrency" Margin="10,0,0,0" />
-                </StackPanel>
-              </Grid>
-            </Border>
+                <Grid Margin="0,2,0,0">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="1.1*" /><ColumnDefinition Width="0.9*" /></Grid.ColumnDefinitions>
 
-            <Border Grid.Column="1" Style="{StaticResource Card}" Margin="8,0,0,0">
-              <Grid>
-                <StackPanel>
-                  <TextBlock Text="VITAL OVERRIDE / 05" Style="{StaticResource MicroLabel}" />
-                  <TextBlock Text="生命与能量" Style="{StaticResource SectionTitle}" FontSize="23" Margin="0,5,0,0" />
-                  <TextBlock Text="需要先在背包中选择任意物品" Foreground="{StaticResource MutedBrush}" Margin="0,7,0,0" TextWrapping="Wrap" />
-                <WrapPanel Margin="0,22,0,0">
-                  <CheckBox Content="无限生命" Tag="health" Click="OnToggleInfiniteStat" Margin="0,0,18,0" />
-                  <CheckBox Content="无限体力" Tag="stamina" Click="OnToggleInfiniteStat" Margin="0,0,18,0" />
-                  <CheckBox Content="无限专注" Tag="focus" Click="OnToggleInfiniteStat" />
-                </WrapPanel>
-                </StackPanel>
-              </Grid>
-            </Border>
-            </Grid>
+                  <Border Style="{StaticResource Card}" Margin="0,0,7,0" Padding="26,24">
+                    <Grid>
+                      <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                      <StackPanel>
+                        <TextBlock Text="货币" Style="{StaticResource SectionTitle}" />
+                        <TextBlock x:Name="CurrencyCaptureText" Text="选择币种并输入增加数量" Foreground="{StaticResource MutedBrush}" Margin="0,7,0,0" TextWrapping="Wrap" />
+                      </StackPanel>
+                      <UniformGrid Grid.Row="1" Columns="3" Margin="0,30,0,0">
+                        <Button x:Name="CurrencyCopperButton" Style="{StaticResource SecondaryButton}" Content="铜币" Tag="Copper" Click="OnCurrencyClick" Padding="11,10" Margin="0,0,6,0" />
+                        <Button x:Name="CurrencySilverButton" Style="{StaticResource SecondaryButton}" Content="银币" Tag="Silver" Click="OnCurrencyClick" Padding="11,10" Margin="6,0" />
+                        <Button x:Name="CurrencyGoldButton" Style="{StaticResource SecondaryButton}" Content="金币" Tag="Gold" Click="OnCurrencyClick" Padding="11,10" Margin="6,0,0,0" Background="#8B7CFF" BorderBrush="#8B7CFF" Foreground="#FFFFFF" />
+                      </UniformGrid>
+                      <StackPanel Grid.Row="2" VerticalAlignment="Center" Margin="0,22,0,22">
+                        <TextBlock Text="增加数量" Foreground="{StaticResource MutedBrush}" FontSize="11" />
+                        <TextBox x:Name="CurrencyValueBox" Height="48" Padding="14,8" Text="1000" FontSize="18" Margin="0,7,0,0" />
+                      </StackPanel>
+                      <Button Grid.Row="3" Style="{StaticResource ActionButton}" Content="增加所选货币" Click="OnWriteCurrency" HorizontalAlignment="Stretch" />
+                    </Grid>
+                  </Border>
+
+                  <Border Grid.Column="1" Style="{StaticResource Card}" Margin="7,0,0,0" Padding="26,24">
+                    <Grid>
+                      <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                      <StackPanel>
+                        <TextBlock Text="生命与能量" Style="{StaticResource SectionTitle}" />
+                        <TextBlock Text="离开背包后仍会持续保持" Foreground="{StaticResource MutedBrush}" Margin="0,7,0,0" />
+                      </StackPanel>
+                      <StackPanel Grid.Row="1" VerticalAlignment="Center" Margin="0,24,0,0">
+                        <Border Background="#151A24" BorderBrush="#282E3B" BorderThickness="1" CornerRadius="11" Padding="16,14" Margin="0,0,0,10">
+                          <Grid><TextBlock Text="无限生命" FontSize="14" VerticalAlignment="Center" /><CheckBox Tag="health" Click="OnToggleInfiniteStat" HorizontalAlignment="Right" /></Grid>
+                        </Border>
+                        <Border Background="#151A24" BorderBrush="#282E3B" BorderThickness="1" CornerRadius="11" Padding="16,14" Margin="0,0,0,10">
+                          <Grid><TextBlock Text="无限体力" FontSize="14" VerticalAlignment="Center" /><CheckBox Tag="stamina" Click="OnToggleInfiniteStat" HorizontalAlignment="Right" /></Grid>
+                        </Border>
+                        <Border Background="#151A24" BorderBrush="#282E3B" BorderThickness="1" CornerRadius="11" Padding="16,14">
+                          <Grid><TextBlock Text="无限专注" FontSize="14" VerticalAlignment="Center" /><CheckBox Tag="focus" Click="OnToggleInfiniteStat" HorizontalAlignment="Right" /></Grid>
+                        </Border>
+                      </StackPanel>
+                    </Grid>
+                  </Border>
                 </Grid>
               </TabItem>
             </TabControl>
@@ -410,7 +394,7 @@
         </Grid>
       </Grid>
 
-      <Border x:Name="ConnectionOverlay" Grid.Row="2" Background="#B8060911" Visibility="Collapsed" IsHitTestVisible="True">
+      <Border x:Name="ConnectionOverlay" Grid.Row="1" Background="#B8060911" Visibility="Collapsed" IsHitTestVisible="True">
         <Border HorizontalAlignment="Center" VerticalAlignment="Center" Background="#F3111B2B" BorderBrush="#365673" BorderThickness="1" CornerRadius="18" Padding="34,26">
           <StackPanel HorizontalAlignment="Center">
             <Grid Width="54" Height="54" HorizontalAlignment="Center">
@@ -435,7 +419,7 @@
         </Border>
       </Border>
 
-      <Border Grid.Row="3" Background="#EC0B0E15" BorderBrush="#242A35" BorderThickness="0,1,0,0" CornerRadius="0,0,12,12" Padding="18,11">
+      <Border Grid.Row="2" Background="#EC0B0E15" BorderBrush="#242A35" BorderThickness="0,1,0,0" CornerRadius="0,0,12,12" Padding="18,11">
         <Grid>
           <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
           <StackPanel Orientation="Horizontal">

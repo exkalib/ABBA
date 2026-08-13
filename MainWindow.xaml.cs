@@ -256,8 +256,8 @@ public partial class MainWindow : Window
         ConnectButtonLabel.Text = busy
             ? "正在验证"
             : _session is { IsAttached: true }
-                ? "断开游戏"
-                : "连接并验证游戏";
+                ? "断开连接"
+                : "连接游戏";
         ConnectionOverlay.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
         OperationSurface.IsEnabled = !busy &&
                                      _session is { IsAttached: true } &&
