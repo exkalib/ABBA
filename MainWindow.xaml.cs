@@ -10,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using NRftWManagerUI.Core;
+using ToolGood.Words.Pinyin;
 
 namespace NRftWManagerUI;
 
@@ -88,6 +89,8 @@ public partial class MainWindow : Window
     private bool _isConnecting;
     private bool _isScanningLocalItems;
     private bool _isRenderingIconCatalog;
+    private bool _isGeneratingCatalogItem;
+    private readonly DispatcherTimer _iconSearchTimer = new() { Interval = TimeSpan.FromMilliseconds(180) };
     private int _iconCatalogRenderVersion;
     private IconCatalogEntry[] _pendingIconCatalogItems = Array.Empty<IconCatalogEntry>();
     private bool _isClosing;
@@ -101,6 +104,16 @@ public partial class MainWindow : Window
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "NRftWManagerUI",
         "item-catalog.json");
+    private static readonly string CatalogUiStatePath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NRftWManagerUI", "catalog-ui-state.json");
+    private CatalogUiState _catalogUiState = new();
+
+    private sealed class CatalogUiState
+    {
+        public string Category { get; set; } = "全部";
+        public string Search { get; set; } = string.Empty;
+        public long SelectedGuid { get; set; }
+    }
 
     internal sealed class CapturedItemTemplate
     {
@@ -162,6 +175,7 @@ public partial class MainWindow : Window
         public CapturedItemTemplate? Template { get; init; }
         public LocalGameItem? LocalItem { get; init; }
         public string DisplayName => Template?.DisplayName ?? LocalItem?.DisplayName ?? string.Empty;
+        public string EnglishName => LocalItem?.EnglishName ?? string.Empty;
         public string Category => Template?.Category ?? LocalItem?.Category ?? "其他";
         public string IconPath => Template?.IconPath ?? LocalItem?.IconPath ?? "Assets/riftctrl-icon.png";
         public string IconSource
@@ -180,13 +194,22 @@ public partial class MainWindow : Window
         public bool HasIcon => !string.IsNullOrWhiteSpace(IconSource);
         public string Metadata => Template?.Metadata ?? LocalItem?.Metadata ?? string.Empty;
         public string PreviewDescription => Template?.PreviewDescription ?? LocalItem?.Description ?? string.Empty;
-        public string SearchText => $"{DisplayName} {Category} {Metadata} {PreviewDescription}";
+        public string ResourceKey => Template?.Path ?? LocalItem?.Key ?? string.Empty;
+        public string Pinyin => WordsHelper.GetPinyin(DisplayName, false).Replace(" ", string.Empty);
+        public string PinyinInitials => WordsHelper.GetFirstPinyin(DisplayName);
+        public string SearchText => $"{DisplayName} {EnglishName} {Pinyin} {PinyinInitials} {Category} {ResourceKey} {Metadata}";
         public long Guid => Template?.Guid ?? LocalItem?.Guid ?? 0;
         public int Rarity => Template?.Rarity ?? LocalItem?.Rarity ?? 0;
         public bool CanGenerate => Guid != 0;
         public bool IsStackable => IsStackableCategory(Category);
         public string AvailabilityText => CanGenerate ? "可生成" : "待解析 GUID";
         public string CategoryIcon => GetCategoryIcon(Category);
+        public string TypeText => IsStackable ? "可堆叠物品" : "独立装备";
+        public string StackText => IsStackable ? "优先合并已有堆栈" : "每件占用一个格子";
+        public string SlotEstimate => IsStackable ? "预计占用 0–1 格" : "预计占用 1 格";
+        public string MatchPrefix { get; set; } = string.Empty;
+        public string MatchText { get; set; } = string.Empty;
+        public string MatchSuffix { get; set; } = string.Empty;
     }
 
     private sealed class IconCatalogCategoryFilter
@@ -202,6 +225,10 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         LoadItemCatalog();
+        LoadCatalogUiState();
+        _iconSearchTimer.Tick += (_, _) => { _iconSearchTimer.Stop(); RefreshIconCatalogList(); SaveCatalogUiState(); };
+        IconCatalogSearchBox.Text = _catalogUiState.Search;
+        _selectedIconCatalogCategory = _catalogUiState.Category;
         Loaded += async (_, _) => await RefreshGameLibraryAsync();
         Closed += (_, _) =>
         {
@@ -1071,7 +1098,27 @@ public partial class MainWindow : Window
 
     private void OnFilterCapturedItems(object sender, TextChangedEventArgs e) => RefreshCapturedItemList();
 
-    private void OnFilterIconCatalogItems(object sender, TextChangedEventArgs e) => RefreshIconCatalogList();
+    private void OnFilterIconCatalogItems(object sender, TextChangedEventArgs e)
+    {
+        ClearIconCatalogSearchButton.Visibility = string.IsNullOrWhiteSpace(IconCatalogSearchBox.Text) ? Visibility.Collapsed : Visibility.Visible;
+        _iconSearchTimer.Stop();
+        _iconSearchTimer.Start();
+    }
+
+    private void OnClearIconCatalogSearch(object sender, RoutedEventArgs e)
+    {
+        IconCatalogSearchBox.Clear();
+        RefreshIconCatalogList();
+        SaveCatalogUiState();
+    }
+
+    private void OnShowAllIconCatalogItems(object sender, RoutedEventArgs e)
+    {
+        _selectedIconCatalogCategory = "全部";
+        IconCatalogSearchBox.Clear();
+        RefreshIconCatalogList();
+        SaveCatalogUiState();
+    }
 
     private void OnIconCatalogCategoryChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -1079,6 +1126,7 @@ public partial class MainWindow : Window
         {
             _selectedIconCatalogCategory = category.Name;
             RefreshIconCatalogList();
+            SaveCatalogUiState();
         }
     }
 
@@ -1165,7 +1213,7 @@ public partial class MainWindow : Window
         ScanLocalItemsSpinner.Visibility = loading ? Visibility.Visible : Visibility.Collapsed;
         IconCatalogLoadingOverlay.Visibility = loading ? Visibility.Visible : Visibility.Collapsed;
         IconCatalogRenderOverlay.Visibility = !loading && _isRenderingIconCatalog ? Visibility.Visible : Visibility.Collapsed;
-        ScanLocalItemsButtonText.Text = loading ? "扫描中" : "扫描";
+        ScanLocalItemsButtonText.Text = loading ? "正在更新" : "更新物品";
         ScanLocalItemsButton.IsEnabled = !loading && _selectedGame?.IsInstalled == true;
     }
 
@@ -1227,7 +1275,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        var selectedName = (IconCatalogList.SelectedItem as IconCatalogEntry)?.DisplayName;
+        var selectedGuid = (IconCatalogList.SelectedItem as IconCatalogEntry)?.Guid ?? _catalogUiState.SelectedGuid;
         var search = IconCatalogSearchBox?.Text.Trim() ?? string.Empty;
         var captured = _capturedItemTemplates.Select(item => new IconCatalogEntry { Template = item });
         var capturedKeys = _capturedItemTemplates
@@ -1249,30 +1297,52 @@ public partial class MainWindow : Window
             .ThenBy(item => item.DisplayName, StringComparer.CurrentCultureIgnoreCase)
             .ToArray();
 
+        foreach (var item in visibleItems)
+        {
+            SetSearchHighlight(item, search);
+        }
+
         _pendingIconCatalogItems = visibleItems;
         IconCatalogList.Items.Clear();
 
         var localIconCount = _localGameItems.Count(item => !string.IsNullOrWhiteSpace(item.IconPath));
         var localGeneratableCount = _localGameItems.Count(item => !string.IsNullOrWhiteSpace(item.IconPath) && item.Guid != 0);
         IconCatalogSummaryText.Text = $"{visibleItems.Length} 个 · 真实图标 {localIconCount} · 可生成 {localGeneratableCount}";
-
-        if (!string.IsNullOrWhiteSpace(selectedName))
-        {
-            // Restored after the incremental render completes.
-        }
-
+        IconCatalogEmptyState.Visibility = visibleItems.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+        IconCatalogEmptyHint.Text = _selectedIconCatalogCategory == "全部"
+            ? $"没有与“{search}”匹配的中文、拼音、英文或资源键"
+            : $"“{_selectedIconCatalogCategory}”中没有匹配项，可清除分类后重试";
 
         var renderVersion = ++_iconCatalogRenderVersion;
         if (MainFeatureTabs?.SelectedItem == IconCatalogTab)
         {
-            _ = RenderIconCatalogItemsAsync(visibleItems, renderVersion, selectedName);
+            _ = RenderIconCatalogItemsAsync(visibleItems, renderVersion, selectedGuid);
         }
+    }
+
+    private static void SetSearchHighlight(IconCatalogEntry item, string search)
+    {
+        item.MatchPrefix = item.DisplayName;
+        item.MatchText = string.Empty;
+        item.MatchSuffix = string.Empty;
+        if (string.IsNullOrWhiteSpace(search)) return;
+        var index = item.DisplayName.IndexOf(search, StringComparison.OrdinalIgnoreCase);
+        if (index < 0)
+        {
+            // Pinyin/English/resource-key matches still need a visible indication on the card.
+            item.MatchPrefix = string.Empty;
+            item.MatchText = item.DisplayName;
+            return;
+        }
+        item.MatchPrefix = item.DisplayName[..index];
+        item.MatchText = item.DisplayName.Substring(index, search.Length);
+        item.MatchSuffix = item.DisplayName[(index + search.Length)..];
     }
 
     private async Task RenderIconCatalogItemsAsync(
         IReadOnlyList<IconCatalogEntry> items,
         int renderVersion,
-        string? selectedName = null)
+        long selectedGuid = 0)
     {
         _isRenderingIconCatalog = true;
         SetIconCatalogLoading(_isScanningLocalItems);
@@ -1296,9 +1366,14 @@ public partial class MainWindow : Window
                 await Dispatcher.Yield(DispatcherPriority.Background);
             }
 
-            if (!string.IsNullOrWhiteSpace(selectedName))
+            if (selectedGuid != 0)
             {
-                IconCatalogList.SelectedItem = items.FirstOrDefault(item => item.DisplayName == selectedName);
+                var selected = items.FirstOrDefault(item => item.Guid == selectedGuid);
+                if (selected is not null)
+                {
+                    IconCatalogList.SelectedItem = selected;
+                    IconCatalogList.ScrollIntoView(selected);
+                }
             }
         }
         finally
@@ -1360,12 +1435,12 @@ public partial class MainWindow : Window
 
         if (ContainsAny(path, "items.consumables.", "/consumables/"))
         {
-            return "消耗品";
+            return ContainsAny(path, ".food", ".cookedMeals.", "/food", "/cookedMeals/") ? "食物" : "药剂/消耗品";
         }
 
         if (ContainsAny(path, "items.quest", "items.keys.", "/quest", "/keys/"))
         {
-            return "任务/钥匙";
+            return "任务物品";
         }
         if (ContainsAny(text, "Weapon", "Weapons", "Sword", "Axe", "Bow", "Dagger", "Staff", "Spear", "Mace", "Hammer", "Wand", "双手", "单手", "巨棒", "剑", "斧", "弓", "杖", "矛"))
         {
@@ -1379,12 +1454,12 @@ public partial class MainWindow : Window
 
         if (ContainsAny(text, "Ring", "Amulet", "Jewelry", "Accessory", "Trinket", "戒指", "项链", "护符", "饰品"))
         {
-            return "饰品";
+            return "防具";
         }
 
         if (ContainsAny(text, "Potion", "Food", "Consumable", "Bomb", "Elixir", "药", "食物", "消耗", "炸弹"))
         {
-            return "消耗品";
+            return "药剂/消耗品";
         }
 
         if (ContainsAny(text, "Material", "Resource", "Ingredient", "Craft", "Ore", "Hide", "Herb", "Wood", "材料", "资源", "矿", "皮", "草", "木"))
@@ -1394,15 +1469,15 @@ public partial class MainWindow : Window
 
         if (ContainsAny(text, "Key", "Quest", "Token", "钥匙", "任务"))
         {
-            return "任务/钥匙";
+            return "任务物品";
         }
 
         return itemType switch
         {
             1 or 2 or 3 => "武器",
             4 or 5 or 6 => "防具",
-            7 or 8 => "饰品",
-            9 or 10 => "消耗品",
+            7 or 8 => "防具",
+            9 or 10 => "药剂/消耗品",
             11 or 12 => "材料",
             _ => "其他"
         };
@@ -1414,11 +1489,11 @@ public partial class MainWindow : Window
     private static int GetCategoryOrder(string category) => category switch
     {
         "武器" => 0,
-        "防具" => 1,
-        "饰品" => 2,
-        "消耗品" => 3,
+        "食物" => 1,
+        "药剂/消耗品" => 2,
+        "防具" => 3,
         "材料" => 4,
-        "任务/钥匙" => 5,
+        "任务物品" => 5,
         _ => 9
     };
 
@@ -1426,10 +1501,10 @@ public partial class MainWindow : Window
     {
         "武器" => "⚔",
         "防具" => "◈",
-        "饰品" => "◇",
-        "消耗品" => "✚",
+        "食物" => "♨",
+        "药剂/消耗品" => "⚗",
         "材料" => "◆",
-        "任务/钥匙" => "⌑",
+        "任务物品" => "⌑",
         "图纸/配方" => "▧",
         _ => "•"
     };
@@ -1520,6 +1595,37 @@ public partial class MainWindow : Window
         }
     }
 
+    private void LoadCatalogUiState()
+    {
+        try
+        {
+            if (File.Exists(CatalogUiStatePath))
+            {
+                _catalogUiState = JsonSerializer.Deserialize<CatalogUiState>(File.ReadAllText(CatalogUiStatePath)) ?? new CatalogUiState();
+            }
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
+        {
+            AddLog($"物品浏览状态未恢复：{exception.Message}");
+            _catalogUiState = new CatalogUiState();
+        }
+    }
+
+    private void SaveCatalogUiState()
+    {
+        try
+        {
+            _catalogUiState.Category = _selectedIconCatalogCategory;
+            _catalogUiState.Search = IconCatalogSearchBox?.Text ?? string.Empty;
+            Directory.CreateDirectory(Path.GetDirectoryName(CatalogUiStatePath)!);
+            File.WriteAllText(CatalogUiStatePath, JsonSerializer.Serialize(_catalogUiState));
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            AddLog($"物品浏览状态未保存：{exception.Message}");
+        }
+    }
+
     private void OnIconCatalogSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (IconCatalogList.SelectedItem is not IconCatalogEntry entry)
@@ -1529,7 +1635,12 @@ public partial class MainWindow : Window
         }
 
         IconCatalogCreateButton.IsEnabled = entry.CanGenerate;
+        EquipmentCreatePanel.Visibility = entry.IsStackable ? Visibility.Collapsed : Visibility.Visible;
+        StackCreatePanel.Visibility = entry.IsStackable ? Visibility.Visible : Visibility.Collapsed;
         UpdateCreateCountControls(entry.IsStackable, IconCatalogCreateCountLabel, IconCatalogCreateCountBox);
+        IconCatalogCreateResult.Visibility = Visibility.Collapsed;
+        _catalogUiState.SelectedGuid = entry.Guid;
+        SaveCatalogUiState();
         if (entry.Template is { } item)
         {
             CapturedItemCatalogList.SelectedItem = item;
@@ -1542,12 +1653,14 @@ public partial class MainWindow : Window
         if (IconCatalogList.SelectedItem is not IconCatalogEntry item || !item.CanGenerate)
         {
             SetStatus("这个条目在当前游戏资源中没有完整 ItemData GUID，已禁止生成。", false);
+            SetCatalogGenerationState(false, "请先选择一个可生成物品", false);
             return;
         }
 
         if (_selectedItemEntity is not { } ownerItem || ownerItem == 0)
         {
             SetStatus("生成前请在当前角色背包里点击任意一件物品，用于识别接收角色。", false);
+            SetCatalogGenerationState(false, "请先在游戏背包中点击任意物品，以确定接收角色", false);
             return;
         }
 
@@ -1556,10 +1669,11 @@ public partial class MainWindow : Window
             (!TryParseInt32(IconCatalogCreateCountBox.Text, out count) || count is < 1 or > 9999))
         {
             SetStatus("堆叠数量请输入 1 至 9999。", false);
+            SetCatalogGenerationState(false, "堆叠数量需要在 1–9999 之间", false);
             return;
         }
 
-        CreateFromTemplate(ownerItem, item.DisplayName, item.Guid, item.Rarity, count);
+        CreateFromTemplate(ownerItem, item.DisplayName, item.Guid, item.Rarity, count, true);
     }
 
     private void OnSaveCapturedItemName(object sender, RoutedEventArgs e)
@@ -1691,14 +1805,17 @@ public partial class MainWindow : Window
         CreateFromTemplate(selectedItem, $"0x{selectedItem:X}", 0, 0);
     }
 
-    private async void CreateFromTemplate(long ownerItem, string templateName, long templateGuid, int rarity, int count = 1)
+    private async void CreateFromTemplate(long ownerItem, string templateName, long templateGuid, int rarity, int count = 1, bool catalogFeedback = false)
     {
+        if (_isGeneratingCatalogItem) return;
+        if (catalogFeedback) SetCatalogGenerationState(true, "正在交给游戏处理…", true);
         var queued = templateGuid == 0
             ? _quantumCommandHook?.QueueCreateFromTemplate(ownerItem, count) == true
             : _quantumCommandHook?.QueueCreateFromGuid(ownerItem, templateGuid, rarity, count) == true;
         if (!queued)
         {
             SetStatus("生成命令无法排队，请稍后重试。", false);
+            if (catalogFeedback) SetCatalogGenerationState(false, "当前有操作尚未完成，请稍后再试。", false);
             return;
         }
 
@@ -1713,13 +1830,28 @@ public partial class MainWindow : Window
             SetStatus(succeeded
                 ? (count == 1 ? $"已生成“{templateName}”并加入背包。" : $"已生成“{templateName}”× {count}；游戏已按正常入包规则合并堆栈。")
                 : "游戏拒绝生成物品，命令没有重复执行。", succeeded);
+            if (catalogFeedback) SetCatalogGenerationState(false, succeeded
+                ? (count == 1 ? "已生成并加入背包" : $"已生成 × {count}，游戏已自动处理堆叠")
+                : "生成失败，游戏拒绝了本次操作", succeeded);
             return;
         }
         SetStatus("等待生成完成超时，命令没有重复执行。", false);
+        if (catalogFeedback) SetCatalogGenerationState(false, "等待游戏响应超时，没有重复执行", false);
+    }
+
+    private void SetCatalogGenerationState(bool busy, string message, bool success)
+    {
+        _isGeneratingCatalogItem = busy;
+        IconCatalogCreateButton.IsEnabled = !busy && IconCatalogList.SelectedItem is IconCatalogEntry { CanGenerate: true };
+        IconCatalogCreateSpinner.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
+        IconCatalogCreateButtonText.Text = busy ? "生成中…" : "生成物品";
+        IconCatalogCreateResult.Visibility = Visibility.Visible;
+        IconCatalogCreateResultText.Text = message;
+        IconCatalogCreateResultText.Foreground = success ? (Brush)FindResource("NodeBrush") : (Brush)FindResource("WarningBrush");
     }
 
     private static bool IsStackableCategory(string category) =>
-        category is not ("武器" or "防具" or "饰品");
+        category is not ("武器" or "防具");
 
     private static void UpdateCreateCountControls(bool stackable, TextBlock label, TextBox box)
     {

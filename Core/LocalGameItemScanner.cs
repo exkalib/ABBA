@@ -8,6 +8,7 @@ internal sealed class LocalGameItem
 {
     public required string Key { get; init; }
     public required string Name { get; init; }
+    public string EnglishName { get; init; } = string.Empty;
     public required string Category { get; init; }
     public required string Source { get; init; }
     public string IconPath { get; init; } = string.Empty;
@@ -314,6 +315,7 @@ internal static partial class LocalGameItemScanner
         {
             Key = key,
             Name = string.IsNullOrWhiteSpace(localizedName.SimplifiedChinese) ? ToDisplayName(rawName) : localizedName.SimplifiedChinese,
+            EnglishName = localizedName.English,
             Category = category,
             Source = Path.GetFileName(source),
             IconPath = iconPath,
@@ -391,13 +393,16 @@ internal static partial class LocalGameItemScanner
 
         if (key.StartsWith("items.consumables.", StringComparison.OrdinalIgnoreCase))
         {
-            return "消耗品";
+            return key.Contains(".food", StringComparison.OrdinalIgnoreCase) ||
+                   key.Contains(".cookedMeals.", StringComparison.OrdinalIgnoreCase)
+                ? "食物"
+                : "药剂/消耗品";
         }
 
         if (key.StartsWith("items.quest", StringComparison.OrdinalIgnoreCase) ||
             key.StartsWith("items.keys.", StringComparison.OrdinalIgnoreCase))
         {
-            return "任务/钥匙";
+            return "任务物品";
         }
 
         if (key.Contains(".weapons.", StringComparison.OrdinalIgnoreCase) ||
@@ -418,7 +423,7 @@ internal static partial class LocalGameItemScanner
             key.Contains(".amulets.", StringComparison.OrdinalIgnoreCase) ||
             key.Contains(".accessories.", StringComparison.OrdinalIgnoreCase))
         {
-            return "饰品";
+            return "防具";
         }
 
         if (key.Contains("recipe", StringComparison.OrdinalIgnoreCase) ||
@@ -434,12 +439,12 @@ internal static partial class LocalGameItemScanner
     private static int GetCategoryOrder(string category) => category switch
     {
         "武器" => 0,
-        "防具" => 1,
-        "饰品" => 2,
-        "消耗品" => 3,
-        "图纸/配方" => 4,
-        "材料" => 5,
-        "任务/钥匙" => 6,
+        "食物" => 1,
+        "药剂/消耗品" => 2,
+        "防具" => 3,
+        "材料" => 4,
+        "图纸/配方" => 5,
+        "任务物品" => 6,
         _ => 9
     };
 
