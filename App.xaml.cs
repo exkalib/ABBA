@@ -1,7 +1,28 @@
+using System.IO;
 using System.Windows;
 
 namespace NRftWManagerUI;
 
 public partial class App : Application
 {
+    protected override void OnStartup(StartupEventArgs e)
+    {
+        if (e.Args.Length >= 2 && e.Args[0].Equals("--scan-icons", StringComparison.OrdinalIgnoreCase))
+        {
+            var installPath = string.Join(' ', e.Args.Skip(1));
+            var result = NRftWManagerUI.Core.LocalGameItemScanner.Scan(installPath);
+            var cachePath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "NRftWManagerUI",
+                "item-icons");
+            Directory.CreateDirectory(cachePath);
+            File.WriteAllText(
+                Path.Combine(cachePath, "scan-icons-result.txt"),
+                $"path={installPath}{Environment.NewLine}items={result.Items.Count} matchedIcons={result.MatchedIconResources} extractedIcons={result.ExtractedIcons}{Environment.NewLine}");
+            Environment.Exit(result.ExtractedIcons > 0 ? 0 : 2);
+            return;
+        }
+
+        base.OnStartup(e);
+    }
 }

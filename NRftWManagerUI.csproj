@@ -16,5 +16,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AssetsTools.NET.Texture" Version="3.*" />
+    <PackageReference Include="StbImageWriteSharp" Version="1.16.7" />
   </ItemGroup>
 </Project>

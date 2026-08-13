@@ -50,7 +50,8 @@ internal static partial class LocalGameItemScanner
             };
         }
 
-        var iconResources = ScanIconResources(installPath);
+        var rawItemNames = ScanRawItemNames(dataPath);
+        var iconResources = ScanIconResources(installPath, rawItemNames);
         var extractedIcons = UnityIconExtractor.Extract(installPath, iconResources.Values.Distinct(StringComparer.OrdinalIgnoreCase).ToArray());
         var found = new Dictionary<string, LocalGameItem>(StringComparer.OrdinalIgnoreCase);
         foreach (var bundle in Directory.EnumerateFiles(dataPath, "*.bundle")
@@ -120,7 +121,26 @@ internal static partial class LocalGameItemScanner
         }
     }
 
-    private static IReadOnlyDictionary<string, string> ScanIconResources(string installPath)
+    private static IReadOnlySet<string> ScanRawItemNames(string dataPath)
+    {
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var bundle in Directory.EnumerateFiles(dataPath, "*.bundle")
+                     .Where(path => ItemBundleHints.Any(hint => Path.GetFileName(path).Contains(hint, StringComparison.OrdinalIgnoreCase))))
+        {
+            foreach (var token in ExtractAsciiTokens(bundle))
+            {
+                var match = ItemLocalizationKeyRegex().Match(token);
+                if (match.Success)
+                {
+                    names.Add(NormalizeName(GetRawItemName(match.Value.Trim('.'))));
+                }
+            }
+        }
+
+        return names;
+    }
+
+    private static IReadOnlyDictionary<string, string> ScanIconResources(string installPath, IReadOnlySet<string> rawItemNames)
     {
         var catalogPath = Path.Combine(installPath, "NoRestForTheWicked_Data", "StreamingAssets", "aa", "catalog.bin");
         if (!File.Exists(catalogPath))
@@ -134,8 +154,8 @@ internal static partial class LocalGameItemScanner
             foreach (Match match in IconResourceRegex().Matches(token))
             {
                 var resourceName = match.Value;
-                var normalizedName = NormalizeName(Path.GetFileNameWithoutExtension(resourceName));
-                if (normalizedName.Length > 0)
+                var normalizedName = NormalizeName(StripIconPrefix(Path.GetFileNameWithoutExtension(resourceName)));
+                if (normalizedName.Length > 0 && rawItemNames.Contains(normalizedName))
                 {
                     icons.TryAdd(normalizedName, resourceName);
                 }
@@ -209,6 +229,21 @@ internal static partial class LocalGameItemScanner
     private static string NormalizeName(string value) =>
         new(value.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray());
 
+    private static string StripIconPrefix(string name)
+    {
+        if (name.StartsWith("uiIconItem", StringComparison.OrdinalIgnoreCase))
+        {
+            return name["uiIconItem".Length..];
+        }
+
+        if (name.StartsWith("icon", StringComparison.OrdinalIgnoreCase))
+        {
+            return name["icon".Length..];
+        }
+
+        return name;
+    }
+
     private static string Categorize(string key)
     {
         if (key.Contains(".weapons.", StringComparison.OrdinalIgnoreCase) ||
@@ -270,6 +305,6 @@ internal static partial class LocalGameItemScanner
     [GeneratedRegex("(?<!^)([A-Z])")]
     private static partial Regex NameBoundaryRegex();
 
-    [GeneratedRegex(@"(?:uiIconItem[A-Za-z0-9_-]+|icon[A-Za-z0-9_-]+|[a-z][A-Za-z0-9_-]*)\.png", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"[A-Za-z0-9_-]+\.png", RegexOptions.IgnoreCase)]
     private static partial Regex IconResourceRegex();
 }
