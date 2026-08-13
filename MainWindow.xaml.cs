@@ -656,7 +656,10 @@ public partial class MainWindow : Window
         var referenceId = 0L;
         if (_session is { IsAttached: true } && itemSlot != 0)
         {
-            _session.TryReadInt64(itemSlot + 0x538, out delayedAsset);
+            if (_session.TryReadInt64(itemSlot + 0x20, out var itemSlotVisual) && itemSlotVisual != 0)
+            {
+                _session.TryReadInt64(itemSlotVisual + 0x188, out delayedAsset);
+            }
             var asset = delayedAsset != 0 ? delayedAsset : capturedAsset;
             if (asset != 0)
             {

@@ -50,7 +50,12 @@ internal sealed class RemoteItemSelectionHook : IDisposable
         AddStoreRipRelative(code, trampolineAddress, LocalizedNameOffset, new byte[] { 0x48, 0x89, 0x05 });
         code.AddRange(new byte[] { 0x48, 0x89, 0xC8 }); // mov rax,rcx
         AddStoreRipRelative(code, trampolineAddress, ItemSlotOffset, new byte[] { 0x48, 0x89, 0x05 });
-        code.AddRange(new byte[] { 0x48, 0x8B, 0x81, 0x38, 0x05, 0x00, 0x00 }); // mov rax,[rcx+0x538] HeroItemDataAsset
+        code.AddRange(new byte[] { 0x48, 0x8B, 0x41, 0x20 }); // mov rax,[rcx+0x20] ItemSlotVisual
+        code.AddRange(new byte[] { 0x48, 0x85, 0xC0 }); // test rax,rax
+        var skipVisualAssetLoad = code.Count;
+        code.AddRange(new byte[] { 0x74, 0x07 }); // je short store-null
+        code.AddRange(new byte[] { 0x48, 0x8B, 0x80, 0x88, 0x01, 0x00, 0x00 }); // mov rax,[rax+0x188] m_slotPopulateData.ItemDataAsset
+        code[skipVisualAssetLoad + 1] = checked((byte)(code.Count - (skipVisualAssetLoad + 2)));
         AddStoreRipRelative(code, trampolineAddress, ItemAssetOffset, new byte[] { 0x48, 0x89, 0x05 });
         code.AddRange(new byte[] { 0x48, 0x8B, 0x81, 0x00, 0x01, 0x00, 0x00 }); // mov rax,[rcx+0x100] ItemRef.Entity
         AddStoreRipRelative(code, trampolineAddress, PendingItemOffset, new byte[] { 0x48, 0x89, 0x05 });
