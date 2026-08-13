@@ -6,36 +6,34 @@
   <Application.Resources>
     <System:Double xmlns:System="clr-namespace:System;assembly=System.Runtime" x:Key="{x:Static system:SystemParameters.VerticalScrollBarWidthKey}">7</System:Double>
     <System:Double xmlns:System="clr-namespace:System;assembly=System.Runtime" x:Key="{x:Static system:SystemParameters.HorizontalScrollBarHeightKey}">7</System:Double>
-    <Color x:Key="VoidColor">#060812</Color>
-    <Color x:Key="SurfaceColor">#0C1220</Color>
-    <Color x:Key="SurfaceRaisedColor">#111B2D</Color>
-    <Color x:Key="LineColor">#243753</Color>
-    <Color x:Key="CyanColor">#38E8FF</Color>
-    <Color x:Key="CyanSoftColor">#C2F8FF</Color>
+    <Color x:Key="VoidColor">#090B12</Color>
+    <Color x:Key="SurfaceColor">#11151F</Color>
+    <Color x:Key="SurfaceRaisedColor">#171C28</Color>
+    <Color x:Key="LineColor">#282E3B</Color>
+    <Color x:Key="CyanColor">#8B7CFF</Color>
+    <Color x:Key="CyanSoftColor">#DDD8FF</Color>
     <Color x:Key="AmberColor">#EFBF72</Color>
-    <Color x:Key="PurpleColor">#A990FF</Color>
+    <Color x:Key="PurpleColor">#E879F9</Color>
 
     <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource VoidColor}" />
     <SolidColorBrush x:Key="PanelBrush" Color="{StaticResource SurfaceColor}" />
     <SolidColorBrush x:Key="PanelAltBrush" Color="{StaticResource SurfaceRaisedColor}" />
     <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource LineColor}" />
-    <SolidColorBrush x:Key="MutedBrush" Color="#8292AC" />
-    <SolidColorBrush x:Key="TextBrush" Color="#F4F8FF" />
+    <SolidColorBrush x:Key="MutedBrush" Color="#8B94A5" />
+    <SolidColorBrush x:Key="TextBrush" Color="#F3F5F8" />
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource CyanColor}" />
-    <SolidColorBrush x:Key="AccentDarkBrush" Color="#0E6B7D" />
+    <SolidColorBrush x:Key="AccentDarkBrush" Color="#5145A8" />
     <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource AmberColor}" />
     <SolidColorBrush x:Key="PurpleBrush" Color="{StaticResource PurpleColor}" />
 
     <LinearGradientBrush x:Key="SciFiGridBrush" StartPoint="0,0" EndPoint="1,1">
-      <GradientStop Color="#080B17" Offset="0" />
-      <GradientStop Color="#070A13" Offset="0.52" />
-      <GradientStop Color="#0B1020" Offset="1" />
+      <GradientStop Color="#0B0E15" Offset="0" />
+      <GradientStop Color="#090B12" Offset="1" />
     </LinearGradientBrush>
 
     <LinearGradientBrush x:Key="PanelGradient" StartPoint="0,0" EndPoint="1,1">
-      <GradientStop Color="#F5111B2B" Offset="0" />
-      <GradientStop Color="#F50B101C" Offset="0.72" />
-      <GradientStop Color="#F20B1725" Offset="1" />
+      <GradientStop Color="#FE151A24" Offset="0" />
+      <GradientStop Color="#FE11151E" Offset="1" />
     </LinearGradientBrush>
 
     <Style TargetType="TextBlock">
@@ -59,6 +57,7 @@
       <Setter Property="FontSize" Value="10" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+      <Setter Property="Visibility" Value="Collapsed" />
     </Style>
 
     <Style TargetType="TextBox">
@@ -66,7 +65,7 @@
       <Setter Property="Background" Value="#D00B1119" />
       <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
       <Setter Property="CaretBrush" Value="{StaticResource AccentBrush}" />
-      <Setter Property="SelectionBrush" Value="#8036CFEA" />
+      <Setter Property="SelectionBrush" Value="#808B7CFF" />
       <Setter Property="BorderBrush" Value="#2A4260" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -79,7 +78,7 @@
             <ControlTemplate.Triggers>
               <Trigger Property="IsKeyboardFocused" Value="True">
                 <Setter TargetName="InputShell" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
-                <Setter TargetName="InputShell" Property="Effect"><Setter.Value><DropShadowEffect Color="#38E8FF" BlurRadius="10" ShadowDepth="0" Opacity="0.18" /></Setter.Value></Setter>
+                <Setter TargetName="InputShell" Property="Effect"><Setter.Value><DropShadowEffect Color="#8B7CFF" BlurRadius="10" ShadowDepth="0" Opacity="0.18" /></Setter.Value></Setter>
               </Trigger>
               <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.42" /></Trigger>
             </ControlTemplate.Triggers>
@@ -124,7 +123,7 @@
                 <Setter TargetName="Track" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
                 <Setter TargetName="Knob" Property="Fill" Value="{StaticResource AccentBrush}" />
                 <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right" />
-                <Setter TargetName="Knob" Property="Effect"><Setter.Value><DropShadowEffect Color="#38E8FF" BlurRadius="8" ShadowDepth="0" Opacity="0.75" /></Setter.Value></Setter>
+                <Setter TargetName="Knob" Property="Effect"><Setter.Value><DropShadowEffect Color="#8B7CFF" BlurRadius="8" ShadowDepth="0" Opacity="0.75" /></Setter.Value></Setter>
               </Trigger>
               <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4" /></Trigger>
             </ControlTemplate.Triggers>
@@ -155,14 +154,11 @@
 
     <Style x:Key="Card" TargetType="Border">
       <Setter Property="Background" Value="{StaticResource PanelGradient}" />
-      <Setter Property="BorderBrush" Value="#263B58" />
+      <Setter Property="BorderBrush" Value="#292F3B" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="CornerRadius" Value="16" />
       <Setter Property="Padding" Value="24" />
       <Setter Property="SnapsToDevicePixels" Value="True" />
-      <Setter Property="Effect">
-        <Setter.Value><DropShadowEffect Color="#000000" BlurRadius="28" ShadowDepth="9" Opacity="0.42" /></Setter.Value>
-      </Setter>
     </Style>
 
     <Style x:Key="TelemetryCard" TargetType="Border" BasedOn="{StaticResource Card}">
@@ -172,8 +168,8 @@
     </Style>
 
     <Style x:Key="ActionButton" TargetType="Button">
-      <Setter Property="Background" Value="#38E8FF" />
-      <Setter Property="Foreground" Value="#061018" />
+      <Setter Property="Background" Value="#8B7CFF" />
+      <Setter Property="Foreground" Value="#FFFFFF" />
       <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="Padding" Value="18,10" />
@@ -189,10 +185,10 @@
             </Grid>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="Glow" Property="Background" Value="#78F2FF" />
-                <Setter TargetName="Glow" Property="Effect"><Setter.Value><DropShadowEffect Color="#38E8FF" BlurRadius="20" ShadowDepth="0" Opacity="0.48" /></Setter.Value></Setter>
+                <Setter TargetName="Glow" Property="Background" Value="#A99EFF" />
+                <Setter TargetName="Glow" Property="Effect"><Setter.Value><DropShadowEffect Color="#8B7CFF" BlurRadius="20" ShadowDepth="0" Opacity="0.38" /></Setter.Value></Setter>
               </Trigger>
-              <Trigger Property="IsPressed" Value="True"><Setter TargetName="Glow" Property="Background" Value="#20BFD6" /></Trigger>
+              <Trigger Property="IsPressed" Value="True"><Setter TargetName="Glow" Property="Background" Value="#7465E8" /></Trigger>
               <Trigger Property="IsEnabled" Value="False">
                 <Setter Property="Foreground" Value="#526A7B" />
                 <Setter Property="BorderBrush" Value="#233847" />
@@ -225,7 +221,7 @@
             <Grid>
               <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
               <TabPanel IsItemsHost="True" Background="Transparent" />
-              <Border Grid.Row="1" Background="#B80B111D" BorderBrush="#263B58" BorderThickness="1" CornerRadius="0,14,14,14" Padding="0">
+              <Border Grid.Row="1" Background="Transparent" BorderThickness="0" Margin="0,14,0,0">
                 <ContentPresenter ContentSource="SelectedContent" />
               </Border>
             </Grid>
@@ -235,27 +231,26 @@
     </Style>
 
     <Style TargetType="TabItem">
-      <Setter Property="Foreground" Value="#8498B3" />
-      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="#9AA4B5" />
+      <Setter Property="Background" Value="#11151E" />
       <Setter Property="BorderThickness" Value="0" />
       <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI" />
       <Setter Property="FontSize" Value="13" />
       <Setter Property="FontWeight" Value="SemiBold" />
-      <Setter Property="Padding" Value="22,13" />
-      <Setter Property="Margin" Value="0,0,6,0" />
+      <Setter Property="Padding" Value="24,11" />
+      <Setter Property="Margin" Value="0,0,8,0" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="TabItem">
-            <Border x:Name="TabShell" Background="{TemplateBinding Background}" BorderBrush="#2B425F" BorderThickness="1" CornerRadius="10,10,0,0" Padding="{TemplateBinding Padding}">
+            <Border x:Name="TabShell" Background="{TemplateBinding Background}" BorderBrush="#292F3B" BorderThickness="1" CornerRadius="10" Padding="{TemplateBinding Padding}">
               <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" />
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsSelected" Value="True">
                 <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
-                <Setter TargetName="TabShell" Property="Background" Value="#D5111B2B" />
+                <Setter TargetName="TabShell" Property="Background" Value="#23303B" />
                 <Setter TargetName="TabShell" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
-                <Setter TargetName="TabShell" Property="Effect"><Setter.Value><DropShadowEffect Color="#38E8FF" BlurRadius="12" ShadowDepth="0" Opacity="0.18" /></Setter.Value></Setter>
               </Trigger>
               <Trigger Property="IsMouseOver" Value="True"><Setter Property="Foreground" Value="#D7E6F5" /></Trigger>
             </ControlTemplate.Triggers>
@@ -275,7 +270,7 @@
             <Grid Background="{TemplateBinding Background}">
               <Track x:Name="PART_Track" Orientation="{TemplateBinding Orientation}" IsDirectionReversed="True">
                 <Track.DecreaseRepeatButton><RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0" /></Track.DecreaseRepeatButton>
-                <Track.Thumb><Thumb Background="#38E8FF"><Thumb.Template><ControlTemplate TargetType="Thumb"><Border Background="{TemplateBinding Background}" CornerRadius="3" Margin="1,4" /></ControlTemplate></Thumb.Template></Thumb></Track.Thumb>
+                <Track.Thumb><Thumb Background="#8B7CFF"><Thumb.Template><ControlTemplate TargetType="Thumb"><Border Background="{TemplateBinding Background}" CornerRadius="3" Margin="1,4" /></ControlTemplate></Thumb.Template></Thumb></Track.Thumb>
                 <Track.IncreaseRepeatButton><RepeatButton Command="ScrollBar.PageDownCommand" Opacity="0" /></Track.IncreaseRepeatButton>
               </Track>
             </Grid>

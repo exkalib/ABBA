@@ -202,7 +202,7 @@ public partial class MainWindow : Window
 
             RuntimeStateText.Text = "已连接";
             RuntimeDetailText.Text = result;
-            ConnectionText.Text = "已连接游戏";
+            ConnectionText.Text = "已连接";
             ConnectionText.Foreground = (Brush)FindResource("AccentBrush");
             ConnectionIndicator.Fill = (Brush)FindResource("AccentBrush");
 
@@ -265,7 +265,7 @@ public partial class MainWindow : Window
                                      _itemSelectionSite.HasValue;
         if (busy)
         {
-            ConnectionText.Text = "CONNECTING";
+            ConnectionText.Text = "连接中";
             ConnectionText.Foreground = (Brush)FindResource("AccentBrush");
             ConnectionIndicator.Fill = (Brush)FindResource("AccentBrush");
             ConnectionProgressText.Text = progress;
@@ -273,7 +273,7 @@ public partial class MainWindow : Window
         }
         else if (_session is not { IsAttached: true })
         {
-            ConnectionText.Text = "LINK OFFLINE";
+            ConnectionText.Text = "未连接";
             ConnectionText.Foreground = (Brush)FindResource("WarningBrush");
             ConnectionIndicator.Fill = (Brush)FindResource("WarningBrush");
         }
@@ -358,10 +358,19 @@ public partial class MainWindow : Window
 
     private void OnCurrencyClick(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: string currency })
+        if (sender is Button { Tag: string currency } selectedButton)
         {
             _selectedCurrency = currency;
-            CurrencyCaptureText.Text = $"已选择 {currency}；输入的是该单位的总数量。";
+            foreach (var button in new[] { CurrencyCopperButton, CurrencySilverButton, CurrencyGoldButton })
+            {
+                button.Background = (Brush)FindResource("PanelAltBrush");
+                button.BorderBrush = (Brush)FindResource("BorderBrush");
+                button.Foreground = (Brush)FindResource("TextBrush");
+            }
+            selectedButton.Background = (Brush)FindResource("AccentBrush");
+            selectedButton.BorderBrush = (Brush)FindResource("AccentBrush");
+            selectedButton.Foreground = Brushes.White;
+            CurrencyCaptureText.Text = $"已选择{GetCurrencyDisplayName(currency)}";
             SetStatus(CurrencyCaptureText.Text);
         }
     }
@@ -543,7 +552,7 @@ public partial class MainWindow : Window
 
         _currencyAddress = context.InventoryComponent + sizeof(int);
         var valueText = _session!.TryReadInt32(_currencyAddress.Value, out var current) ? current.ToString() : "读取失败";
-        CurrencyCaptureText.Text = $"角色上下文已就绪 · {_selectedCurrency} 当前基数：{valueText}";
+        CurrencyCaptureText.Text = $"{GetCurrencyDisplayName(_selectedCurrency)}已就绪 · 当前值 {valueText}";
         SetStatus(CurrencyCaptureText.Text, true);
     }
 
@@ -571,7 +580,7 @@ public partial class MainWindow : Window
 
         if ((long)value * multiplier > int.MaxValue)
         {
-            SetStatus($"{_selectedCurrency} 数值过大，换算为内部基数后超出游戏允许范围。", false);
+            SetStatus($"{GetCurrencyDisplayName(_selectedCurrency)}数值过大，换算后超出游戏允许范围。", false);
             return;
         }
 
@@ -582,7 +591,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        SetStatus($"已排队增加 {_selectedCurrency} {value:N0}，等待游戏模拟线程执行。", true);
+        SetStatus($"正在增加{GetCurrencyDisplayName(_selectedCurrency)} {value:N0}。", true);
         for (var attempt = 0; attempt < 20; attempt++)
         {
             await Task.Delay(100);
@@ -592,7 +601,7 @@ public partial class MainWindow : Window
             }
 
             CurrencyCaptureText.Text = succeeded
-                ? $"模拟状态已静默增加 {_selectedCurrency} {value:N0}；若金额未立即刷新，关闭再打开背包即可。"
+                ? $"已增加{GetCurrencyDisplayName(_selectedCurrency)} {value:N0}；若未立即刷新，重新打开背包即可。"
                 : "游戏无法从所选物品解析当前角色；请点击角色背包内的物品后重试。";
             SetStatus(CurrencyCaptureText.Text, succeeded);
             return;
@@ -911,8 +920,8 @@ public partial class MainWindow : Window
             CapturedItemCatalogList.Items.Add(item);
         }
         CapturedItemCatalogSummary.Text = search.Length == 0
-            ? $"永久物品模板列表 · 已保存 {_capturedItemTemplates.Count} 件 · 自动读取游戏简体中文名"
-            : $"搜索结果 {visibleItems.Length} / {_capturedItemTemplates.Count} 件";
+            ? $"{_capturedItemTemplates.Count} 个物品"
+            : $"找到 {visibleItems.Length} 个";
     }
 
     private void LoadItemCatalog()
@@ -1617,6 +1626,13 @@ public partial class MainWindow : Window
         return int.TryParse(text.Trim(), out value);
     }
 
+    private static string GetCurrencyDisplayName(string currency) => currency switch
+    {
+        "Copper" => "铜币",
+        "Silver" => "银币",
+        _ => "金币"
+    };
+
     private void Disconnect()
     {
         _itemCapture?.Dispose();
@@ -1634,14 +1650,14 @@ public partial class MainWindow : Window
         _pendingTemplateCaptures.Clear();
         _stalePlayerContextHookDetected = false;
         _currencyAddress = null;
-        CurrencyCaptureText.Text = "先在角色背包里点击任意物品；程序会在模拟线程静默增加所选货币。";
+        CurrencyCaptureText.Text = "选择币种并输入增加数量";
         _itemQuantitySite = null;
         _playerContextSite = null;
         _itemSelectionSite = null;
         _session?.Dispose();
         _session = null;
         OperationSurface.IsEnabled = false;
-        ConnectionText.Text = "LINK OFFLINE";
+        ConnectionText.Text = "未连接";
         ConnectionText.Foreground = (Brush)FindResource("WarningBrush");
         ConnectionIndicator.Fill = (Brush)FindResource("WarningBrush");
     }
