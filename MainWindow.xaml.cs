@@ -41,6 +41,7 @@ public partial class MainWindow : Window
     private const int TryGetHeroInventoryPointerRva = 0x61E20;
     private const int HeroInventoryTypeInfoRva = 0xBFDD5F8;
     private const int ResolveHeroItemDataRva = 0x5F5F270;
+    private const int GetLocalizedItemNameRva = 0x8FB07C0;
     private const int SetItemLevelRva = 0x5D87920;
     private const int AwardGloamseedRva = 0x5F4BE60;
     private const int GiveMaxStatsRva = 0x5E00240;
@@ -588,6 +589,7 @@ public partial class MainWindow : Window
             _itemSelectionHook = new RemoteItemSelectionHook(
                 _session!,
                 _itemSelectionSite!.Value,
+                _session!.GameAssemblyBase + GetLocalizedItemNameRva,
                 AobPattern.Parse(ItemSelectionEntry).Bytes.Select(value => value ?? throw new InvalidOperationException("物品详情入口签名不能包含通配符。")).ToArray());
             var result = _itemSelectionHook.Arm();
             SelectedItemText.Text = result;
@@ -596,19 +598,19 @@ public partial class MainWindow : Window
             for (var attempt = 0; attempt < 18_000 && ReferenceEquals(_itemSelectionHook, activeHook); attempt++)
             {
                 await Task.Delay(100);
-                if (!activeHook.TryReadSelection(out var itemEntity, out var itemAsset) || itemEntity == _selectedItemEntity)
+                if (!activeHook.TryReadSelection(out var itemEntity, out var itemAsset, out var localizedNameAddress) || itemEntity == _selectedItemEntity)
                 {
                     continue;
                 }
 
-                var localizedName = ReadSimplifiedChineseItemName(itemAsset);
+                var localizedName = ReadResolvedItemName(localizedNameAddress);
                 _selectedItemEntity = itemEntity;
                 activeHook.ClearSelection();
                 RecordSelectedItem(itemEntity, localizedName);
                 SelectedItemText.Text = string.IsNullOrWhiteSpace(localizedName)
-                    ? $"已自动选中最近物品：0x{itemEntity:X}。切换物品时这里会自动更新。"
+                    ? $"名称解析失败：物品 0x{itemEntity:X}，资源 0x{itemAsset:X}，名称指针 0x{localizedNameAddress:X}。"
                     : $"已自动选中：{localizedName}（0x{itemEntity:X}）。";
-                SetStatus(SelectedItemText.Text, true);
+                SetStatus(SelectedItemText.Text, !string.IsNullOrWhiteSpace(localizedName));
             }
         }
         catch (Exception exception)
@@ -620,33 +622,27 @@ public partial class MainWindow : Window
 
     private void OnReadItemSelection(object sender, RoutedEventArgs e)
     {
-        if (_itemSelectionHook is null || !_itemSelectionHook.TryReadSelection(out var itemEntity, out var itemAsset))
+        if (_itemSelectionHook is null || !_itemSelectionHook.TryReadSelection(out var itemEntity, out var itemAsset, out var localizedNameAddress))
         {
             SetStatus("尚未捕获物品。请先开启物品选择捕获，再回游戏打开背包并点击目标物品详情。", false);
             return;
         }
 
-        var localizedName = ReadSimplifiedChineseItemName(itemAsset);
+        var localizedName = ReadResolvedItemName(localizedNameAddress);
         _selectedItemEntity = itemEntity;
         _itemSelectionHook.ClearSelection();
         RecordSelectedItem(itemEntity, localizedName);
         SelectedItemText.Text = string.IsNullOrWhiteSpace(localizedName)
-            ? $"已选中当前物品：0x{itemEntity:X}。切换物品时会继续自动更新。"
+            ? $"名称解析失败：物品 0x{itemEntity:X}，资源 0x{itemAsset:X}，名称指针 0x{localizedNameAddress:X}。"
             : $"已选中：{localizedName}（0x{itemEntity:X}）。";
-        SetStatus(SelectedItemText.Text, true);
+        SetStatus(SelectedItemText.Text, !string.IsNullOrWhiteSpace(localizedName));
     }
 
-    private string ReadSimplifiedChineseItemName(long itemAsset)
+    private string ReadResolvedItemName(long localizedNameAddress)
     {
-        // HeroItemDataAsset.ItemNameMsg -> LocalizedMessage.SimplifiedChinese.
-        if (_session?.TryReadInt64(itemAsset + 0x50, out var message) != true || message == 0 ||
-            !_session.TryReadInt64(message + 0x58, out var simplifiedChinese) || simplifiedChinese == 0 ||
-            !_session.TryReadIl2CppString(simplifiedChinese, out var value))
-        {
-            return string.Empty;
-        }
-
-        return value.Trim();
+        return _session?.TryReadIl2CppString(localizedNameAddress, out var value) == true
+            ? value.Trim()
+            : string.Empty;
     }
 
     private void RecordSelectedItem(long itemEntity, string localizedName)
