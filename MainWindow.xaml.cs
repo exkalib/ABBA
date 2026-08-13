@@ -1353,6 +1353,20 @@ public partial class MainWindow : Window
     private static string CategorizeItem(int itemType, string path, string displayName)
     {
         var text = $"{path} {displayName}".Replace('\\', '/');
+        if (ContainsAny(path, "items.craftingMaterials.", "/craftingMaterials/"))
+        {
+            return "材料";
+        }
+
+        if (ContainsAny(path, "items.consumables.", "/consumables/"))
+        {
+            return "消耗品";
+        }
+
+        if (ContainsAny(path, "items.quest", "items.keys.", "/quest", "/keys/"))
+        {
+            return "任务/钥匙";
+        }
         if (ContainsAny(text, "Weapon", "Weapons", "Sword", "Axe", "Bow", "Dagger", "Staff", "Spear", "Mace", "Hammer", "Wand", "双手", "单手", "巨棒", "剑", "斧", "弓", "杖", "矛"))
         {
             return "武器";

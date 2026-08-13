@@ -379,8 +379,28 @@ internal static partial class LocalGameItemScanner
 
     private static string Categorize(string key)
     {
+        // The localization key mirrors the game's own item folders. Use that structure before
+        // looking at individual words: material names such as "blood ring/stone" must not become
+        // jewelry merely because their final name contains "ring".
+        if (key.StartsWith("items.craftingMaterials.", StringComparison.OrdinalIgnoreCase))
+        {
+            return "材料";
+        }
+
+        if (key.StartsWith("items.consumables.", StringComparison.OrdinalIgnoreCase))
+        {
+            return "消耗品";
+        }
+
+        if (key.StartsWith("items.quest", StringComparison.OrdinalIgnoreCase) ||
+            key.StartsWith("items.keys.", StringComparison.OrdinalIgnoreCase))
+        {
+            return "任务/钥匙";
+        }
+
         if (key.Contains(".weapons.", StringComparison.OrdinalIgnoreCase) ||
-            key.Contains("weapon", StringComparison.OrdinalIgnoreCase))
+            key.Contains(".offHands.bows.", StringComparison.OrdinalIgnoreCase) ||
+            key.Contains(".offHands.whips.", StringComparison.OrdinalIgnoreCase))
         {
             return "武器";
         }
@@ -393,16 +413,10 @@ internal static partial class LocalGameItemScanner
         }
 
         if (key.Contains(".rings.", StringComparison.OrdinalIgnoreCase) ||
-            key.Contains("ring", StringComparison.OrdinalIgnoreCase))
+            key.Contains(".amulets.", StringComparison.OrdinalIgnoreCase) ||
+            key.Contains(".accessories.", StringComparison.OrdinalIgnoreCase))
         {
             return "饰品";
-        }
-
-        if (key.Contains(".food", StringComparison.OrdinalIgnoreCase) ||
-            key.Contains("consumable", StringComparison.OrdinalIgnoreCase) ||
-            key.Contains("potion", StringComparison.OrdinalIgnoreCase))
-        {
-            return "消耗品";
         }
 
         if (key.Contains("recipe", StringComparison.OrdinalIgnoreCase) ||
@@ -410,12 +424,6 @@ internal static partial class LocalGameItemScanner
             key.Contains("pattern", StringComparison.OrdinalIgnoreCase))
         {
             return "图纸/配方";
-        }
-
-        if (key.Contains("quest", StringComparison.OrdinalIgnoreCase) ||
-            key.Contains("key", StringComparison.OrdinalIgnoreCase))
-        {
-            return "任务/钥匙";
         }
 
         return "其他";
@@ -428,7 +436,8 @@ internal static partial class LocalGameItemScanner
         "饰品" => 2,
         "消耗品" => 3,
         "图纸/配方" => 4,
-        "任务/钥匙" => 5,
+        "材料" => 5,
+        "任务/钥匙" => 6,
         _ => 9
     };
 
