@@ -327,14 +327,15 @@
                     <Grid>
                       <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
                       <Grid>
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <StackPanel>
                           <TextBlock Text="图标物品库" Style="{StaticResource SectionTitle}" />
-                          <TextBlock Text="实验版：先使用已捕获模板，后续接入全量资源导入" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,6,0,0" />
+                          <TextBlock Text="实验版：从当前游戏安装目录实时扫描资源" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,6,0,0" />
                         </StackPanel>
                         <Border Grid.Column="1" Background="#1B202C" CornerRadius="9" Padding="11,7" VerticalAlignment="Center">
-                          <TextBlock Text="{Binding ElementName=CapturedItemCatalogSummary, Path=Text}" Foreground="{StaticResource MutedBrush}" FontSize="11" />
+                          <TextBlock x:Name="IconCatalogSummaryText" Text="等待扫描" Foreground="{StaticResource MutedBrush}" FontSize="11" />
                         </Border>
+                        <Button Grid.Column="2" x:Name="ScanLocalItemsButton" Style="{StaticResource SecondaryButton}" Content="扫描当前游戏" Click="OnScanLocalItems" Padding="12,7" Margin="8,0,0,0" />
                       </Grid>
 
                       <Grid Grid.Row="1" Margin="0,18,0,12">
@@ -356,6 +357,9 @@
                                 <Grid.RowDefinitions><RowDefinition Height="46" /><RowDefinition Height="*" /></Grid.RowDefinitions>
                                 <Border Width="44" Height="44" CornerRadius="8" Background="#1A1F2B" BorderBrush="#333B52" BorderThickness="1" HorizontalAlignment="Center" ClipToBounds="True">
                                   <Image Source="{Binding IconPath}" Stretch="UniformToFill" />
+                                </Border>
+                                <Border HorizontalAlignment="Right" VerticalAlignment="Top" Background="#20283A" CornerRadius="7" Padding="5,2">
+                                  <TextBlock Text="{Binding AvailabilityText}" FontSize="8" Foreground="#AEB8CC" />
                                 </Border>
                                 <TextBlock Grid.Row="1" Text="{Binding DisplayName}" FontSize="10" FontWeight="SemiBold" Foreground="#EFF7FF" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,7,0,0" />
                               </Grid>
@@ -387,7 +391,8 @@
                       <StackPanel Grid.Row="2" Margin="0,18,0,0">
                         <TextBlock Text="生成数量" Foreground="{StaticResource MutedBrush}" FontSize="11" />
                         <TextBox x:Name="IconCatalogCreateCountBox" Height="42" Padding="12,7" Text="1" Margin="0,7,0,0" ToolTip="生成数量（1–99）" />
-                        <Button Style="{StaticResource ActionButton}" Content="生成预览物品" Click="OnCreateFromIconCatalog" HorizontalAlignment="Stretch" Margin="0,16,0,0" />
+                        <Button x:Name="IconCatalogCreateButton" Style="{StaticResource ActionButton}" Content="生成预览物品" Click="OnCreateFromIconCatalog" HorizontalAlignment="Stretch" Margin="0,16,0,0" />
+                        <TextBlock Text="本地扫描项需要解析出真实 GUID 后才能生成；已捕获模板可直接生成。" Foreground="#717B8C" FontSize="10" TextWrapping="Wrap" Margin="0,10,0,0" />
                       </StackPanel>
                     </Grid>
                   </Border>

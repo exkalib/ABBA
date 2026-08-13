@@ -89,6 +89,7 @@ public partial class MainWindow : Window
     private InstalledGame? _selectedGame;
     private string _selectedCurrency = "Gold";
     private readonly List<CapturedItemTemplate> _capturedItemTemplates = new();
+    private readonly List<LocalGameItem> _localGameItems = new();
     private readonly HashSet<long> _pendingTemplateCaptures = new();
     private static readonly string ItemCatalogPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -148,6 +149,20 @@ public partial class MainWindow : Window
         public required string Category { get; init; }
         public required int Count { get; init; }
         public string DisplayName => $"{Category}  ·  {Count}";
+    }
+
+    private sealed class IconCatalogEntry
+    {
+        public CapturedItemTemplate? Template { get; init; }
+        public LocalGameItem? LocalItem { get; init; }
+        public string DisplayName => Template?.DisplayName ?? LocalItem?.DisplayName ?? string.Empty;
+        public string Category => Template?.Category ?? LocalItem?.Category ?? "其他";
+        public string IconPath => Template?.IconPath ?? LocalItem?.IconPath ?? "Assets/riftctrl-icon.png";
+        public string Metadata => Template?.Metadata ?? LocalItem?.Metadata ?? string.Empty;
+        public string PreviewDescription => Template?.PreviewDescription ?? LocalItem?.Description ?? string.Empty;
+        public string SearchText => $"{DisplayName} {Category} {Metadata} {PreviewDescription}";
+        public bool CanGenerate => Template is not null;
+        public string AvailabilityText => CanGenerate ? "可生成" : "待解析 GUID";
     }
 
     public MainWindow()
@@ -232,6 +247,10 @@ public partial class MainWindow : Window
             SetStatus(game.IsInstalled
                 ? $"已选择 {game.Name} · {game.Platform}"
                 : "已选择 No Rest for the Wicked；未从启动器检测到安装，运行游戏后仍可尝试连接。", true);
+            if (game.IsInstalled)
+            {
+                _ = ScanLocalItemsAsync(game);
+            }
             return;
         }
 
@@ -1009,6 +1028,54 @@ public partial class MainWindow : Window
 
     private void OnFilterIconCatalogItems(object sender, TextChangedEventArgs e) => RefreshIconCatalogList();
 
+    private async void OnScanLocalItems(object sender, RoutedEventArgs e)
+    {
+        if (_selectedGame is not { IsInstalled: true } game || string.IsNullOrWhiteSpace(game.InstallPath))
+        {
+            SetStatus("请先选择一个已安装游戏。", false);
+            return;
+        }
+
+        ScanLocalItemsButton.IsEnabled = false;
+        IconCatalogSummaryText.Text = "正在扫描当前游戏资源…";
+        try
+        {
+            await ScanLocalItemsAsync(game);
+        }
+        catch (IOException exception)
+        {
+            SetStatus($"扫描当前游戏资源失败：{exception.Message}", false);
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            SetStatus($"没有权限读取游戏资源：{exception.Message}", false);
+        }
+        finally
+        {
+            ScanLocalItemsButton.IsEnabled = true;
+        }
+    }
+
+    private async Task ScanLocalItemsAsync(InstalledGame game)
+    {
+        if (string.IsNullOrWhiteSpace(game.InstallPath))
+        {
+            return;
+        }
+
+        IconCatalogSummaryText.Text = "正在扫描当前游戏资源…";
+        var items = await Task.Run(() => LocalGameItemScanner.Scan(game.InstallPath));
+        if (!ReferenceEquals(_selectedGame, game) && (_selectedGame?.AppId != game.AppId || _selectedGame?.Platform != game.Platform))
+        {
+            return;
+        }
+
+        _localGameItems.Clear();
+        _localGameItems.AddRange(items);
+        RefreshIconCatalogList();
+        SetStatus($"已从当前游戏资源扫描到 {_localGameItems.Count} 个候选物品。", _localGameItems.Count > 0);
+    }
+
     private void RefreshCapturedItemList()
     {
         if (CapturedItemCatalogList is null)
@@ -1054,14 +1121,21 @@ public partial class MainWindow : Window
             return;
         }
 
-        var selectedGuid = (IconCatalogList.SelectedItem as CapturedItemTemplate)?.Guid;
+        var selectedName = (IconCatalogList.SelectedItem as IconCatalogEntry)?.DisplayName;
         var search = IconCatalogSearchBox?.Text.Trim() ?? string.Empty;
-        var visibleItems = _capturedItemTemplates.Where(item =>
-                 search.Length == 0 ||
-                 item.DisplayName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                 item.Path.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                 item.Guid.ToString("X").Contains(search, StringComparison.OrdinalIgnoreCase))
+        var captured = _capturedItemTemplates.Select(item => new IconCatalogEntry { Template = item });
+        var capturedKeys = _capturedItemTemplates
+            .Select(item => item.Path)
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var local = _localGameItems
+            .Where(item => !capturedKeys.Contains(item.Key))
+            .Select(item => new IconCatalogEntry { LocalItem = item });
+
+        var visibleItems = captured.Concat(local)
+            .Where(item => search.Length == 0 || item.SearchText.Contains(search, StringComparison.OrdinalIgnoreCase))
             .OrderBy(item => GetCategoryOrder(item.Category))
+            .ThenByDescending(item => item.CanGenerate)
             .ThenBy(item => item.DisplayName, StringComparer.CurrentCultureIgnoreCase)
             .ToArray();
 
@@ -1071,9 +1145,11 @@ public partial class MainWindow : Window
             IconCatalogList.Items.Add(item);
         }
 
-        if (selectedGuid is { } guid)
+        IconCatalogSummaryText.Text = $"{visibleItems.Length} 个 · 本地候选 {_localGameItems.Count} · 可生成 {_capturedItemTemplates.Count}";
+
+        if (!string.IsNullOrWhiteSpace(selectedName))
         {
-            IconCatalogList.SelectedItem = visibleItems.FirstOrDefault(item => item.Guid == guid);
+            IconCatalogList.SelectedItem = visibleItems.FirstOrDefault(item => item.DisplayName == selectedName);
         }
     }
 
@@ -1220,7 +1296,14 @@ public partial class MainWindow : Window
 
     private void OnIconCatalogSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (IconCatalogList.SelectedItem is CapturedItemTemplate item)
+        if (IconCatalogList.SelectedItem is not IconCatalogEntry entry)
+        {
+            IconCatalogCreateButton.IsEnabled = false;
+            return;
+        }
+
+        IconCatalogCreateButton.IsEnabled = entry.CanGenerate;
+        if (entry.Template is { } item)
         {
             CapturedItemCatalogList.SelectedItem = item;
             CapturedItemNameBox.Text = item.CustomName;
@@ -1229,9 +1312,9 @@ public partial class MainWindow : Window
 
     private void OnCreateFromIconCatalog(object sender, RoutedEventArgs e)
     {
-        if (IconCatalogList.SelectedItem is not CapturedItemTemplate item)
+        if (IconCatalogList.SelectedItem is not IconCatalogEntry { Template: { } item })
         {
-            SetStatus("请先在图标物品库中选择一项。", false);
+            SetStatus("这个本地扫描项还没有解析出可生成 GUID。请先选择已捕获模板，或等资源 GUID 解析接入。", false);
             return;
         }
 
