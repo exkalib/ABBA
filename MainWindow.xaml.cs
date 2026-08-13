@@ -394,10 +394,7 @@ public partial class MainWindow : Window
                 ? "断开连接"
                 : "连接游戏";
         ConnectionOverlay.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
-        OperationSurface.IsEnabled = !busy &&
-                                     _session is { IsAttached: true } &&
-                                     _itemQuantitySite.HasValue &&
-                                     _itemSelectionSite.HasValue;
+        UpdateConnectedFeatureAvailability(!busy);
         if (busy)
         {
             ConnectionText.Text = "连接中";
@@ -1045,6 +1042,20 @@ public partial class MainWindow : Window
             _selectedIconCatalogCategory = category.Name;
             RefreshIconCatalogList();
         }
+    }
+
+    private void UpdateConnectedFeatureAvailability(bool allowInteraction)
+    {
+        var connected = allowInteraction &&
+                        _session is { IsAttached: true } &&
+                        _itemQuantitySite.HasValue &&
+                        _itemSelectionSite.HasValue;
+
+        GeneralTab.IsEnabled = connected;
+        ItemEditTab.IsEnabled = connected;
+        CapturedCatalogTab.IsEnabled = connected;
+        IconCatalogTab.IsEnabled = allowInteraction;
+        ScanLocalItemsButton.IsEnabled = allowInteraction;
     }
 
     private async void OnScanLocalItems(object sender, RoutedEventArgs e)
@@ -2062,7 +2073,7 @@ public partial class MainWindow : Window
         _itemSelectionSite = null;
         _session?.Dispose();
         _session = null;
-        OperationSurface.IsEnabled = false;
+        UpdateConnectedFeatureAvailability(true);
         ConnectionText.Text = "未连接";
         ConnectionText.Foreground = (Brush)FindResource("WarningBrush");
         ConnectionIndicator.Fill = (Brush)FindResource("WarningBrush");

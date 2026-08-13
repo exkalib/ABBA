@@ -128,7 +128,7 @@
             </StackPanel>
           </Grid>
         </Border>
-        <Grid x:Name="OperationSurface" Grid.Column="1" IsEnabled="False" Visibility="Collapsed" Margin="24,10,24,12">
+        <Grid x:Name="OperationSurface" Grid.Column="1" Visibility="Collapsed" Margin="24,10,24,12">
           <Grid.Style>
             <Style TargetType="Grid">
               <Setter Property="Opacity" Value="1" />
@@ -139,7 +139,7 @@
             <Grid x:Name="OverviewView" Visibility="Collapsed" />
 
             <TabControl SelectedIndex="0">
-              <TabItem Header="常规功能">
+              <TabItem x:Name="GeneralTab" Header="常规功能" IsEnabled="False">
                 <StackPanel Margin="0,2,0,0" VerticalAlignment="Top">
                   <Border Style="{StaticResource Card}" Padding="22,18">
                     <Grid>
@@ -180,7 +180,7 @@
                   </Border>
                 </StackPanel>
               </TabItem>
-              <TabItem Header="物品修改">
+              <TabItem x:Name="ItemEditTab" Header="物品修改" IsEnabled="False">
                 <Grid Margin="0,2,0,0" VerticalAlignment="Top">
                   <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
                   <Border Style="{StaticResource Card}" Padding="22,17" Margin="0,0,0,12">
@@ -239,7 +239,7 @@
                 </Grid>
               </TabItem>
 
-              <TabItem Header="物品库">
+              <TabItem x:Name="CapturedCatalogTab" Header="物品库" IsEnabled="False">
                 <Grid x:Name="EquipmentView" Margin="0,2,0,0">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="1.55*" /><ColumnDefinition Width="0.85*" /></Grid.ColumnDefinitions>
 
@@ -319,7 +319,7 @@
                 </Grid>
               </TabItem>
 
-              <TabItem Header="图标物品库">
+              <TabItem x:Name="IconCatalogTab" Header="图标物品库">
                 <Grid Margin="0,2,0,0">
                   <Grid.ColumnDefinitions><ColumnDefinition Width="1.45*" /><ColumnDefinition Width="0.9*" /></Grid.ColumnDefinitions>
 
