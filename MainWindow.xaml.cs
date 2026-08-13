@@ -1179,7 +1179,7 @@ public partial class MainWindow : Window
             IconCatalogList.Items.Add(item);
         }
 
-        IconCatalogSummaryText.Text = $"{visibleItems.Length} 个 · 本地候选 {_localGameItems.Count} · 可生成 {_capturedItemTemplates.Count}";
+        IconCatalogSummaryText.Text = $"{visibleItems.Length} 个 · 名称 {_localGameItems.Count} · 图标待解析 · 可生成 {_capturedItemTemplates.Count}";
 
         if (!string.IsNullOrWhiteSpace(selectedName))
         {

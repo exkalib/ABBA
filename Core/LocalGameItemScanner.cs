@@ -10,11 +10,14 @@ internal sealed class LocalGameItem
     public required string Name { get; init; }
     public required string Category { get; init; }
     public required string Source { get; init; }
-    public string IconPath { get; init; } = "Assets/riftctrl-icon.png";
-    public string Description { get; init; } = "从当前游戏资源包实时扫描得到。图标与完整描述解析接入中。";
+    public string IconPath { get; init; } = string.Empty;
+    public string IconResourceName { get; init; } = string.Empty;
+    public string Description { get; init; } = "已从当前游戏资源包解析到物品名称；图标、中文描述与生成 GUID 还需要继续解析 Addressables/Unity 资源。";
     public int Rarity { get; init; }
     public int ItemType { get; init; }
-    public string Metadata => $"{Category}  ·  本地候选  ·  {Key}";
+    public string Metadata => string.IsNullOrWhiteSpace(IconResourceName)
+        ? $"{Category}  ·  本地候选  ·  {Key}"
+        : $"{Category}  ·  图标资源 {IconResourceName}  ·  {Key}";
     public string DisplayName => Name;
 }
 
@@ -35,13 +38,14 @@ internal static partial class LocalGameItemScanner
             return Array.Empty<LocalGameItem>();
         }
 
+        var iconResources = ScanIconResources(installPath);
         var found = new Dictionary<string, LocalGameItem>(StringComparer.OrdinalIgnoreCase);
         foreach (var bundle in Directory.EnumerateFiles(dataPath, "*.bundle")
                      .Where(path => ItemBundleHints.Any(hint => Path.GetFileName(path).Contains(hint, StringComparison.OrdinalIgnoreCase))))
         {
             foreach (var token in ExtractAsciiTokens(bundle))
             {
-                if (!TryCreateItem(token, bundle, out var item))
+                if (!TryCreateItem(token, bundle, iconResources, out var item))
                 {
                     continue;
                 }
@@ -97,7 +101,32 @@ internal static partial class LocalGameItemScanner
         }
     }
 
-    private static bool TryCreateItem(string token, string source, out LocalGameItem item)
+    private static IReadOnlyDictionary<string, string> ScanIconResources(string installPath)
+    {
+        var catalogPath = Path.Combine(installPath, "NoRestForTheWicked_Data", "StreamingAssets", "aa", "catalog.bin");
+        if (!File.Exists(catalogPath))
+        {
+            return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        var icons = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var token in ExtractAsciiTokens(catalogPath))
+        {
+            foreach (Match match in IconResourceRegex().Matches(token))
+            {
+                var resourceName = match.Value;
+                var normalizedName = NormalizeName(Path.GetFileNameWithoutExtension(resourceName));
+                if (normalizedName.Length > 0)
+                {
+                    icons.TryAdd(normalizedName, resourceName);
+                }
+            }
+        }
+
+        return icons;
+    }
+
+    private static bool TryCreateItem(string token, string source, IReadOnlyDictionary<string, string> iconResources, out LocalGameItem item)
     {
         item = default!;
         var match = ItemLocalizationKeyRegex().Match(token);
@@ -112,32 +141,44 @@ internal static partial class LocalGameItemScanner
             return false;
         }
 
+        var rawName = GetRawItemName(key);
         var category = Categorize(key);
+        iconResources.TryGetValue(NormalizeName(rawName), out var iconResourceName);
         item = new LocalGameItem
         {
             Key = key,
-            Name = ToDisplayName(key),
+            Name = ToDisplayName(rawName),
             Category = category,
             Source = Path.GetFileName(source),
+            IconResourceName = iconResourceName ?? string.Empty,
             ItemType = GetCategoryOrder(category),
             Rarity = 0,
-            Description = $"{key}.Description · 来源 {Path.GetFileName(source)}"
+            Description = string.IsNullOrWhiteSpace(iconResourceName)
+                ? $"{key}.Description · 来源 {Path.GetFileName(source)}"
+                : $"{key}.Description · 图标资源 {iconResourceName} · 来源 {Path.GetFileName(source)}"
         };
         return true;
     }
 
-    private static string ToDisplayName(string key)
+    private static string GetRawItemName(string key)
     {
         var parts = key.Split('.', StringSplitOptions.RemoveEmptyEntries);
-        var name = parts.LastOrDefault(part =>
+        return parts.LastOrDefault(part =>
             !part.Equals("Name", StringComparison.OrdinalIgnoreCase) &&
             !part.Equals("Title", StringComparison.OrdinalIgnoreCase)) ?? key;
+    }
+
+    private static string ToDisplayName(string name)
+    {
         name = NameBoundaryRegex().Replace(name, " $1");
         return string.Join(' ', name.Split(' ', StringSplitOptions.RemoveEmptyEntries)
             .Select(part => part.Length <= 1
                 ? part.ToUpperInvariant()
                 : char.ToUpperInvariant(part[0]) + part[1..]));
     }
+
+    private static string NormalizeName(string value) =>
+        new(value.Where(char.IsLetterOrDigit).Select(char.ToLowerInvariant).ToArray());
 
     private static string Categorize(string key)
     {
@@ -199,4 +240,7 @@ internal static partial class LocalGameItemScanner
 
     [GeneratedRegex("(?<!^)([A-Z])")]
     private static partial Regex NameBoundaryRegex();
+
+    [GeneratedRegex(@"(?:uiIconItem[A-Za-z0-9_-]+|icon[A-Za-z0-9_-]+|[a-z][A-Za-z0-9_-]*)\.png", RegexOptions.IgnoreCase)]
+    private static partial Regex IconResourceRegex();
 }
