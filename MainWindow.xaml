@@ -445,7 +445,7 @@
 
                   <Border Grid.Column="1" Style="{StaticResource Card}" Margin="7,0,0,0" Padding="18,16">
                     <Grid>
-                      <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                      <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
                       <StackPanel>
                         <Border Width="72" Height="72" CornerRadius="12" Background="#171C28" BorderBrush="#333B52" BorderThickness="1" HorizontalAlignment="Left" ClipToBounds="True">
                           <Grid>
@@ -468,18 +468,9 @@
                         <TextBlock Text="{Binding ElementName=IconCatalogList, Path=SelectedItem.Category}" Foreground="#BDAEFF" FontSize="12" FontWeight="SemiBold" Margin="0,6,0,0" />
                       </StackPanel>
 
-                      <StackPanel Grid.Row="1" Margin="0,16,0,0">
-                        <UniformGrid Columns="2">
-                          <Border Background="#10141D" CornerRadius="8" Padding="10,8" Margin="0,0,4,0"><StackPanel><TextBlock Text="类型" Foreground="{StaticResource MutedBrush}" FontSize="9"/><TextBlock Text="{Binding ElementName=IconCatalogList, Path=SelectedItem.TypeText}" FontSize="11" FontWeight="SemiBold" Margin="0,3,0,0"/></StackPanel></Border>
-                          <Border Background="#10141D" CornerRadius="8" Padding="10,8" Margin="4,0,0,0"><StackPanel><TextBlock Text="入包方式" Foreground="{StaticResource MutedBrush}" FontSize="9"/><TextBlock Text="{Binding ElementName=IconCatalogList, Path=SelectedItem.StackText}" FontSize="11" FontWeight="SemiBold" Margin="0,3,0,0"/></StackPanel></Border>
-                        </UniformGrid>
-                        <TextBlock Text="{Binding ElementName=IconCatalogList, Path=SelectedItem.SlotEstimate}" Foreground="#BDAEFF" FontSize="11" FontWeight="SemiBold" Margin="0,10,0,0" />
-                        <TextBlock Text="{Binding ElementName=IconCatalogList, Path=SelectedItem.Metadata}" FontFamily="Consolas" FontSize="9.5" Foreground="#717B8C" Margin="0,10,0,0" TextWrapping="Wrap" />
-                      </StackPanel>
-
-                      <StackPanel Grid.Row="2" Margin="0,14,0,0">
-                        <Border x:Name="EquipmentCreatePanel" Background="#10141D" CornerRadius="9" Padding="12,10"><StackPanel><TextBlock Text="装备生成" FontWeight="SemiBold"/><TextBlock Text="生成 1 件并占用 1 个背包格" Foreground="{StaticResource MutedBrush}" FontSize="10" Margin="0,3,0,0"/></StackPanel></Border>
-                        <Border x:Name="StackCreatePanel" Background="#10141D" CornerRadius="9" Padding="12,10" Visibility="Collapsed"><StackPanel><TextBlock x:Name="IconCatalogCreateCountLabel" Text="堆叠数量" Foreground="{StaticResource MutedBrush}" FontSize="10" /><TextBox x:Name="IconCatalogCreateCountBox" Height="36" Padding="10,5" Text="1" Margin="0,6,0,0" ToolTip="一次创建，并由游戏合并已有堆栈"/><TextBlock Text="有同类物品时合并，没有时占用 1 格" Foreground="#717B8C" FontSize="9.5" Margin="0,5,0,0"/></StackPanel></Border>
+                      <StackPanel Grid.Row="1" VerticalAlignment="Bottom" Margin="0,14,0,0">
+                        <Border x:Name="EquipmentCreatePanel" Background="#10141D" CornerRadius="8" Padding="11,8"><TextBlock Text="固定生成 1 件" Foreground="{StaticResource MutedBrush}" FontSize="10"/></Border>
+                        <Border x:Name="StackCreatePanel" Background="#10141D" CornerRadius="8" Padding="11,8" Visibility="Collapsed"><StackPanel><TextBlock x:Name="IconCatalogCreateCountLabel" Text="数量" Foreground="{StaticResource MutedBrush}" FontSize="10" /><TextBox x:Name="IconCatalogCreateCountBox" Height="36" Padding="10,5" Text="1" Margin="0,5,0,0" ToolTip="一次创建，并由游戏合并已有堆栈"/><TextBlock Text="自动叠加到已有物品；没有时新占一格" Foreground="#717B8C" FontSize="9.5" Margin="0,4,0,0"/></StackPanel></Border>
                         <Button x:Name="IconCatalogCreateButton" Style="{StaticResource ActionButton}" Click="OnCreateFromIconCatalog" HorizontalAlignment="Stretch" Margin="0,10,0,0"><StackPanel Orientation="Horizontal" HorizontalAlignment="Center"><Ellipse x:Name="IconCatalogCreateSpinner" Width="12" Height="12" Stroke="White" StrokeThickness="2" StrokeDashArray="2,2" Visibility="Collapsed" Margin="0,0,7,0" RenderTransformOrigin="0.5,0.5"><Ellipse.RenderTransform><RotateTransform/></Ellipse.RenderTransform><Ellipse.Triggers><EventTrigger RoutedEvent="Loaded"><BeginStoryboard><Storyboard RepeatBehavior="Forever"><DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)" From="0" To="360" Duration="0:0:0.8"/></Storyboard></BeginStoryboard></EventTrigger></Ellipse.Triggers></Ellipse><TextBlock x:Name="IconCatalogCreateButtonText" Text="生成物品" Foreground="White"/></StackPanel></Button>
                         <Border x:Name="IconCatalogCreateResult" Background="#10141D" CornerRadius="7" Padding="10,7" Margin="0,8,0,0" Visibility="Collapsed"><TextBlock x:Name="IconCatalogCreateResultText" FontSize="10" TextWrapping="Wrap"/></Border>
                       </StackPanel>

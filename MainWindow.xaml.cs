@@ -204,9 +204,6 @@ public partial class MainWindow : Window
         public bool IsStackable => IsStackableCategory(Category);
         public string AvailabilityText => CanGenerate ? "可生成" : "待解析 GUID";
         public string CategoryIcon => GetCategoryIcon(Category);
-        public string TypeText => IsStackable ? "可堆叠物品" : "独立装备";
-        public string StackText => IsStackable ? "优先合并已有堆栈" : "每件占用一个格子";
-        public string SlotEstimate => IsStackable ? "预计占用 0–1 格" : "预计占用 1 格";
         public string MatchPrefix { get; set; } = string.Empty;
         public string MatchText { get; set; } = string.Empty;
         public string MatchSuffix { get; set; } = string.Empty;
