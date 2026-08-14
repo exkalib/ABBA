@@ -16,11 +16,14 @@ internal sealed class InstalledGame
     public required string AppId { get; init; }
     public required string InstallPath { get; init; }
     public string? IconPath { get; init; }
+    public string? CoverPath { get; init; }
     public bool IsInstalled { get; init; } = true;
     public bool IsSupported => AppId == "1371980" ||
                                Name.Contains("No Rest for the Wicked", StringComparison.OrdinalIgnoreCase);
     public string SupportLabel => IsSupported ? "已支持" : "已发现";
-    public string CoverArtPath => Platform == "Steam" && long.TryParse(AppId, out _)
+    public string CoverArtPath => !string.IsNullOrWhiteSpace(CoverPath)
+        ? CoverPath
+        : Platform == "Steam" && long.TryParse(AppId, out _)
         ? $"https://cdn.akamai.steamstatic.com/steam/apps/{AppId}/library_600x900.jpg"
         : IconPath ?? "Assets/riftctrl-icon.png";
     public string DisplayName => $"{Name}  ·  {Platform}";
@@ -126,7 +129,8 @@ internal static partial class InstalledGameScanner
                         Platform = "Steam",
                         AppId = appId,
                         InstallPath = installPath,
-                        IconPath = FindSteamIcon(root, appId, installPath) ?? "Assets/riftctrl-icon.png"
+                        IconPath = FindSteamIcon(root, appId, installPath) ?? "Assets/riftctrl-icon.png",
+                        CoverPath = FindSteamCover(root, appId)
                     });
                 }
                 catch (IOException) { }
@@ -217,6 +221,20 @@ internal static partial class InstalledGameScanner
 
         var cachedIcon = candidates.FirstOrDefault(File.Exists);
         return cachedIcon ?? ExtractExecutableIcon(appId, installPath);
+    }
+
+    private static string? FindSteamCover(string steamRoot, string appId)
+    {
+        var cacheRoot = Path.Combine(steamRoot, "appcache", "librarycache");
+        var candidates = new[]
+        {
+            Path.Combine(cacheRoot, appId, "library_600x900.jpg"),
+            Path.Combine(cacheRoot, appId, "library_600x900.png"),
+            Path.Combine(cacheRoot, $"{appId}_library_600x900.jpg"),
+            Path.Combine(cacheRoot, $"{appId}_library_600x900.png")
+        };
+
+        return candidates.FirstOrDefault(File.Exists);
     }
 
     private static string? ExtractExecutableIcon(string appId, string installPath)
