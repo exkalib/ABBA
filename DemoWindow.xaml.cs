@@ -11,9 +11,9 @@ public partial class DemoWindow : Window
         InitializeComponent();
         GamesList.ItemsSource = new ObservableCollection<DemoGame>
         {
-            new("艾尔登法环", "42 项功能", "Assets/demo-cover-01.png"), new("赛博朋克 2077", "35 项功能", "Assets/demo-cover-02.png"), new("荒野大镖客 2", "28 项功能", "Assets/demo-cover-03.png"), new("战神", "30 项功能", "Assets/demo-cover-04.png"),
-            new("地平线：零之曙光", "25 项功能", "Assets/demo-cover-05.png"), new("巫师 3：狂猎", "40 项功能", "Assets/demo-cover-06.png"), new("GTA 5", "60 项功能", "Assets/demo-cover-07.png"), new("只狼：影逝二度", "32 项功能", "Assets/demo-cover-08.png"),
-            new("博德之门 3", "38 项功能", "Assets/demo-cover-09.png"), new("星空", "31 项功能", "Assets/demo-cover-10.png"), new("刺客信条：英灵殿", "27 项功能", "Assets/demo-cover-11.png"), new("极限竞速：地平线 5", "24 项功能", "Assets/demo-cover-12.png")
+            new("艾尔登法环", "42 项功能", "Assets/live-cover-01.png"), new("赛博朋克 2077", "35 项功能", "Assets/live-cover-02.png"), new("荒野大镖客 2", "28 项功能", "Assets/live-cover-03.png"), new("战神", "30 项功能", "Assets/live-cover-04.png"),
+            new("地平线：零之曙光", "25 项功能", "Assets/live-cover-05.png"), new("巫师 3：狂猎", "40 项功能", "Assets/live-cover-06.png"), new("GTA 5", "60 项功能", "Assets/live-cover-07.png"), new("只狼：影逝二度", "32 项功能", "Assets/live-cover-08.png"),
+            new("博德之门 3", "38 项功能", "Assets/live-cover-09.png"), new("星空", "31 项功能", "Assets/live-cover-10.png"), new("刺客信条：英灵殿", "27 项功能", "Assets/live-cover-11.png"), new("极限竞速：地平线 5", "24 项功能", "Assets/live-cover-12.png")
         };
     }
 

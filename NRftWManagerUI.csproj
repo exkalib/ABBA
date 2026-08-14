@@ -37,6 +37,8 @@
     <Resource Include="Assets\ui-button-secondary-shell.png" />
     <Resource Include="Assets\ui-input-shell.png" />
     <Resource Include="Assets\demo-cover-*.png" />
+    <Resource Include="Assets\live-cover-*.png" />
+    <Resource Include="Assets\menu-*.png" />
     <Resource Include="Assets\replica-*.png" />
     <Resource Include="Assets\riftctrl.ico" />
   </ItemGroup>
