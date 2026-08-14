@@ -21,6 +21,7 @@
     <Resource Include="Assets\ui-decoration-radar.png" />
     <Resource Include="Assets\ui-sidebar-radar.png" />
     <Resource Include="Assets\ui-riftctrl-wordmark.png" />
+    <Resource Include="Assets\ui-nav-*.png" />
     <Resource Include="Assets\ui-frame-panel-wide.png" />
     <Resource Include="Assets\ui-frame-panel-tall.png" />
     <Resource Include="Assets\ui-frame-card.png" />
