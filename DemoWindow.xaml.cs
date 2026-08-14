@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
 
 namespace NRftWManagerUI;
 
@@ -42,6 +44,19 @@ public partial class DemoWindow : Window
             case "max": WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized; break;
             case "close": Close(); break;
         }
+    }
+
+    private void OnTitleBarMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        for (var current = e.OriginalSource as DependencyObject; current is not null; current = VisualTreeHelper.GetParent(current))
+        {
+            if (current is Button or TextBox)
+                return;
+            if (ReferenceEquals(current, sender))
+                break;
+        }
+
+        DragMove();
     }
 }
 
