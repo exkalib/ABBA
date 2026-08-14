@@ -303,7 +303,7 @@
       <Setter Property="Cursor" Value="Arrow" />
     </Style>
 
-    <Style x:Key="HeaderIconButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+    <Style x:Key="HeaderIconButton" TargetType="Button">
       <Setter Property="Width" Value="40" />
       <Setter Property="Height" Value="40" />
       <Setter Property="Padding" Value="0" />
@@ -312,19 +312,19 @@
       <Setter Property="Foreground" Value="#B9D0F2" />
     </Style>
 
-    <Style x:Key="HeroButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+    <Style x:Key="HeroButton" TargetType="Button">
       <Setter Property="Padding" Value="23,10" />
       <Setter Property="MinWidth" Value="170" />
       <Setter Property="BorderBrush" Value="#B05AFF" />
     </Style>
 
-    <Style x:Key="LibraryFilterButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+    <Style x:Key="LibraryFilterButton" TargetType="Button">
       <Setter Property="Padding" Value="11,6" />
       <Setter Property="Margin" Value="7,0,0,0" />
       <Setter Property="FontSize" Value="11" />
     </Style>
 
-    <Style x:Key="GameCardButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+    <Style x:Key="GameCardButton" TargetType="Button">
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="BorderBrush" Value="Transparent" />
       <Setter Property="Template">
