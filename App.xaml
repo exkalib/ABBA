@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:NRftWManagerUI"
              xmlns:system="clr-namespace:System.Windows;assembly=PresentationFramework"
-             StartupUri="MainWindow.xaml">
+             StartupUri="DemoWindow.xaml">
   <Application.Resources>
     <System:Double xmlns:System="clr-namespace:System;assembly=System.Runtime" x:Key="{x:Static system:SystemParameters.VerticalScrollBarWidthKey}">7</System:Double>
     <System:Double xmlns:System="clr-namespace:System;assembly=System.Runtime" x:Key="{x:Static system:SystemParameters.HorizontalScrollBarHeightKey}">7</System:Double>

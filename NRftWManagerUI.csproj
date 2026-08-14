@@ -12,12 +12,15 @@
   </PropertyGroup>
   <ItemGroup>
     <Resource Include="Assets\riftctrl-icon.png" />
+    <Resource Include="Assets\riftctrl-app-icon.png" />
     <Resource Include="Assets\riftctrl-hero.png" />
     <Resource Include="Assets\riftctrl-background-portal.png" />
     <Resource Include="Assets\riftctrl-library-page.png" />
     <Resource Include="Assets\ui-asset-atlas.png" />
     <Resource Include="Assets\ui-decoration-lines.png" />
     <Resource Include="Assets\ui-decoration-radar.png" />
+    <Resource Include="Assets\ui-sidebar-radar.png" />
+    <Resource Include="Assets\ui-riftctrl-wordmark.png" />
     <Resource Include="Assets\ui-frame-panel-wide.png" />
     <Resource Include="Assets\ui-frame-panel-tall.png" />
     <Resource Include="Assets\ui-frame-card.png" />
@@ -32,6 +35,7 @@
     <Resource Include="Assets\ui-button-primary-shell.png" />
     <Resource Include="Assets\ui-button-secondary-shell.png" />
     <Resource Include="Assets\ui-input-shell.png" />
+    <Resource Include="Assets\demo-cover-*.png" />
     <Resource Include="Assets\riftctrl.ico" />
   </ItemGroup>
   <ItemGroup>
