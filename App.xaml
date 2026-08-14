@@ -304,24 +304,81 @@
     </Style>
 
     <Style x:Key="HeaderIconButton" TargetType="Button">
-      <Setter Property="Width" Value="40" />
-      <Setter Property="Height" Value="40" />
+      <Setter Property="Width" Value="34" />
+      <Setter Property="Height" Value="34" />
       <Setter Property="Padding" Value="0" />
-      <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
-      <Setter Property="FontSize" Value="14" />
       <Setter Property="Foreground" Value="#B9D0F2" />
+      <Setter Property="Background" Value="#091526" />
+      <Setter Property="BorderBrush" Value="#245381" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="IconShell" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="IconShell" Property="BorderBrush" Value="#A35BFF" /><Setter TargetName="IconShell" Property="Background" Value="#16113A" /></Trigger>
+              <Trigger Property="IsPressed" Value="True"><Setter TargetName="IconShell" Property="Background" Value="#24184A" /></Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4" /></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
     </Style>
 
     <Style x:Key="HeroButton" TargetType="Button">
-      <Setter Property="Padding" Value="23,10" />
-      <Setter Property="MinWidth" Value="170" />
+      <Setter Property="Padding" Value="18,8" />
+      <Setter Property="MinWidth" Value="150" />
       <Setter Property="BorderBrush" Value="#B05AFF" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Background" Value="#30124F" />
+      <Setter Property="Foreground" Value="#F6F2FF" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Grid>
+              <Border x:Name="HeroShell" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" />
+              <Border BorderBrush="#783DE0" BorderThickness="1" Margin="3" IsHitTestVisible="False" />
+              <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center" TextElement.Foreground="{TemplateBinding Foreground}" />
+              <Canvas IsHitTestVisible="False" HorizontalAlignment="Right"><Path Data="M0,0 L9,9 L9,20" Stroke="#C66DFF" StrokeThickness="1" /></Canvas>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="HeroShell" Property="Background" Value="#54218C" /><Setter TargetName="HeroShell" Property="Effect"><Setter.Value><DropShadowEffect Color="#883CFF" BlurRadius="16" ShadowDepth="0" Opacity="0.7" /></Setter.Value></Setter></Trigger>
+              <Trigger Property="IsPressed" Value="True"><Setter TargetName="HeroShell" Property="Background" Value="#271045" /></Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter TargetName="HeroShell" Property="Background" Value="#18202D" /><Setter Property="Foreground" Value="#748095" /><Setter Property="BorderBrush" Value="#34445B" /></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
     </Style>
 
     <Style x:Key="LibraryFilterButton" TargetType="Button">
       <Setter Property="Padding" Value="11,6" />
       <Setter Property="Margin" Value="7,0,0,0" />
       <Setter Property="FontSize" Value="11" />
+      <Setter Property="Background" Value="#0A1728" />
+      <Setter Property="Foreground" Value="#C4D6EE" />
+      <Setter Property="BorderBrush" Value="#244B78" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="FilterShell" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" TextElement.Foreground="{TemplateBinding Foreground}" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="FilterShell" Property="BorderBrush" Value="#9F5AFF" /></Trigger>
+              <Trigger Property="IsPressed" Value="True"><Setter TargetName="FilterShell" Property="Background" Value="#35146C" /></Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.45" /></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
     </Style>
 
     <Style x:Key="GameCardButton" TargetType="Button">
@@ -477,8 +534,8 @@
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="BorderBrush" Value="Transparent" />
       <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="Padding" Value="14,12" />
-      <Setter Property="Margin" Value="0,0,0,7" />
+      <Setter Property="Padding" Value="11,9" />
+      <Setter Property="Margin" Value="0,0,0,5" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="GroupName" Value="MainNavigation" />
       <Setter Property="Template">
