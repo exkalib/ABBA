@@ -20,6 +20,14 @@
     <Resource Include="Assets\ui-frame-panel-wide.png" />
     <Resource Include="Assets\ui-frame-panel-tall.png" />
     <Resource Include="Assets\ui-frame-card.png" />
+    <Resource Include="Assets\ui-frame-tl.png" />
+    <Resource Include="Assets\ui-frame-t.png" />
+    <Resource Include="Assets\ui-frame-tr.png" />
+    <Resource Include="Assets\ui-frame-l.png" />
+    <Resource Include="Assets\ui-frame-r.png" />
+    <Resource Include="Assets\ui-frame-bl.png" />
+    <Resource Include="Assets\ui-frame-b.png" />
+    <Resource Include="Assets\ui-frame-br.png" />
     <Resource Include="Assets\ui-button-primary-shell.png" />
     <Resource Include="Assets\ui-button-secondary-shell.png" />
     <Resource Include="Assets\ui-input-shell.png" />

@@ -271,23 +271,35 @@
               <Border x:Name="Surface" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" />
               <Border Margin="6" BorderBrush="#214F8E3D" BorderThickness="1" IsHitTestVisible="False" />
               <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Margin="{TemplateBinding Padding}" />
-              <Canvas IsHitTestVisible="False">
+              <Grid IsHitTestVisible="False">
+                <Grid.RowDefinitions><RowDefinition Height="18" /><RowDefinition Height="*" /><RowDefinition Height="18" /></Grid.RowDefinitions>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="18" /><ColumnDefinition Width="*" /><ColumnDefinition Width="18" /></Grid.ColumnDefinitions>
+                <Image Source="Assets/ui-frame-tl.png" Grid.Row="0" Grid.Column="0" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                <Image Source="Assets/ui-frame-t.png" Grid.Row="0" Grid.Column="1" Stretch="Fill" VerticalAlignment="Top" Height="4" />
+                <Image Source="Assets/ui-frame-tr.png" Grid.Row="0" Grid.Column="2" Stretch="None" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                <Image Source="Assets/ui-frame-l.png" Grid.Row="1" Grid.Column="0" Stretch="Fill" HorizontalAlignment="Left" Width="4" />
+                <Image Source="Assets/ui-frame-r.png" Grid.Row="1" Grid.Column="2" Stretch="Fill" HorizontalAlignment="Right" Width="4" />
+                <Image Source="Assets/ui-frame-bl.png" Grid.Row="2" Grid.Column="0" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+                <Image Source="Assets/ui-frame-b.png" Grid.Row="2" Grid.Column="1" Stretch="Fill" VerticalAlignment="Bottom" Height="4" />
+                <Image Source="Assets/ui-frame-br.png" Grid.Row="2" Grid.Column="2" Stretch="None" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+              </Grid>
+              <Canvas IsHitTestVisible="False" Visibility="Collapsed">
                 <Polygon Points="0,0 14,0 0,14" Fill="#020711" />
                 <Path Data="M0,14 L14,0 L36,0" Stroke="#54C7FF" StrokeThickness="1" />
                 <Path Data="M0,14 L14,0" Stroke="#B058FF" StrokeThickness="1.8" Opacity="0.62" />
                 <Path Data="M0,14 L0,36" Stroke="#54C7FF" StrokeThickness="1" />
               </Canvas>
-              <Canvas IsHitTestVisible="False" HorizontalAlignment="Right">
+              <Canvas IsHitTestVisible="False" HorizontalAlignment="Right" Visibility="Collapsed">
                 <Polygon Points="0,0 14,0 14,14" Fill="#020711" />
                 <Path Data="M0,0 L14,14 L14,36" Stroke="#54C7FF" StrokeThickness="1" />
                 <Path Data="M0,0 L14,14" Stroke="#B058FF" StrokeThickness="1.8" Opacity="0.62" />
               </Canvas>
-              <Canvas IsHitTestVisible="False" VerticalAlignment="Bottom">
+              <Canvas IsHitTestVisible="False" VerticalAlignment="Bottom" Visibility="Collapsed">
                 <Polygon Points="0,14 14,0 0,0" Fill="#020711" />
                 <Path Data="M0,0 L14,14 L36,14" Stroke="#54C7FF" StrokeThickness="1" />
                 <Path Data="M0,0 L14,14" Stroke="#B058FF" StrokeThickness="1.8" Opacity="0.62" />
               </Canvas>
-              <Canvas IsHitTestVisible="False" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+              <Canvas IsHitTestVisible="False" HorizontalAlignment="Right" VerticalAlignment="Bottom" Visibility="Collapsed">
                 <Polygon Points="14,14 0,14 14,0" Fill="#020711" />
                 <Path Data="M0,14 L14,0 L14,-22" Stroke="#54C7FF" StrokeThickness="1" />
                 <Path Data="M0,14 L14,0" Stroke="#B058FF" StrokeThickness="1.8" Opacity="0.62" />
@@ -408,8 +420,18 @@
             <Grid>
               <Border x:Name="CardHost" Background="#0A1322" BorderBrush="#24568F" BorderThickness="1" />
               <ContentPresenter />
-              <Canvas IsHitTestVisible="False"><Polygon Points="0,0 14,0 0,14" Fill="#020711" /><Path Data="M0,14 L14,0 L34,0" Stroke="#52D7FF" StrokeThickness="1" /></Canvas>
-              <Canvas IsHitTestVisible="False" HorizontalAlignment="Right" VerticalAlignment="Bottom"><Polygon Points="14,14 0,14 14,0" Fill="#020711" /><Path Data="M0,14 L14,0" Stroke="#9B53FF" StrokeThickness="1" /></Canvas>
+              <Grid IsHitTestVisible="False">
+                <Grid.RowDefinitions><RowDefinition Height="18" /><RowDefinition Height="*" /><RowDefinition Height="18" /></Grid.RowDefinitions>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="18" /><ColumnDefinition Width="*" /><ColumnDefinition Width="18" /></Grid.ColumnDefinitions>
+                <Image Source="Assets/ui-frame-tl.png" Grid.Row="0" Grid.Column="0" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                <Image Source="Assets/ui-frame-t.png" Grid.Row="0" Grid.Column="1" Stretch="Fill" VerticalAlignment="Top" Height="4" />
+                <Image Source="Assets/ui-frame-tr.png" Grid.Row="0" Grid.Column="2" Stretch="None" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                <Image Source="Assets/ui-frame-l.png" Grid.Row="1" Grid.Column="0" Stretch="Fill" HorizontalAlignment="Left" Width="4" />
+                <Image Source="Assets/ui-frame-r.png" Grid.Row="1" Grid.Column="2" Stretch="Fill" HorizontalAlignment="Right" Width="4" />
+                <Image Source="Assets/ui-frame-bl.png" Grid.Row="2" Grid.Column="0" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+                <Image Source="Assets/ui-frame-b.png" Grid.Row="2" Grid.Column="1" Stretch="Fill" VerticalAlignment="Bottom" Height="4" />
+                <Image Source="Assets/ui-frame-br.png" Grid.Row="2" Grid.Column="2" Stretch="None" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+              </Grid>
             </Grid>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="CardHost" Property="BorderBrush" Value="#A259FF" /><Setter TargetName="CardHost" Property="Effect"><Setter.Value><DropShadowEffect Color="#7430E8" BlurRadius="20" ShadowDepth="0" Opacity="0.52" /></Setter.Value></Setter></Trigger>
