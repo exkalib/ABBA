@@ -7,9 +7,9 @@
   <Border Background="{StaticResource SciFiGridBrush}" BorderBrush="#174379" BorderThickness="1" CornerRadius="8">
   <Grid>
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="200" />
+        <ColumnDefinition Width="202" />
         <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="312" />
+        <ColumnDefinition Width="318" />
       </Grid.ColumnDefinitions>
       <Grid.RowDefinitions>
         <RowDefinition Height="64" />
@@ -17,61 +17,73 @@
         <RowDefinition Height="*" />
         <RowDefinition Height="32" />
       </Grid.RowDefinitions>
+      <Image Grid.RowSpan="4" Grid.ColumnSpan="3" Source="Assets/riftctrl-background-portal.png" Stretch="UniformToFill" Opacity="0.34" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+        <Image.RenderTransform>
+          <ScaleTransform x:Name="PortalBackgroundScale" ScaleX="1.04" ScaleY="1.04" />
+        </Image.RenderTransform>
+        <Image.Triggers>
+          <EventTrigger RoutedEvent="Loaded">
+            <BeginStoryboard>
+              <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                <DoubleAnimation Storyboard.TargetName="PortalBackgroundScale" Storyboard.TargetProperty="ScaleX" To="1.11" Duration="0:0:18" />
+                <DoubleAnimation Storyboard.TargetName="PortalBackgroundScale" Storyboard.TargetProperty="ScaleY" To="1.11" Duration="0:0:18" />
+              </Storyboard>
+            </BeginStoryboard>
+          </EventTrigger>
+        </Image.Triggers>
+      </Image>
+      <Image Grid.RowSpan="4" Grid.Column="0" Source="Assets/ui-decoration-lines.png" Width="176" Height="156" Stretch="Fill" Opacity="0.18" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,90" IsHitTestVisible="False" />
       <Rectangle Grid.RowSpan="4" Grid.ColumnSpan="3" Fill="{StaticResource TechGridBrush}" IsHitTestVisible="False" />
 
       <Border Grid.RowSpan="4" Background="#EB040914" BorderBrush="#153A67" BorderThickness="0,0,1,0" CornerRadius="8,0,0,8">
         <Grid Margin="14,0">
-          <Grid.RowDefinitions><RowDefinition Height="72" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+          <Grid.RowDefinitions><RowDefinition Height="72" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /><RowDefinition Height="0" /></Grid.RowDefinitions>
           <StackPanel VerticalAlignment="Center" Margin="6,0,0,0">
             <StackPanel Orientation="Horizontal">
               <StackPanel VerticalAlignment="Center">
-                <TextBlock FontFamily="Bahnschrift, Segoe UI" FontSize="19" FontWeight="SemiBold"><Run Text="RIFT" /><Run Text="//" Foreground="#9B45FF" /><Run Text="CTRL" /></TextBlock>
+                <TextBlock FontFamily="Bahnschrift, Segoe UI" FontSize="28" FontWeight="SemiBold"><Run Text="RIFT" /><Run Text="//" Foreground="#9B45FF" /><Run Text="CTRL" /></TextBlock>
                 <TextBlock Text="YOUR GAMES. YOUR RULES." FontFamily="Consolas" FontSize="8" Foreground="#8BA1C2" Margin="0,3,0,0" />
               </StackPanel>
             </StackPanel>
           </StackPanel>
-          <StackPanel Grid.Row="1">
-            <TextBlock Text="CONTROL CENTER" Foreground="#5E789B" FontSize="9" FontWeight="SemiBold" Margin="11,0,0,8" />
+          <StackPanel Grid.Row="1" Margin="0,14,0,0">
             <RadioButton x:Name="LibraryNavButton" Style="{StaticResource SidebarNavigationButton}" Tag="library" Checked="OnGlobalNavigation" IsChecked="True">
-              <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8F1;" Style="{StaticResource SidebarGlyph}" /><StackPanel><TextBlock Text="游戏库" FontSize="14" FontWeight="SemiBold" /><TextBlock Text="本机已安装游戏" Style="{StaticResource SidebarCaption}" /></StackPanel></StackPanel>
+              <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8F1;" Style="{StaticResource SidebarGlyph}" /><StackPanel><TextBlock Text="游戏库" FontSize="14" FontWeight="SemiBold" /><TextBlock x:Name="LibraryNavCaptionText" Text="正在发现本机游戏" Style="{StaticResource SidebarCaption}" /></StackPanel></StackPanel>
             </RadioButton>
             <RadioButton x:Name="ModifierNavButton" Style="{StaticResource SidebarNavigationButton}" Tag="modifier" Checked="OnGlobalNavigation">
-              <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE713;" Style="{StaticResource SidebarGlyph}" /><StackPanel><TextBlock Text="修改器中心" FontSize="14" FontWeight="SemiBold" /><TextBlock Text="当前游戏功能" Style="{StaticResource SidebarCaption}" /></StackPanel></StackPanel>
+              <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE713;" Style="{StaticResource SidebarGlyph}" /><StackPanel><TextBlock Text="修改器中心" FontSize="14" FontWeight="SemiBold" /><TextBlock x:Name="ModifierNavCaptionText" Text="正在读取支持状态" Style="{StaticResource SidebarCaption}" /></StackPanel></StackPanel>
             </RadioButton>
             <Border Style="{StaticResource SidebarMutedEntry}"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8F2;" Style="{StaticResource SidebarGlyph}" /><StackPanel><TextBlock Text="配置方案" FontSize="14" /><TextBlock Text="我的配置方案" Style="{StaticResource SidebarCaption}" /></StackPanel></StackPanel></Border>
             <Border Style="{StaticResource SidebarMutedEntry}"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE765;" Style="{StaticResource SidebarGlyph}" /><StackPanel><TextBlock Text="热键管理" FontSize="14" /><TextBlock Text="全局热键设置" Style="{StaticResource SidebarCaption}" /></StackPanel></StackPanel></Border>
             <Border Style="{StaticResource SidebarMutedEntry}"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE895;" Style="{StaticResource SidebarGlyph}" /><StackPanel><TextBlock Text="扩展工具" FontSize="14" /><TextBlock Text="脚本与工具" Style="{StaticResource SidebarCaption}" /></StackPanel></StackPanel></Border>
             <Border Style="{StaticResource SidebarMutedEntry}"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE713;" Style="{StaticResource SidebarGlyph}" /><StackPanel><TextBlock Text="设置" FontSize="14" /><TextBlock Text="界面与其他" Style="{StaticResource SidebarCaption}" /></StackPanel></StackPanel></Border>
           </StackPanel>
-          <Grid Grid.Row="2" Width="170" Height="170" VerticalAlignment="Bottom" Margin="0,0,0,18" Opacity="0.8" IsHitTestVisible="False">
+          <StackPanel Grid.Row="2" VerticalAlignment="Top" Margin="14,36,14,0">
+          <Grid Width="154" Height="154" HorizontalAlignment="Center" Opacity="0.8" IsHitTestVisible="False">
             <Ellipse Stroke="#174E91" StrokeThickness="1" />
-            <Ellipse Width="124" Height="124" Stroke="#286ED1" StrokeThickness="1" StrokeDashArray="5,5" />
-            <Ellipse Width="78" Height="78" Stroke="#7B39FF" StrokeThickness="2" />
+            <Ellipse Width="112" Height="112" Stroke="#286ED1" StrokeThickness="1" StrokeDashArray="5,5" />
+            <Ellipse Width="72" Height="72" Stroke="#7B39FF" StrokeThickness="2" />
             <Ellipse Width="28" Height="28" Fill="#4123A6" Stroke="#35D9FF" StrokeThickness="2"><Ellipse.Effect><DropShadowEffect Color="#3F8CFF" BlurRadius="24" ShadowDepth="0" Opacity="0.95" /></Ellipse.Effect></Ellipse>
-            <Line X1="85" Y1="0" X2="85" Y2="170" Stroke="#1A4F88" StrokeThickness="1" />
-            <Line X1="0" Y1="85" X2="170" Y2="85" Stroke="#1A4F88" StrokeThickness="1" />
-            <Path Data="M85,18 L97,52 L85,45 L73,52 Z" Fill="#3BD8FF" Opacity="0.8" />
+            <Line X1="77" Y1="0" X2="77" Y2="154" Stroke="#1A4F88" StrokeThickness="1" />
+            <Line X1="0" Y1="77" X2="154" Y2="77" Stroke="#1A4F88" StrokeThickness="1" />
+            <Path Data="M77,15 L89,47 L77,40 L65,47 Z" Fill="#3BD8FF" Opacity="0.8" />
           </Grid>
-          <StackPanel Grid.Row="3" Margin="8,0,8,18">
             <Border Background="#071425" BorderBrush="#1B477A" BorderThickness="1" CornerRadius="5" Padding="13,11">
-              <StackPanel><TextBlock Text="RIFT CORE" Foreground="#46D6FF" FontSize="10" FontWeight="SemiBold" /><TextBlock Text="本地内存模式 · NO MOD" Foreground="#7187A5" FontSize="9" Margin="0,4,0,0" /></StackPanel>
+              <StackPanel><TextBlock Text="RIFT CORE" Foreground="#46D6FF" FontSize="10" FontWeight="SemiBold" /><TextBlock Text="v2.0.0" Foreground="#7187A5" FontSize="9" Margin="0,4,0,0" /></StackPanel>
             </Border>
-            <TextBlock Text="BUILD 1.45  ·  SECURE CORE" Foreground="#405A7A" FontFamily="Consolas" FontSize="8" HorizontalAlignment="Center" Margin="0,11,0,0" />
+            <Border Background="#071425" BorderBrush="#1B477A" BorderThickness="1" CornerRadius="5" Padding="12,10" Margin="0,12,0,0"><StackPanel Orientation="Horizontal"><Ellipse Width="8" Height="8" Fill="#47E49A" VerticalAlignment="Center" Margin="0,0,8,0" /><StackPanel><TextBlock Text="RIFT//CTRL PRO" FontSize="10" Foreground="#9DE7FF" /><TextBlock Text="永久授权" FontSize="9" Foreground="#48DFA0" Margin="0,2,0,0" /></StackPanel><TextBlock Text="◎" Foreground="#47E49A" Margin="30,4,0,0" /></StackPanel></Border><StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0"><TextBlock Text="◉" Foreground="#6287B8" FontSize="15" Margin="0,0,20,0" /><TextBlock Text="♙" Foreground="#6287B8" FontSize="15" Margin="0,0,20,0" /><TextBlock Text="◎" Foreground="#6287B8" FontSize="15" Margin="0,0,20,0" /><TextBlock Text="▣" Foreground="#6287B8" FontSize="15" /></StackPanel>
           </StackPanel>
-          <Border Grid.Row="4" Background="#071425" BorderBrush="#1B477A" BorderThickness="1" CornerRadius="5" Padding="12,10" Margin="8,0,8,20"><StackPanel Orientation="Horizontal"><Ellipse Width="8" Height="8" Fill="#47E49A" VerticalAlignment="Center" Margin="0,0,8,0" /><StackPanel><TextBlock Text="RIFT//CTRL PRO" FontSize="10" Foreground="#9DE7FF" /><TextBlock Text="本地授权" FontSize="9" Foreground="#48DFA0" Margin="0,2,0,0" /></StackPanel></StackPanel></Border>
         </Grid>
       </Border>
 
-      <Border Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="0" Padding="18,0,10,0" Background="#E9040914" BorderBrush="#153A67" BorderThickness="0,0,0,1" CornerRadius="0,8,0,0" MouseLeftButtonDown="OnTitleBarMouseDown">
+      <Border Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="0" Padding="34,0,10,0" Background="#E9040914" BorderBrush="#153A67" BorderThickness="0,0,0,1" CornerRadius="0,8,0,0" MouseLeftButtonDown="OnTitleBarMouseDown">
         <Grid>
           <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
           <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-            <Grid Width="315" Height="40">
-            <TextBox x:Name="LibrarySearchBox" Width="315" Height="40" Padding="38,6,12,6" TextChanged="OnLibrarySearchChanged" ToolTip="支持游戏名称和平台搜索">
-              <TextBox.Background><SolidColorBrush Color="#060D19" /></TextBox.Background>
-            </TextBox>
+            <Grid Width="232" Height="32">
+            <TextBox x:Name="LibrarySearchBox" Width="232" Height="32" Padding="31,4,10,4" TextChanged="OnLibrarySearchChanged" ToolTip="支持游戏名称和平台搜索" Background="{StaticResource AtlasInputShellBrush}" BorderBrush="Transparent" />
             <Path Data="M0,0 A6,6 0 1 1 0.1,0 M4.5,4.5 L9,9" Stroke="#7C98BF" StrokeThickness="1.4" Width="14" Height="14" Stretch="Uniform" HorizontalAlignment="Left" Margin="13,0,0,0" IsHitTestVisible="False" />
-            <TextBlock x:Name="LibrarySearchHint" Text="搜索游戏（支持拼音）" Foreground="#536985" FontSize="10" Margin="38,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False" />
+            <TextBlock x:Name="LibrarySearchHint" Text="搜索游戏（支持拼音）" Foreground="#536985" FontSize="10" Margin="31,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False" />
             </Grid>
             <ComboBox x:Name="GameSelector" Width="1" Height="1" Opacity="0" IsHitTestVisible="False" Padding="0" SelectionChanged="OnGameSelectionChanged" MaxDropDownHeight="420">
               <ComboBox.ItemTemplate>
@@ -80,19 +92,22 @@
                 </DataTemplate>
               </ComboBox.ItemTemplate>
             </ComboBox>
-            <Button x:Name="RefreshGameLibraryButton" Style="{StaticResource SecondaryButton}" Content="↻  重新扫描" Click="OnRefreshGameLibrary" Height="40" Padding="16,7" Margin="9,0,0,0" ToolTip="重新扫描 Steam 和 Epic 游戏库" />
+            <Button x:Name="RefreshGameLibraryButton" Style="{StaticResource SecondaryButton}" Content="↻  重新扫描" Click="OnRefreshGameLibrary" Height="32" Padding="12,4" Margin="16,0,0,0" ToolTip="重新扫描 Steam 和 Epic 游戏库" />
             <TextBlock x:Name="GameLibrarySummaryText" Text="正在扫描 Steam 与 Epic…" Visibility="Collapsed" />
           </StackPanel>
           <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
             <Button Style="{StaticResource HeaderIconButton}" ToolTip="通知">
               <Grid Width="16" Height="16"><Path Data="M8,1 C5,1 3.5,3.3 3.5,6.3 L3.5,9.2 L2,11.2 L14,11.2 L12.5,9.2 L12.5,6.3 C12.5,3.3 11,1 8,1 M6.2,13 C6.6,14.4 7.4,15 8,15 C8.6,15 9.4,14.4 9.8,13" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.35" StrokeLineJoin="Round" Fill="Transparent" /></Grid>
             </Button>
-            <Button Style="{StaticResource HeaderIconButton}" ToolTip="设置" Margin="8,0,14,0">
-              <Grid Width="16" Height="16"><Path Data="M8,1.4 L9.4,3.1 L11.6,2.8 L12.2,4.9 L14.2,5.9 L13.2,7.9 L14.2,9.9 L12.2,10.9 L11.6,13 L9.4,12.7 L8,14.5 L6.6,12.7 L4.4,13 L3.8,10.9 L1.8,9.9 L2.8,7.9 L1.8,5.9 L3.8,4.9 L4.4,2.8 L6.6,3.1 Z M8,5.5 A2.4,2.4 0 1 1 7.9,5.5" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.2" StrokeLineJoin="Round" Fill="Transparent" /></Grid>
+            <Button Style="{StaticResource HeaderIconButton}" ToolTip="终端" Margin="8,0,14,0">
+              <Grid Width="16" Height="16"><Rectangle Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.2" RadiusX="1" RadiusY="1" /><Path Data="M3,4 L6,7 L3,10 M8,10 L12,10" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" /></Grid>
             </Button>
-            <Border Background="#071425" BorderBrush="#1A4779" BorderThickness="1" CornerRadius="6" Padding="9,6" Margin="0,0,13,0"><StackPanel Orientation="Horizontal"><Image Source="Assets/riftctrl-icon.png" Width="24" Height="24" Margin="0,0,8,0" /><TextBlock Text="RIFT-USER" Foreground="#D6E6FF" FontSize="10" VerticalAlignment="Center" /><Border Background="#6F2FFF" CornerRadius="3" Padding="5,2" Margin="8,0,0,0"><TextBlock Text="PRO" FontSize="9" FontWeight="Bold" /></Border></StackPanel></Border>
+            <Border Background="#071425" BorderBrush="#1A4779" BorderThickness="1" CornerRadius="6" Padding="6,3" Margin="0,0,13,0"><StackPanel Orientation="Horizontal"><Image Source="Assets/riftctrl-icon.png" Width="32" Height="32" Margin="0,0,8,0" /><TextBlock Text="RIFT-USER" Foreground="#D6E6FF" FontSize="10" VerticalAlignment="Center" /><Border Background="#6F2FFF" CornerRadius="3" Padding="5,2" Margin="8,0,0,0" VerticalAlignment="Center"><TextBlock Text="PRO" FontSize="9" FontWeight="Bold" /></Border></StackPanel></Border>
             <Button Style="{StaticResource WindowControlButton}" Click="OnMinimizeWindow" ToolTip="最小化">
               <Path Data="M 0,0 L 12,0" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.6" StrokeStartLineCap="Round" />
+            </Button>
+            <Button Style="{StaticResource WindowControlButton}" Click="OnToggleWindowState" ToolTip="最大化/还原">
+              <Rectangle Width="10" Height="10" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.2" />
             </Button>
             <Button Style="{StaticResource CloseWindowButton}" Click="OnCloseWindow" ToolTip="关闭">
               <Path Data="M 0,0 L 10,10 M 10,0 L 0,10" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.6" StrokeStartLineCap="Round" />
@@ -669,7 +684,7 @@
         </Grid>
       </Grid>
 
-      <Grid x:Name="GameLibraryPanel" Grid.Column="1" Grid.Row="1" Grid.RowSpan="2" Margin="18,10,14,12">
+      <Grid x:Name="GameLibraryPanel" Grid.Column="1" Grid.Row="1" Grid.RowSpan="2" Margin="20,0,14,12">
         <Grid.RowDefinitions><RowDefinition Height="200" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
         <local:CutCornerPanel Style="{StaticResource CutCornerPanelStyle}" Padding="0" ClipToBounds="True">
           <Grid>
@@ -685,16 +700,17 @@
             </StackPanel>
           </Grid>
         </local:CutCornerPanel>
-        <Grid Grid.Row="1" Margin="2,18,2,14"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-          <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><TextBlock Text="我的游戏库" FontSize="21" FontWeight="SemiBold" /><Border Background="#1C1042" BorderBrush="#7644E8" BorderThickness="1" CornerRadius="4" Padding="10,3" Margin="10,0,0,0"><TextBlock x:Name="LibraryCountBadge" Text="0" Foreground="#CEA7FF" FontSize="10" /></Border><Button x:Name="AllGamesFilterButton" Style="{StaticResource LibraryFilterButton}" Tag="all" Content="全部" Click="OnLibraryFilter" Margin="18,0,0,0" /><Button x:Name="SupportedGamesFilterButton" Style="{StaticResource LibraryFilterButton}" Tag="supported" Content="已支持" Click="OnLibraryFilter" /><Button x:Name="UnsupportedGamesFilterButton" Style="{StaticResource LibraryFilterButton}" Tag="unsupported" Content="暂未支持" Click="OnLibraryFilter" /></StackPanel>
-          <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"><TextBlock x:Name="LibrarySortText" Text="排序：支持状态" Foreground="#91A0B9" FontSize="10" Margin="0,0,11,0" /><Button Style="{StaticResource HeaderIconButton}" Click="OnToggleLibrarySort" ToolTip="切换支持状态 / 名称排序"><Grid Width="15" Height="15"><Path Data="M2,2 L13,2 M2,7.5 L10,7.5 M2,13 L7,13" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.4" StrokeStartLineCap="Round" /><Path Data="M11,10 L13.5,12.5 L11,15" Stroke="#A760FF" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" /></Grid></Button></StackPanel>
+        <Grid Grid.Row="1" Margin="2,14,2,10"><Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><TextBlock Text="我的游戏库" FontSize="16" FontWeight="SemiBold" /><TextBlock Text="（" FontSize="16" Foreground="#9BA9BD" Margin="6,0,0,0" /><TextBlock x:Name="LibraryCountBadge" Text="0" FontSize="16" Foreground="#D9E4F5" /><TextBlock Text="）" FontSize="16" Foreground="#9BA9BD" /></StackPanel>
+          <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,11,0,0"><Button x:Name="AllGamesFilterButton" Style="{StaticResource LibraryFilterButton}" Tag="all" Content="全部 (0)" Click="OnLibraryFilter" Margin="0" /><Button x:Name="SupportedGamesFilterButton" Style="{StaticResource LibraryFilterButton}" Tag="supported" Content="已支持 (0)" Click="OnLibraryFilter" /><Button x:Name="UnsupportedGamesFilterButton" Style="{StaticResource LibraryFilterButton}" Tag="unsupported" Content="暂未支持 (0)" Click="OnLibraryFilter" /></StackPanel>
+          <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,11,0,0"><TextBlock x:Name="LibrarySortText" Text="排序：最近游玩⌄" Foreground="#91A0B9" FontSize="10" Margin="0,0,9,0" VerticalAlignment="Center" /><Button Style="{StaticResource HeaderIconButton}" Click="OnToggleLibrarySort" ToolTip="网格视图" Background="#153A76" Width="26" Height="26"><TextBlock Text="▦" Foreground="#D8ECFF" FontSize="14" /></Button><Button Style="{StaticResource HeaderIconButton}" Click="OnToggleLibrarySort" ToolTip="列表视图" Margin="6,0,0,0" Width="26" Height="26"><TextBlock Text="☷" Foreground="#7890AF" FontSize="14" /></Button></StackPanel>
         </Grid>
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="2" Margin="4,0,0,0">
           <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <ItemsControl x:Name="InstalledGameLibraryList">
             <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate><DataTemplate>
-              <Button Tag="{Binding}" Click="OnLibraryGameClick" Style="{StaticResource GameCardButton}" Width="152" Height="150" Margin="0,0,12,12" Padding="0" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" ToolTip="打开此游戏的控制中心">
+              <Button Tag="{Binding}" Click="OnLibraryGameClick" Style="{StaticResource GameCardButton}" Width="158" Height="150" Margin="0,0,12,12" Padding="0" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" ToolTip="打开此游戏的控制中心">
                 <Grid ClipToBounds="True">
                   <Grid Margin="1"><Grid.RowDefinitions><RowDefinition Height="94" /><RowDefinition Height="*" /></Grid.RowDefinitions>
                     <Image Source="{Binding IconPath}" Stretch="UniformToFill" Opacity="0.55" />
@@ -712,9 +728,9 @@
         </Grid>
       </Grid>
 
-      <Grid x:Name="LibraryStatusRail" Grid.Column="2" Grid.Row="1" Grid.RowSpan="2" Margin="0,10,14,12">
-        <Grid.RowDefinitions><RowDefinition Height="224" /><RowDefinition Height="216" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-        <local:CutCornerPanel Style="{StaticResource CutCornerPanelStyle}" Padding="16,13"><StackPanel><TextBlock Text="GAME LINK" Style="{StaticResource RailTitle}" /><Border Style="{StaticResource LinkRow}" Margin="0,9,0,0"><Grid><TextBlock Text="●  STEAM" FontSize="12" /><TextBlock x:Name="SteamLinkText" Text="扫描中" Foreground="#46E89B" HorizontalAlignment="Right" /></Grid></Border><Border Style="{StaticResource LinkRow}"><Grid><TextBlock Text="▣  EPIC" FontSize="12" /><TextBlock x:Name="EpicLinkText" Text="扫描中" Foreground="#46E89B" HorizontalAlignment="Right" /></Grid></Border><Border Style="{StaticResource LinkRow}"><Grid><TextBlock Text="▤  LOCAL" FontSize="12" /><TextBlock x:Name="LocalLinkText" Text="等待" Foreground="#46E89B" HorizontalAlignment="Right" /></Grid></Border><Border Background="#090F20" BorderBrush="#1F467D" BorderThickness="1" Padding="9" Margin="0,8,0,0"><Grid><StackPanel><TextBlock x:Name="LibraryLinkSummaryText" Text="正在扫描游戏库…" Foreground="#85A2CB" FontSize="10" TextWrapping="Wrap" /><TextBlock Text="RIFT//CTRL CONFIGURATION" Foreground="#5E7CA4" FontSize="8" Margin="0,3,0,0" /></StackPanel><Grid Width="42" Height="42" HorizontalAlignment="Right"><Ellipse Stroke="#245C9A" StrokeThickness="1" /><Ellipse Width="28" Height="28" Stroke="#7F45FF" StrokeThickness="2" /><Ellipse Width="7" Height="7" Fill="#36DFFF" /></Grid></Grid></Border></StackPanel></local:CutCornerPanel>
+      <Grid x:Name="LibraryStatusRail" Grid.Column="2" Grid.Row="1" Grid.RowSpan="2" Margin="0,0,14,12">
+        <Grid.RowDefinitions><RowDefinition Height="224" /><RowDefinition Height="230" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+        <local:CutCornerPanel Style="{StaticResource AtlasPanelFrameStyle}" Padding="16,13"><StackPanel><TextBlock Text="GAME LINK" Style="{StaticResource RailTitle}" /><Border Style="{StaticResource LinkRow}" Margin="0,9,0,0"><Grid><TextBlock Text="●  STEAM" FontSize="12" /><TextBlock x:Name="SteamLinkText" Text="扫描中" Foreground="#46E89B" HorizontalAlignment="Right" /></Grid></Border><Border Style="{StaticResource LinkRow}"><Grid><TextBlock Text="▣  EPIC" FontSize="12" /><TextBlock x:Name="EpicLinkText" Text="扫描中" Foreground="#46E89B" HorizontalAlignment="Right" /></Grid></Border><Border Style="{StaticResource LinkRow}"><Grid><TextBlock Text="▤  LOCAL" FontSize="12" /><TextBlock x:Name="LocalLinkText" Text="等待" Foreground="#46E89B" HorizontalAlignment="Right" /></Grid></Border><Border Background="#090F20" BorderBrush="#1F467D" BorderThickness="1" Padding="9" Margin="0,8,0,0"><Grid><StackPanel><TextBlock x:Name="LibraryLinkSummaryText" Text="正在扫描游戏库…" Foreground="#85A2CB" FontSize="10" TextWrapping="Wrap" /><TextBlock Text="RIFT//CTRL CONFIGURATION" Foreground="#5E7CA4" FontSize="8" Margin="0,3,0,0" /></StackPanel><Grid Width="42" Height="42" HorizontalAlignment="Right"><Ellipse Stroke="#245C9A" StrokeThickness="1" /><Ellipse Width="28" Height="28" Stroke="#7F45FF" StrokeThickness="2" /><Ellipse Width="7" Height="7" Fill="#36DFFF" /></Grid></Grid></Border></StackPanel></local:CutCornerPanel>
         <local:CutCornerPanel Grid.Row="1" Style="{StaticResource CutCornerPanelStyle}" Padding="16" Margin="0,12,0,0"><StackPanel><TextBlock Text="运行状态" Style="{StaticResource RailTitle}" /><Grid Height="92" Margin="0,7,0,0"><Ellipse Width="72" Height="72" Stroke="#1B477D" StrokeThickness="1" /><Ellipse Width="48" Height="48" Stroke="#2A6EB5" StrokeThickness="1" StrokeDashArray="3,4" /><Line X1="36" Y1="0" X2="36" Y2="88" Stroke="#1B477D" /><Line X1="0" Y1="44" X2="72" Y2="44" Stroke="#1B477D" /><Path Data="M36,20 L44,46 L36,40 L28,46 Z" Fill="#477FFF" /></Grid><TextBlock Text="未检测到运行中的游戏" Foreground="#9AAAC0" FontSize="12" HorizontalAlignment="Center" /><TextBlock Text="启动游戏后将自动检测并准备修改器。" Foreground="#617A9D" FontSize="9" TextAlignment="Center" TextWrapping="Wrap" Margin="0,4,0,0" /></StackPanel></local:CutCornerPanel>
         <local:CutCornerPanel Grid.Row="2" Style="{StaticResource CutCornerPanelStyle}" Padding="18" Margin="0,14,0,0"><StackPanel><TextBlock Text="最近活动" Style="{StaticResource RailTitle}" /><Border Style="{StaticResource ActivityRow}" Margin="0,14,0,0"><Grid><TextBlock Text="游戏库扫描完成" /><TextBlock Text="刚刚" Foreground="#7690B2" HorizontalAlignment="Right" /></Grid></Border><Border Style="{StaticResource ActivityRow}"><Grid><TextBlock Text="RIFT//CTRL 界面已加载" /><TextBlock Text="本次会话" Foreground="#7690B2" HorizontalAlignment="Right" /></Grid></Border><Border Style="{StaticResource ActivityRow}"><Grid><TextBlock Text="本地模式已启用" /><TextBlock Text="安全" Foreground="#46E89B" HorizontalAlignment="Right" /></Grid></Border><Button Style="{StaticResource SecondaryButton}" Content="查看全部活动  ›" Margin="0,14,0,0" /></StackPanel></local:CutCornerPanel>
       </Grid>

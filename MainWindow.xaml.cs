@@ -34,6 +34,9 @@ public partial class MainWindow : Window
 
     private void OnMinimizeWindow(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
+    private void OnToggleWindowState(object sender, RoutedEventArgs e) =>
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+
     private void OnCloseWindow(object sender, RoutedEventArgs e) => Close();
 
     private const string ItemQuantityPattern = "89 3B 0F 94 C0 EB ??";
@@ -258,13 +261,17 @@ public partial class MainWindow : Window
             GameSelector.ItemsSource = games;
             _libraryGames = games.Where(game => game.IsInstalled).ToArray();
             RefreshGameLibraryCards();
-            LibraryCountBadge.Text = games.Count(game => game.IsInstalled).ToString();
-            LibraryHeroSummaryText.Text = $"已发现 {games.Count(game => game.IsInstalled)} 款本机游戏";
-            GameLibrarySummaryText.Text = $"已发现 {games.Count(game => game.IsInstalled)} 个已安装游戏";
+            var installedCount = games.Count(game => game.IsInstalled);
+            var supportedCount = games.Count(game => game.IsSupported && game.IsInstalled);
+            LibraryCountBadge.Text = installedCount.ToString();
+            LibraryNavCaptionText.Text = $"{installedCount} 款游戏已发现";
+            ModifierNavCaptionText.Text = $"{supportedCount} 款游戏已支持";
+            LibraryHeroSummaryText.Text = $"已发现 {installedCount} 款本机游戏";
+            GameLibrarySummaryText.Text = $"已发现 {installedCount} 个已安装游戏";
             SteamLinkText.Text = games.Any(game => game.Platform == "Steam") ? "已连接  ●" : "未发现";
             EpicLinkText.Text = games.Any(game => game.Platform == "Epic") ? "已连接  ●" : "未发现";
             LocalLinkText.Text = "扫描完成  ●";
-            LibraryLinkSummaryText.Text = $"检测到 {games.Count(game => game.IsInstalled)} 款游戏；其中 {games.Count(game => game.IsSupported && game.IsInstalled)} 款已有 RIFT//CTRL 配置。";
+            LibraryLinkSummaryText.Text = $"检测到 {installedCount} 款游戏；其中 {supportedCount} 款已有 RIFT//CTRL 配置。";
             GameSelector.SelectedItem = games.FirstOrDefault(game => previousGame is not null &&
                                                                      game.AppId == previousGame.AppId &&
                                                                      game.Platform == previousGame.Platform)
@@ -370,7 +377,11 @@ public partial class MainWindow : Window
         InstalledGameLibraryList.ItemsSource = (_sortLibraryByName
             ? games.OrderBy(game => game.Name, StringComparer.CurrentCultureIgnoreCase)
             : games.OrderByDescending(game => game.IsSupported).ThenBy(game => game.Name, StringComparer.CurrentCultureIgnoreCase)).ToArray();
-        LibrarySortText.Text = _sortLibraryByName ? "排序：名称" : "排序：支持状态";
+        var supportedCount = _libraryGames.Count(game => game.IsSupported);
+        AllGamesFilterButton.Content = $"全部 ({_libraryGames.Count})";
+        SupportedGamesFilterButton.Content = $"已支持 ({supportedCount})";
+        UnsupportedGamesFilterButton.Content = $"暂未支持 ({_libraryGames.Count - supportedCount})";
+        LibrarySortText.Text = _sortLibraryByName ? "排序：名称⌄" : "排序：最近游玩⌄";
         AllGamesFilterButton.Background = _libraryFilter == "all" ? (Brush)FindResource("ActionGradient") : null;
         SupportedGamesFilterButton.Background = _libraryFilter == "supported" ? (Brush)FindResource("ActionGradient") : null;
         UnsupportedGamesFilterButton.Background = _libraryFilter == "unsupported" ? (Brush)FindResource("ActionGradient") : null;
