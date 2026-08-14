@@ -1216,7 +1216,24 @@ public partial class MainWindow : Window
 
     private void OnMainFeatureTabChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (!ReferenceEquals(e.Source, MainFeatureTabs) || MainFeatureTabs.SelectedItem != IconCatalogTab)
+        if (!ReferenceEquals(e.Source, MainFeatureTabs))
+        {
+            return;
+        }
+
+        var navigationButtons = new[]
+        {
+            GeneralNavButton,
+            ItemEditNavButton,
+            CapturedCatalogNavButton,
+            IconCatalogNavButton
+        };
+        if (MainFeatureTabs.SelectedIndex >= 0 && MainFeatureTabs.SelectedIndex < navigationButtons.Length)
+        {
+            navigationButtons[MainFeatureTabs.SelectedIndex].IsChecked = true;
+        }
+
+        if (MainFeatureTabs.SelectedItem != IconCatalogTab)
         {
             return;
         }
@@ -1224,6 +1241,22 @@ public partial class MainWindow : Window
         if (!_isScanningLocalItems && _pendingIconCatalogItems.Length > 0)
         {
             _ = RenderIconCatalogItemsAsync(_pendingIconCatalogItems, ++_iconCatalogRenderVersion);
+        }
+    }
+
+    private void OnSidebarNavigation(object sender, RoutedEventArgs e)
+    {
+        if (MainFeatureTabs is null ||
+            sender is not RadioButton { IsChecked: true, Tag: string tabIndexText } ||
+            !int.TryParse(tabIndexText, out var tabIndex) ||
+            tabIndex < 0 || tabIndex >= MainFeatureTabs.Items.Count)
+        {
+            return;
+        }
+
+        if (MainFeatureTabs.Items[tabIndex] is TabItem { IsEnabled: true })
+        {
+            MainFeatureTabs.SelectedIndex = tabIndex;
         }
     }
 
