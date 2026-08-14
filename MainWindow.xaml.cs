@@ -95,6 +95,7 @@ public partial class MainWindow : Window
     private IconCatalogEntry[] _pendingIconCatalogItems = Array.Empty<IconCatalogEntry>();
     private bool _isClosing;
     private InstalledGame? _selectedGame;
+    private IReadOnlyList<InstalledGame> _libraryGames = Array.Empty<InstalledGame>();
     private string _selectedCurrency = "Gold";
     private readonly List<CapturedItemTemplate> _capturedItemTemplates = new();
     private readonly List<LocalGameItem> _localGameItems = new();
@@ -253,10 +254,15 @@ public partial class MainWindow : Window
             }
 
             GameSelector.ItemsSource = games;
-            InstalledGameLibraryList.ItemsSource = games.Where(game => game.IsInstalled).ToArray();
+            _libraryGames = games.Where(game => game.IsInstalled).ToArray();
+            RefreshGameLibraryCards();
             LibraryCountBadge.Text = games.Count(game => game.IsInstalled).ToString();
             LibraryHeroSummaryText.Text = $"已发现 {games.Count(game => game.IsInstalled)} 款本机游戏";
             GameLibrarySummaryText.Text = $"已发现 {games.Count(game => game.IsInstalled)} 个已安装游戏";
+            SteamLinkText.Text = games.Any(game => game.Platform == "Steam") ? "已连接  ●" : "未发现";
+            EpicLinkText.Text = games.Any(game => game.Platform == "Epic") ? "已连接  ●" : "未发现";
+            LocalLinkText.Text = "扫描完成  ●";
+            LibraryLinkSummaryText.Text = $"检测到 {games.Count(game => game.IsInstalled)} 款游戏；其中 {games.Count(game => game.IsSupported && game.IsInstalled)} 款已有 RIFT//CTRL 配置。";
             GameSelector.SelectedItem = games.FirstOrDefault(game => previousGame is not null &&
                                                                      game.AppId == previousGame.AppId &&
                                                                      game.Platform == previousGame.Platform)
@@ -317,6 +323,22 @@ public partial class MainWindow : Window
         UnsupportedGameDetailText.Text = $"已通过 {game.Platform} 检测到安装 · 当前版本尚未适配";
         GameSupportBadgeText.Text = "暂未支持";
         SetStatus($"已选择 {game.Name}，当前仅支持 No Rest for the Wicked。", false);
+    }
+
+    private void OnLibrarySearchChanged(object sender, TextChangedEventArgs e) => RefreshGameLibraryCards();
+
+    private void RefreshGameLibraryCards()
+    {
+        if (InstalledGameLibraryList is null)
+        {
+            return;
+        }
+
+        var search = LibrarySearchBox?.Text.Trim() ?? string.Empty;
+        InstalledGameLibraryList.ItemsSource = _libraryGames.Where(game =>
+            search.Length == 0 ||
+            game.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+            game.Platform.Contains(search, StringComparison.OrdinalIgnoreCase)).ToArray();
     }
 
     private async void OnConnectGame(object sender, RoutedEventArgs e)
@@ -385,6 +407,7 @@ public partial class MainWindow : Window
             RuntimeStateText.Text = "已连接";
             RuntimeDetailText.Text = result;
             ConnectionText.Text = "已连接";
+            ModifierRailStateText.Text = "游戏已连接";
             ConnectionText.Foreground = (Brush)FindResource("NodeBrush");
             ConnectionIndicator.Fill = (Brush)FindResource("NodeBrush");
 
@@ -466,6 +489,7 @@ public partial class MainWindow : Window
         if (busy)
         {
             ConnectionText.Text = "连接中";
+            ModifierRailStateText.Text = "正在验证";
             ConnectionText.Foreground = (Brush)FindResource("NodeBrush");
             ConnectionIndicator.Fill = (Brush)FindResource("NodeBrush");
             ConnectionProgressText.Text = progress;
@@ -474,6 +498,7 @@ public partial class MainWindow : Window
         else if (_session is not { IsAttached: true })
         {
             ConnectionText.Text = "未连接";
+            ModifierRailStateText.Text = "等待连接";
             ConnectionText.Foreground = (Brush)FindResource("WarningBrush");
             ConnectionIndicator.Fill = (Brush)FindResource("WarningBrush");
         }
@@ -1275,6 +1300,8 @@ public partial class MainWindow : Window
         }
 
         GameLibraryPanel.Visibility = Visibility.Visible;
+        LibraryStatusRail.Visibility = Visibility.Visible;
+        ModifierStatusRail.Visibility = Visibility.Collapsed;
         GameHeroPanel.Visibility = Visibility.Collapsed;
         ModifierBodyPanel.Visibility = Visibility.Collapsed;
         UnsupportedGamePanel.Visibility = Visibility.Collapsed;
@@ -1289,6 +1316,8 @@ public partial class MainWindow : Window
         }
 
         GameLibraryPanel.Visibility = Visibility.Collapsed;
+        LibraryStatusRail.Visibility = Visibility.Collapsed;
+        ModifierStatusRail.Visibility = Visibility.Visible;
         GameHeroPanel.Visibility = Visibility.Visible;
         ModifierBodyPanel.Visibility = Visibility.Visible;
         var supported = _selectedGame?.IsSupported == true;
@@ -2411,6 +2440,7 @@ public partial class MainWindow : Window
         _session = null;
         UpdateConnectedFeatureAvailability(true);
         ConnectionText.Text = "未连接";
+        ModifierRailStateText.Text = "等待连接";
         ConnectionText.Foreground = (Brush)FindResource("WarningBrush");
         ConnectionIndicator.Fill = (Brush)FindResource("WarningBrush");
         ConnectButtonLabel.Text = "连接游戏";

@@ -20,6 +20,9 @@ internal sealed class InstalledGame
     public bool IsSupported => AppId == "1371980" ||
                                Name.Contains("No Rest for the Wicked", StringComparison.OrdinalIgnoreCase);
     public string SupportLabel => IsSupported ? "已支持" : "已发现";
+    public string CoverArtPath => Platform == "Steam" && long.TryParse(AppId, out _)
+        ? $"https://cdn.akamai.steamstatic.com/steam/apps/{AppId}/library_600x900.jpg"
+        : IconPath ?? "Assets/riftctrl-icon.png";
     public string DisplayName => $"{Name}  ·  {Platform}";
 
     public override string ToString() => DisplayName;

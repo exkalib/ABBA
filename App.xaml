@@ -246,6 +246,91 @@
       <Setter Property="Effect"><Setter.Value><DropShadowEffect Color="#154F9A" BlurRadius="12" ShadowDepth="0" Opacity="0.2" /></Setter.Value></Setter>
     </Style>
 
+    <Style x:Key="AngularPanel" TargetType="Border" BasedOn="{StaticResource Card}">
+      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="BorderBrush" Value="#1E548F" />
+      <Setter Property="Background" Value="#E6071020" />
+      <Setter Property="Effect"><Setter.Value><DropShadowEffect Color="#1F5CBD" BlurRadius="16" ShadowDepth="0" Opacity="0.22" /></Setter.Value></Setter>
+    </Style>
+
+    <Style x:Key="SidebarMutedEntry" TargetType="Border">
+      <Setter Property="Padding" Value="14,10" />
+      <Setter Property="Margin" Value="0,0,0,4" />
+      <Setter Property="Opacity" Value="0.64" />
+      <Setter Property="Cursor" Value="Arrow" />
+    </Style>
+
+    <Style x:Key="HeaderIconButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+      <Setter Property="Width" Value="40" />
+      <Setter Property="Height" Value="40" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="Foreground" Value="#B9D0F2" />
+    </Style>
+
+    <Style x:Key="HeroButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+      <Setter Property="Padding" Value="23,10" />
+      <Setter Property="MinWidth" Value="170" />
+      <Setter Property="BorderBrush" Value="#B05AFF" />
+    </Style>
+
+    <Style x:Key="LibraryFilterButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+      <Setter Property="Padding" Value="11,6" />
+      <Setter Property="Margin" Value="7,0,0,0" />
+      <Setter Property="FontSize" Value="11" />
+    </Style>
+
+    <Style x:Key="GameCardButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="CardHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="6">
+              <ContentPresenter />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="CardHost" Property="BorderBrush" Value="#A259FF" /><Setter TargetName="CardHost" Property="Effect"><Setter.Value><DropShadowEffect Color="#7430E8" BlurRadius="20" ShadowDepth="0" Opacity="0.52" /></Setter.Value></Setter></Trigger>
+              <Trigger Property="IsPressed" Value="True"><Setter TargetName="CardHost" Property="Opacity" Value="0.78" /></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="RailTitle" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="Bahnschrift, Segoe UI" />
+      <Setter Property="FontSize" Value="16" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="#9DD8FF" />
+    </Style>
+
+    <Style x:Key="LinkRow" TargetType="Border">
+      <Setter Property="Background" Value="#080F1D" />
+      <Setter Property="BorderBrush" Value="#1A3F6B" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="Padding" Value="11,9" />
+      <Setter Property="Margin" Value="0,6,0,0" />
+    </Style>
+
+    <Style x:Key="ActivityRow" TargetType="Border">
+      <Setter Property="Background" Value="#070E1B" />
+      <Setter Property="BorderBrush" Value="#183A63" />
+      <Setter Property="BorderThickness" Value="0,0,0,1" />
+      <Setter Property="Padding" Value="8,10" />
+    </Style>
+
+    <Style x:Key="QuickFeatureRow" TargetType="Border">
+      <Setter Property="Background" Value="#0A1323" />
+      <Setter Property="BorderBrush" Value="#1B426F" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="Padding" Value="11,10" />
+      <Setter Property="Margin" Value="0,7,0,0" />
+    </Style>
+
     <Style x:Key="TelemetryCard" TargetType="Border" BasedOn="{StaticResource Card}">
       <Setter Property="Padding" Value="13,11" />
       <Setter Property="Background" Value="#E00C121A" />
