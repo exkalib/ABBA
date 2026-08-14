@@ -360,11 +360,15 @@ public partial class MainWindow : Window
              _libraryFilter == "unsupported" && !game.IsSupported) &&
             (search.Length == 0 ||
              game.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-             game.Platform.Contains(search, StringComparison.OrdinalIgnoreCase)));
+             game.Platform.Contains(search, StringComparison.OrdinalIgnoreCase)))
+            .ToArray();
 
         InstalledGameLibraryList.ItemsSource = (_sortLibraryByName
             ? games.OrderBy(game => game.Name, StringComparer.CurrentCultureIgnoreCase)
             : games.OrderByDescending(game => game.IsSupported).ThenBy(game => game.Name, StringComparer.CurrentCultureIgnoreCase)).ToArray();
+        LibraryEmptyStatePanel.Visibility = games.Length is > 0 and < 4
+            ? Visibility.Visible
+            : Visibility.Collapsed;
         LibrarySortText.Text = _sortLibraryByName ? "排序：名称" : "排序：支持状态";
         AllGamesFilterButton.Background = _libraryFilter == "all" ? (Brush)FindResource("ActionGradient") : null;
         SupportedGamesFilterButton.Background = _libraryFilter == "supported" ? (Brush)FindResource("ActionGradient") : null;
