@@ -2,29 +2,28 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:NRftWManagerUI"
-        Title="RIFT//CTRL" Icon="Assets/riftctrl.ico" Height="780" Width="1280" MinHeight="600" MinWidth="960"
-        WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="CanResize" Background="#020610">
+        Title="RIFT//CTRL" Icon="Assets/riftctrl.ico" Height="820" Width="1220" MinHeight="640" MinWidth="960"
+        WindowStartupLocation="CenterScreen" WindowState="Maximized" WindowStyle="None" ResizeMode="CanResize" Background="#020610">
   <Border Background="{StaticResource SciFiGridBrush}" BorderBrush="#174379" BorderThickness="1" CornerRadius="8">
   <Grid>
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="205" />
+        <ColumnDefinition Width="200" />
         <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="304" />
+        <ColumnDefinition Width="312" />
       </Grid.ColumnDefinitions>
       <Grid.RowDefinitions>
-        <RowDefinition Height="62" />
-        <RowDefinition Height="180" />
+        <RowDefinition Height="64" />
+        <RowDefinition Height="200" />
         <RowDefinition Height="*" />
-        <RowDefinition Height="36" />
+        <RowDefinition Height="32" />
       </Grid.RowDefinitions>
       <Rectangle Grid.RowSpan="4" Grid.ColumnSpan="3" Fill="{StaticResource TechGridBrush}" IsHitTestVisible="False" />
 
       <Border Grid.RowSpan="4" Background="#EB040914" BorderBrush="#153A67" BorderThickness="0,0,1,0" CornerRadius="8,0,0,8">
         <Grid Margin="14,0">
-          <Grid.RowDefinitions><RowDefinition Height="104" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+          <Grid.RowDefinitions><RowDefinition Height="72" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
           <StackPanel VerticalAlignment="Center" Margin="6,0,0,0">
             <StackPanel Orientation="Horizontal">
-              <Image Source="Assets/riftctrl-icon.png" Width="42" Height="42" Stretch="UniformToFill" Margin="0,0,10,0" />
               <StackPanel VerticalAlignment="Center">
                 <TextBlock FontFamily="Bahnschrift, Segoe UI" FontSize="19" FontWeight="SemiBold"><Run Text="RIFT" /><Run Text="//" Foreground="#9B45FF" /><Run Text="CTRL" /></TextBlock>
                 <TextBlock Text="YOUR GAMES. YOUR RULES." FontFamily="Consolas" FontSize="8" Foreground="#8BA1C2" Margin="0,3,0,0" />
@@ -67,10 +66,13 @@
         <Grid>
           <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
           <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-            <TextBox x:Name="LibrarySearchBox" Width="315" Height="40" Padding="38,6,12,6" TextChanged="OnLibrarySearchChanged" ToolTip="搜索已安装游戏">
+            <Grid Width="315" Height="40">
+            <TextBox x:Name="LibrarySearchBox" Width="315" Height="40" Padding="38,6,12,6" TextChanged="OnLibrarySearchChanged" ToolTip="支持游戏名称和平台搜索">
               <TextBox.Background><SolidColorBrush Color="#060D19" /></TextBox.Background>
             </TextBox>
-            <Path Data="M0,0 A6,6 0 1 1 0.1,0 M4.5,4.5 L9,9" Stroke="#7C98BF" StrokeThickness="1.4" Width="14" Height="14" Stretch="Uniform" Margin="-296,0,282,0" IsHitTestVisible="False" />
+            <Path Data="M0,0 A6,6 0 1 1 0.1,0 M4.5,4.5 L9,9" Stroke="#7C98BF" StrokeThickness="1.4" Width="14" Height="14" Stretch="Uniform" HorizontalAlignment="Left" Margin="13,0,0,0" IsHitTestVisible="False" />
+            <TextBlock x:Name="LibrarySearchHint" Text="搜索游戏（支持拼音）" Foreground="#536985" FontSize="10" Margin="38,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False" />
+            </Grid>
             <ComboBox x:Name="GameSelector" Width="1" Height="1" Opacity="0" IsHitTestVisible="False" Padding="0" SelectionChanged="OnGameSelectionChanged" MaxDropDownHeight="420">
               <ComboBox.ItemTemplate>
                 <DataTemplate>
@@ -79,7 +81,7 @@
               </ComboBox.ItemTemplate>
             </ComboBox>
             <Button x:Name="RefreshGameLibraryButton" Style="{StaticResource SecondaryButton}" Content="↻  重新扫描" Click="OnRefreshGameLibrary" Height="40" Padding="16,7" Margin="9,0,0,0" ToolTip="重新扫描 Steam 和 Epic 游戏库" />
-            <TextBlock x:Name="GameLibrarySummaryText" Text="正在扫描 Steam 与 Epic…" Foreground="#637B9D" FontSize="10" Margin="15,0,0,0" VerticalAlignment="Center" />
+            <TextBlock x:Name="GameLibrarySummaryText" Text="正在扫描 Steam 与 Epic…" Visibility="Collapsed" />
           </StackPanel>
           <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
             <Button Style="{StaticResource HeaderIconButton}" ToolTip="通知">
@@ -667,23 +669,23 @@
         </Grid>
       </Grid>
 
-      <Grid x:Name="GameLibraryPanel" Grid.Column="1" Grid.Row="1" Grid.RowSpan="2" Margin="18,14,14,14">
+      <Grid x:Name="GameLibraryPanel" Grid.Column="1" Grid.Row="1" Grid.RowSpan="2" Margin="18,10,14,12">
         <Grid.RowDefinitions><RowDefinition Height="200" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
         <local:CutCornerPanel Style="{StaticResource CutCornerPanelStyle}" Padding="0" ClipToBounds="True">
           <Grid>
             <Image Source="Assets/riftctrl-hero.png" Stretch="UniformToFill" Opacity="0.92" />
             <Rectangle Fill="{StaticResource HeroShadeBrush}" />
             <Rectangle Fill="#130E1536" Stroke="#5C37C8" StrokeThickness="1" StrokeDashArray="2,8" Margin="13" />
-            <StackPanel Margin="28,20" VerticalAlignment="Center">
+            <StackPanel Margin="28,18" VerticalAlignment="Center">
               <TextBlock FontFamily="Bahnschrift, Segoe UI" FontSize="32" FontWeight="SemiBold"><Run Text="RIFT" /><Run Text="//" Foreground="#B05AFF" /><Run Text="CTRL" /></TextBlock>
               <TextBlock Text="YOUR GAMES. YOUR RULES." FontFamily="Consolas" FontSize="10" Foreground="#D5DDF0" Margin="2,1,0,0" />
               <TextBlock x:Name="LibraryHeroSummaryText" Text="正在发现本机游戏…" FontSize="17" Foreground="#F5F7FF" Margin="0,18,0,0" />
               <TextBlock Text="STEAM  ·  EPIC  ·  LOCAL  ·  RIFT//CTRL READY" FontFamily="Consolas" FontSize="9" Foreground="#8AA2C7" Margin="0,7,0,0" />
-              <Button Style="{StaticResource HeroButton}" Content="重新扫描游戏库    ›" Click="OnRefreshGameLibrary" Margin="0,12,0,0" HorizontalAlignment="Left" />
+              <Button Style="{StaticResource HeroButton}" Content="进入游戏库    ›" Click="OnRefreshGameLibrary" Margin="0,12,0,0" HorizontalAlignment="Left" />
             </StackPanel>
           </Grid>
         </local:CutCornerPanel>
-        <Grid Grid.Row="1" Margin="2,18,2,12"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+        <Grid Grid.Row="1" Margin="2,18,2,14"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
           <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><TextBlock Text="我的游戏库" FontSize="21" FontWeight="SemiBold" /><Border Background="#1C1042" BorderBrush="#7644E8" BorderThickness="1" CornerRadius="4" Padding="10,3" Margin="10,0,0,0"><TextBlock x:Name="LibraryCountBadge" Text="0" Foreground="#CEA7FF" FontSize="10" /></Border><Button x:Name="AllGamesFilterButton" Style="{StaticResource LibraryFilterButton}" Tag="all" Content="全部" Click="OnLibraryFilter" Margin="18,0,0,0" /><Button x:Name="SupportedGamesFilterButton" Style="{StaticResource LibraryFilterButton}" Tag="supported" Content="已支持" Click="OnLibraryFilter" /><Button x:Name="UnsupportedGamesFilterButton" Style="{StaticResource LibraryFilterButton}" Tag="unsupported" Content="暂未支持" Click="OnLibraryFilter" /></StackPanel>
           <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"><TextBlock x:Name="LibrarySortText" Text="排序：支持状态" Foreground="#91A0B9" FontSize="10" Margin="0,0,11,0" /><Button Style="{StaticResource HeaderIconButton}" Click="OnToggleLibrarySort" ToolTip="切换支持状态 / 名称排序"><Grid Width="15" Height="15"><Path Data="M2,2 L13,2 M2,7.5 L10,7.5 M2,13 L7,13" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.4" StrokeStartLineCap="Round" /><Path Data="M11,10 L13.5,12.5 L11,15" Stroke="#A760FF" StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" /></Grid></Button></StackPanel>
         </Grid>
@@ -692,9 +694,9 @@
             <ItemsControl x:Name="InstalledGameLibraryList">
             <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate><DataTemplate>
-              <Button Tag="{Binding}" Click="OnLibraryGameClick" Style="{StaticResource GameCardButton}" Width="152" Height="190" Margin="0,0,12,12" Padding="0" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" ToolTip="打开此游戏的控制中心">
+              <Button Tag="{Binding}" Click="OnLibraryGameClick" Style="{StaticResource GameCardButton}" Width="152" Height="150" Margin="0,0,12,12" Padding="0" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" ToolTip="打开此游戏的控制中心">
                 <Grid ClipToBounds="True">
-                  <Grid Margin="1"><Grid.RowDefinitions><RowDefinition Height="112" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                  <Grid Margin="1"><Grid.RowDefinitions><RowDefinition Height="94" /><RowDefinition Height="*" /></Grid.RowDefinitions>
                     <Image Source="{Binding IconPath}" Stretch="UniformToFill" Opacity="0.55" />
                     <Image Source="{Binding CoverArtPath}" Stretch="UniformToFill" />
                     <Rectangle Fill="#24030A18" />
@@ -707,16 +709,13 @@
             </DataTemplate></ItemsControl.ItemTemplate>
             </ItemsControl>
           </ScrollViewer>
-          <local:CutCornerPanel x:Name="LibraryEmptyStatePanel" Style="{StaticResource CutCornerPanelStyle}" Width="340" Height="164" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="165,0,0,0" Padding="22" Visibility="Collapsed" IsHitTestVisible="True">
-            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><StackPanel VerticalAlignment="Center"><TextBlock Text="继续扩展你的游戏库" FontSize="16" FontWeight="SemiBold" /><TextBlock Text="Steam、Epic 和本地安装游戏会在下次扫描后显示在这里。" Foreground="#7D96B9" FontSize="10" TextWrapping="Wrap" Margin="0,7,0,0" /><TextBlock Text="目前仅发现 1 款游戏" Foreground="#51D8FF" FontFamily="Consolas" FontSize="9" Margin="0,11,0,0" /></StackPanel><Button Grid.Column="1" Style="{StaticResource HeroButton}" Content="扫描  ›" Click="OnRefreshGameLibrary" MinWidth="88" Padding="11,7" VerticalAlignment="Center" Margin="15,0,0,0" /></Grid>
-          </local:CutCornerPanel>
         </Grid>
       </Grid>
 
-      <Grid x:Name="LibraryStatusRail" Grid.Column="2" Grid.Row="1" Grid.RowSpan="2" Margin="0,14,18,14">
-        <Grid.RowDefinitions><RowDefinition Height="230" /><RowDefinition Height="218" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-        <local:CutCornerPanel Style="{StaticResource CutCornerPanelStyle}" Padding="18,16"><StackPanel><TextBlock Text="GAME LINK" Style="{StaticResource RailTitle}" /><Border Style="{StaticResource LinkRow}" Margin="0,14,0,0"><Grid><TextBlock Text="●  STEAM" FontSize="12" /><TextBlock x:Name="SteamLinkText" Text="扫描中" Foreground="#46E89B" HorizontalAlignment="Right" /></Grid></Border><Border Style="{StaticResource LinkRow}"><Grid><TextBlock Text="▣  EPIC" FontSize="12" /><TextBlock x:Name="EpicLinkText" Text="扫描中" Foreground="#46E89B" HorizontalAlignment="Right" /></Grid></Border><Border Style="{StaticResource LinkRow}"><Grid><TextBlock Text="▤  LOCAL" FontSize="12" /><TextBlock x:Name="LocalLinkText" Text="等待" Foreground="#46E89B" HorizontalAlignment="Right" /></Grid></Border><Border Background="#090F20" BorderBrush="#1F467D" BorderThickness="1" Padding="12" Margin="0,12,0,0"><Grid><StackPanel><TextBlock x:Name="LibraryLinkSummaryText" Text="正在扫描游戏库…" Foreground="#85A2CB" FontSize="10" TextWrapping="Wrap" /><TextBlock Text="RIFT//CTRL CONFIGURATION" Foreground="#5E7CA4" FontSize="9" Margin="0,5,0,0" /></StackPanel><Grid Width="52" Height="52" HorizontalAlignment="Right"><Ellipse Stroke="#245C9A" StrokeThickness="1" /><Ellipse Width="34" Height="34" Stroke="#7F45FF" StrokeThickness="2" /><Ellipse Width="8" Height="8" Fill="#36DFFF" /></Grid></Grid></Border></StackPanel></local:CutCornerPanel>
-        <local:CutCornerPanel Grid.Row="1" Style="{StaticResource CutCornerPanelStyle}" Padding="18" Margin="0,14,0,0"><StackPanel><TextBlock Text="运行状态" Style="{StaticResource RailTitle}" /><Grid Height="150" Margin="0,12,0,0"><Ellipse Width="106" Height="106" Stroke="#1B477D" StrokeThickness="1" /><Ellipse Width="68" Height="68" Stroke="#2A6EB5" StrokeThickness="1" StrokeDashArray="3,4" /><Line X1="53" Y1="0" X2="53" Y2="150" Stroke="#1B477D" /><Line X1="0" Y1="75" X2="106" Y2="75" Stroke="#1B477D" /><Path Data="M53,40 L62,69 L53,63 L44,69 Z" Fill="#477FFF" /><TextBlock Text="未检测到运行中的游戏" Foreground="#9AAAC0" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Bottom" /></Grid><TextBlock Text="启动游戏后，RIFT//CTRL 将自动检测并准备适配的修改器。" Foreground="#617A9D" FontSize="10" TextAlignment="Center" TextWrapping="Wrap" /></StackPanel></local:CutCornerPanel>
+      <Grid x:Name="LibraryStatusRail" Grid.Column="2" Grid.Row="1" Grid.RowSpan="2" Margin="0,10,14,12">
+        <Grid.RowDefinitions><RowDefinition Height="224" /><RowDefinition Height="216" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+        <local:CutCornerPanel Style="{StaticResource CutCornerPanelStyle}" Padding="16,13"><StackPanel><TextBlock Text="GAME LINK" Style="{StaticResource RailTitle}" /><Border Style="{StaticResource LinkRow}" Margin="0,9,0,0"><Grid><TextBlock Text="●  STEAM" FontSize="12" /><TextBlock x:Name="SteamLinkText" Text="扫描中" Foreground="#46E89B" HorizontalAlignment="Right" /></Grid></Border><Border Style="{StaticResource LinkRow}"><Grid><TextBlock Text="▣  EPIC" FontSize="12" /><TextBlock x:Name="EpicLinkText" Text="扫描中" Foreground="#46E89B" HorizontalAlignment="Right" /></Grid></Border><Border Style="{StaticResource LinkRow}"><Grid><TextBlock Text="▤  LOCAL" FontSize="12" /><TextBlock x:Name="LocalLinkText" Text="等待" Foreground="#46E89B" HorizontalAlignment="Right" /></Grid></Border><Border Background="#090F20" BorderBrush="#1F467D" BorderThickness="1" Padding="9" Margin="0,8,0,0"><Grid><StackPanel><TextBlock x:Name="LibraryLinkSummaryText" Text="正在扫描游戏库…" Foreground="#85A2CB" FontSize="10" TextWrapping="Wrap" /><TextBlock Text="RIFT//CTRL CONFIGURATION" Foreground="#5E7CA4" FontSize="8" Margin="0,3,0,0" /></StackPanel><Grid Width="42" Height="42" HorizontalAlignment="Right"><Ellipse Stroke="#245C9A" StrokeThickness="1" /><Ellipse Width="28" Height="28" Stroke="#7F45FF" StrokeThickness="2" /><Ellipse Width="7" Height="7" Fill="#36DFFF" /></Grid></Grid></Border></StackPanel></local:CutCornerPanel>
+        <local:CutCornerPanel Grid.Row="1" Style="{StaticResource CutCornerPanelStyle}" Padding="16" Margin="0,12,0,0"><StackPanel><TextBlock Text="运行状态" Style="{StaticResource RailTitle}" /><Grid Height="92" Margin="0,7,0,0"><Ellipse Width="72" Height="72" Stroke="#1B477D" StrokeThickness="1" /><Ellipse Width="48" Height="48" Stroke="#2A6EB5" StrokeThickness="1" StrokeDashArray="3,4" /><Line X1="36" Y1="0" X2="36" Y2="88" Stroke="#1B477D" /><Line X1="0" Y1="44" X2="72" Y2="44" Stroke="#1B477D" /><Path Data="M36,20 L44,46 L36,40 L28,46 Z" Fill="#477FFF" /></Grid><TextBlock Text="未检测到运行中的游戏" Foreground="#9AAAC0" FontSize="12" HorizontalAlignment="Center" /><TextBlock Text="启动游戏后将自动检测并准备修改器。" Foreground="#617A9D" FontSize="9" TextAlignment="Center" TextWrapping="Wrap" Margin="0,4,0,0" /></StackPanel></local:CutCornerPanel>
         <local:CutCornerPanel Grid.Row="2" Style="{StaticResource CutCornerPanelStyle}" Padding="18" Margin="0,14,0,0"><StackPanel><TextBlock Text="最近活动" Style="{StaticResource RailTitle}" /><Border Style="{StaticResource ActivityRow}" Margin="0,14,0,0"><Grid><TextBlock Text="游戏库扫描完成" /><TextBlock Text="刚刚" Foreground="#7690B2" HorizontalAlignment="Right" /></Grid></Border><Border Style="{StaticResource ActivityRow}"><Grid><TextBlock Text="RIFT//CTRL 界面已加载" /><TextBlock Text="本次会话" Foreground="#7690B2" HorizontalAlignment="Right" /></Grid></Border><Border Style="{StaticResource ActivityRow}"><Grid><TextBlock Text="本地模式已启用" /><TextBlock Text="安全" Foreground="#46E89B" HorizontalAlignment="Right" /></Grid></Border><Button Style="{StaticResource SecondaryButton}" Content="查看全部活动  ›" Margin="0,14,0,0" /></StackPanel></local:CutCornerPanel>
       </Grid>
 

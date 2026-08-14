@@ -327,7 +327,11 @@ public partial class MainWindow : Window
         SetStatus($"已选择 {game.Name}，当前仅支持 No Rest for the Wicked。", false);
     }
 
-    private void OnLibrarySearchChanged(object sender, TextChangedEventArgs e) => RefreshGameLibraryCards();
+    private void OnLibrarySearchChanged(object sender, TextChangedEventArgs e)
+    {
+        LibrarySearchHint.Visibility = string.IsNullOrEmpty(LibrarySearchBox.Text) ? Visibility.Visible : Visibility.Collapsed;
+        RefreshGameLibraryCards();
+    }
 
     private void OnLibraryFilter(object sender, RoutedEventArgs e)
     {
@@ -366,9 +370,6 @@ public partial class MainWindow : Window
         InstalledGameLibraryList.ItemsSource = (_sortLibraryByName
             ? games.OrderBy(game => game.Name, StringComparer.CurrentCultureIgnoreCase)
             : games.OrderByDescending(game => game.IsSupported).ThenBy(game => game.Name, StringComparer.CurrentCultureIgnoreCase)).ToArray();
-        LibraryEmptyStatePanel.Visibility = games.Length is > 0 and < 4
-            ? Visibility.Visible
-            : Visibility.Collapsed;
         LibrarySortText.Text = _sortLibraryByName ? "排序：名称" : "排序：支持状态";
         AllGamesFilterButton.Background = _libraryFilter == "all" ? (Brush)FindResource("ActionGradient") : null;
         SupportedGamesFilterButton.Background = _libraryFilter == "supported" ? (Brush)FindResource("ActionGradient") : null;
