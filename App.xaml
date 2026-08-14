@@ -1,6 +1,7 @@
 <Application x:Class="NRftWManagerUI.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:NRftWManagerUI"
              xmlns:system="clr-namespace:System.Windows;assembly=PresentationFramework"
              StartupUri="MainWindow.xaml">
   <Application.Resources>
@@ -247,10 +248,43 @@
     </Style>
 
     <Style x:Key="AngularPanel" TargetType="Border" BasedOn="{StaticResource Card}">
-      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="Padding" Value="24" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="0" />
       <Setter Property="BorderBrush" Value="#1E548F" />
       <Setter Property="Background" Value="#E6071020" />
       <Setter Property="Effect"><Setter.Value><DropShadowEffect Color="#1F5CBD" BlurRadius="16" ShadowDepth="0" Opacity="0.22" /></Setter.Value></Setter>
+    </Style>
+
+    <Style x:Key="CutCornerPanelStyle" TargetType="local:CutCornerPanel">
+      <Setter Property="Padding" Value="24" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="BorderBrush" Value="#1E548F" />
+      <Setter Property="Background" Value="#E6071020" />
+      <Setter Property="Effect"><Setter.Value><DropShadowEffect Color="#1F5CBD" BlurRadius="16" ShadowDepth="0" Opacity="0.28" /></Setter.Value></Setter>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="local:CutCornerPanel">
+            <Grid SnapsToDevicePixels="True">
+              <Border x:Name="Surface" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" />
+              <Border Margin="7" BorderBrush="#2B6AB054" BorderThickness="1" IsHitTestVisible="False" />
+              <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Margin="{TemplateBinding Padding}" />
+              <Canvas IsHitTestVisible="False">
+                <Path Data="M0,17 L17,0 L48,0" Stroke="#54C7FF" StrokeThickness="1.4" />
+                <Path Data="M0,17 L17,0" Stroke="#B058FF" StrokeThickness="3" Opacity="0.65" />
+                <Path Data="M0,17 L0,48" Stroke="#54C7FF" StrokeThickness="1.4" />
+                <Path Data="M0,0 L0,17 L17,0" Fill="#050B18" />
+              </Canvas>
+              <Canvas IsHitTestVisible="False" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                <Path Data="M48,17 L17,17 L0,0" Stroke="#54C7FF" StrokeThickness="1.4" />
+                <Path Data="M17,17 L0,0" Stroke="#B058FF" StrokeThickness="3" Opacity="0.65" />
+                <Path Data="M48,17 L17,17 L17,48" Stroke="#54C7FF" StrokeThickness="1.4" />
+                <Path Data="M48,17 L17,17 L17,48" Fill="Transparent" />
+              </Canvas>
+            </Grid>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
     </Style>
 
     <Style x:Key="SidebarMutedEntry" TargetType="Border">
