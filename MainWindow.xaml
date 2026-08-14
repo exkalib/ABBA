@@ -3,9 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:NRftWManagerUI"
         Title="RIFT//CTRL" Icon="Assets/riftctrl.ico" Height="820" Width="1220" MinHeight="640" MinWidth="960"
-        WindowStartupLocation="CenterScreen" WindowState="Maximized" WindowStyle="None" ResizeMode="CanResize" Background="#020610">
+        WindowStartupLocation="CenterScreen" WindowState="Normal" WindowStyle="None" ResizeMode="NoResize" Background="#020610">
   <Border Background="{StaticResource SciFiGridBrush}" BorderBrush="#174379" BorderThickness="1" CornerRadius="8">
-  <Grid>
+      <Grid>
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="202" />
         <ColumnDefinition Width="*" />
@@ -17,21 +17,6 @@
         <RowDefinition Height="*" />
         <RowDefinition Height="32" />
       </Grid.RowDefinitions>
-      <Image Grid.RowSpan="4" Grid.ColumnSpan="3" Source="Assets/riftctrl-background-portal.png" Stretch="UniformToFill" Opacity="0.34" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
-        <Image.RenderTransform>
-          <ScaleTransform x:Name="PortalBackgroundScale" ScaleX="1.04" ScaleY="1.04" />
-        </Image.RenderTransform>
-        <Image.Triggers>
-          <EventTrigger RoutedEvent="Loaded">
-            <BeginStoryboard>
-              <Storyboard RepeatBehavior="Forever" AutoReverse="True">
-                <DoubleAnimation Storyboard.TargetName="PortalBackgroundScale" Storyboard.TargetProperty="ScaleX" To="1.11" Duration="0:0:18" />
-                <DoubleAnimation Storyboard.TargetName="PortalBackgroundScale" Storyboard.TargetProperty="ScaleY" To="1.11" Duration="0:0:18" />
-              </Storyboard>
-            </BeginStoryboard>
-          </EventTrigger>
-        </Image.Triggers>
-      </Image>
       <Image Grid.RowSpan="4" Grid.Column="0" Source="Assets/ui-decoration-lines.png" Width="176" Height="156" Stretch="Fill" Opacity="0.18" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,90" IsHitTestVisible="False" />
       <Rectangle Grid.RowSpan="4" Grid.ColumnSpan="3" Fill="{StaticResource TechGridBrush}" IsHitTestVisible="False" />
 
@@ -794,6 +779,7 @@
           <TextBlock Grid.Column="1" x:Name="ActionStatusText" Text="尚未连接游戏" Foreground="#9DA6B6" FontSize="11" Margin="2,0,0,0" VerticalAlignment="Center" />
         </Grid>
       </Border>
-  </Grid>
+      <Image Grid.RowSpan="4" Grid.ColumnSpan="3" Source="Assets/riftctrl-library-page.png" Stretch="Fill" IsHitTestVisible="False" Panel.ZIndex="999" />
+      </Grid>
   </Border>
 </Window>

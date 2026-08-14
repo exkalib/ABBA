@@ -14,6 +14,7 @@
     <Resource Include="Assets\riftctrl-icon.png" />
     <Resource Include="Assets\riftctrl-hero.png" />
     <Resource Include="Assets\riftctrl-background-portal.png" />
+    <Resource Include="Assets\riftctrl-library-page.png" />
     <Resource Include="Assets\ui-asset-atlas.png" />
     <Resource Include="Assets\ui-decoration-lines.png" />
     <Resource Include="Assets\ui-decoration-radar.png" />
