@@ -1,0 +1,70 @@
+<Window x:Class="NRftWManagerUI.ReplicaWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="RIFT//CTRL" Icon="Assets/riftctrl.ico" Width="1229" Height="820"
+        WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="NoResize" Background="#02070D">
+  <Window.Resources>
+    <Style x:Key="Hotspot" TargetType="Button">
+      <Setter Property="Background" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Cursor" Value="Hand"/><Setter Property="Focusable" Value="True"/>
+      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><Border Background="Transparent"><ContentPresenter/></Border></ControlTemplate></Setter.Value></Setter>
+    </Style>
+  </Window.Resources>
+  <Viewbox Stretch="Uniform"><Canvas Width="1536" Height="1024" Background="#02070D">
+    <!-- Each rendered region is an individual reference component; controls below are independent click targets. -->
+    <Image Source="Assets/replica-sidebar.png" Canvas.Left="0" Canvas.Top="0" Width="252" Height="1024"/>
+    <Image Source="Assets/replica-topbar.png" Canvas.Left="252" Canvas.Top="0" Width="1284" Height="82"/>
+    <Image Source="Assets/replica-hero.png" Canvas.Left="278" Canvas.Top="82" Width="825" Height="251"/>
+    <Image Source="Assets/replica-library-tools.png" Canvas.Left="278" Canvas.Top="350" Width="826" Height="84"/>
+    <Image Source="Assets/replica-link.png" Canvas.Left="1128" Canvas.Top="82" Width="384" Height="281"/>
+    <Image Source="Assets/replica-state.png" Canvas.Left="1128" Canvas.Top="378" Width="384" Height="273"/>
+    <Image Source="Assets/replica-activity.png" Canvas.Left="1128" Canvas.Top="666" Width="384" Height="278"/>
+    <Image Source="Assets/replica-footer.png" Canvas.Left="252" Canvas.Top="976" Width="1284" Height="48"/>
+
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="18" Canvas.Top="108" Width="216" Height="67" Tag="游戏库" Click="OnNavClick"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="18" Canvas.Top="190" Width="216" Height="67" Tag="修改器中心" Click="OnNavClick"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="18" Canvas.Top="264" Width="216" Height="67" Tag="配置方案" Click="OnNavClick"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="18" Canvas.Top="337" Width="216" Height="67" Tag="热键管理" Click="OnNavClick"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="18" Canvas.Top="410" Width="216" Height="67" Tag="扩展工具" Click="OnNavClick"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="18" Canvas.Top="483" Width="216" Height="67" Tag="设置" Click="OnNavClick"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="18" Canvas.Top="848" Width="196" Height="62" Tag="PRO" Click="OnNavClick"/>
+
+    <TextBox x:Name="SearchBox" Canvas.Left="306" Canvas.Top="25" Width="280" Height="34" Background="Transparent" BorderThickness="0" Foreground="#D7E8FF" Padding="26,3,8,3" TextChanged="OnSearchChanged"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="605" Canvas.Top="21" Width="111" Height="42" Tag="重新扫描" Click="OnRefreshClick"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="952" Canvas.Top="18" Width="47" Height="45" Tag="通知" Click="OnHeaderClick"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="1014" Canvas.Top="18" Width="47" Height="45" Tag="终端" Click="OnHeaderClick"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="1361" Canvas.Top="17" Width="48" Height="48" Tag="min" Click="OnWindowClick"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="1410" Canvas.Top="17" Width="48" Height="48" Tag="max" Click="OnWindowClick"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="1462" Canvas.Top="17" Width="48" Height="48" Tag="close" Click="OnWindowClick"/>
+
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="313" Canvas.Top="272" Width="172" Height="39" Tag="进入游戏库" Click="OnHeroClick"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="286" Canvas.Top="392" Width="99" Height="34" Tag="全部" Click="OnFilterClick"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="394" Canvas.Top="392" Width="101" Height="34" Tag="已支持" Click="OnFilterClick"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="505" Canvas.Top="392" Width="118" Height="34" Tag="暂未支持" Click="OnFilterClick"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="1026" Canvas.Top="392" Width="36" Height="34" Tag="网格" Click="OnViewClick"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="1064" Canvas.Top="392" Width="36" Height="34" Tag="列表" Click="OnViewClick"/>
+
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="285" Canvas.Top="442" Width="192" Height="188" Tag="艾尔登法环" Click="OnGameClick"><Image Source="Assets/replica-card-01.png"/></Button>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="493" Canvas.Top="442" Width="192" Height="188" Tag="赛博朋克 2077" Click="OnGameClick"><Image Source="Assets/replica-card-02.png"/></Button>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="700" Canvas.Top="442" Width="192" Height="188" Tag="荒野大镖客 2" Click="OnGameClick"><Image Source="Assets/replica-card-03.png"/></Button>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="906" Canvas.Top="442" Width="192" Height="188" Tag="战神" Click="OnGameClick"><Image Source="Assets/replica-card-04.png"/></Button>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="285" Canvas.Top="646" Width="192" Height="188" Tag="地平线：零之曙光" Click="OnGameClick"><Image Source="Assets/replica-card-05.png"/></Button>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="493" Canvas.Top="646" Width="192" Height="188" Tag="巫师 3：狂猎" Click="OnGameClick"><Image Source="Assets/replica-card-06.png"/></Button>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="700" Canvas.Top="646" Width="192" Height="188" Tag="GTA 5" Click="OnGameClick"><Image Source="Assets/replica-card-07.png"/></Button>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="906" Canvas.Top="646" Width="192" Height="188" Tag="只狼：影逝二度" Click="OnGameClick"><Image Source="Assets/replica-card-08.png"/></Button>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="285" Canvas.Top="846" Width="192" Height="114" Tag="博德之门 3" Click="OnGameClick"><Image Source="Assets/replica-card-09.png"/></Button>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="493" Canvas.Top="846" Width="192" Height="114" Tag="星空" Click="OnGameClick"><Image Source="Assets/replica-card-10.png"/></Button>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="700" Canvas.Top="846" Width="192" Height="114" Tag="刺客信条：英灵殿" Click="OnGameClick"><Image Source="Assets/replica-card-11.png"/></Button>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="906" Canvas.Top="846" Width="192" Height="114" Tag="极限竞速：地平线 5" Click="OnGameClick"><Image Source="Assets/replica-card-12.png"/></Button>
+
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="1145" Canvas.Top="135" Width="344" Height="39" Tag="Steam" Click="OnLinkClick"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="1145" Canvas.Top="177" Width="344" Height="39" Tag="Epic" Click="OnLinkClick"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="1145" Canvas.Top="219" Width="344" Height="39" Tag="Local" Click="OnLinkClick"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="1140" Canvas.Top="692" Width="355" Height="54" Tag="活动 1" Click="OnActivityClick"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="1140" Canvas.Top="756" Width="355" Height="54" Tag="活动 2" Click="OnActivityClick"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="1140" Canvas.Top="820" Width="355" Height="54" Tag="活动 3" Click="OnActivityClick"/>
+    <Button Style="{StaticResource Hotspot}" Canvas.Left="1140" Canvas.Top="899" Width="355" Height="43" Tag="查看全部活动" Click="OnActivityClick"/>
+
+    <TextBlock x:Name="DemoStatus" Visibility="Collapsed"/><TextBlock x:Name="RunStateText" Visibility="Collapsed"/>
+  </Canvas></Viewbox>
+</Window>
