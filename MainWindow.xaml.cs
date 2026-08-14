@@ -96,6 +96,8 @@ public partial class MainWindow : Window
     private bool _isClosing;
     private InstalledGame? _selectedGame;
     private IReadOnlyList<InstalledGame> _libraryGames = Array.Empty<InstalledGame>();
+    private string _libraryFilter = "all";
+    private bool _sortLibraryByName;
     private string _selectedCurrency = "Gold";
     private readonly List<CapturedItemTemplate> _capturedItemTemplates = new();
     private readonly List<LocalGameItem> _localGameItems = new();
@@ -327,6 +329,23 @@ public partial class MainWindow : Window
 
     private void OnLibrarySearchChanged(object sender, TextChangedEventArgs e) => RefreshGameLibraryCards();
 
+    private void OnLibraryFilter(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string filter })
+        {
+            return;
+        }
+
+        _libraryFilter = filter;
+        RefreshGameLibraryCards();
+    }
+
+    private void OnToggleLibrarySort(object sender, RoutedEventArgs e)
+    {
+        _sortLibraryByName = !_sortLibraryByName;
+        RefreshGameLibraryCards();
+    }
+
     private void RefreshGameLibraryCards()
     {
         if (InstalledGameLibraryList is null)
@@ -335,10 +354,21 @@ public partial class MainWindow : Window
         }
 
         var search = LibrarySearchBox?.Text.Trim() ?? string.Empty;
-        InstalledGameLibraryList.ItemsSource = _libraryGames.Where(game =>
-            search.Length == 0 ||
-            game.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-            game.Platform.Contains(search, StringComparison.OrdinalIgnoreCase)).ToArray();
+        var games = _libraryGames.Where(game =>
+            (_libraryFilter == "all" ||
+             _libraryFilter == "supported" && game.IsSupported ||
+             _libraryFilter == "unsupported" && !game.IsSupported) &&
+            (search.Length == 0 ||
+             game.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+             game.Platform.Contains(search, StringComparison.OrdinalIgnoreCase)));
+
+        InstalledGameLibraryList.ItemsSource = (_sortLibraryByName
+            ? games.OrderBy(game => game.Name, StringComparer.CurrentCultureIgnoreCase)
+            : games.OrderByDescending(game => game.IsSupported).ThenBy(game => game.Name, StringComparer.CurrentCultureIgnoreCase)).ToArray();
+        LibrarySortText.Text = _sortLibraryByName ? "排序：名称" : "排序：支持状态";
+        AllGamesFilterButton.Background = _libraryFilter == "all" ? (Brush)FindResource("ActionGradient") : null;
+        SupportedGamesFilterButton.Background = _libraryFilter == "supported" ? (Brush)FindResource("ActionGradient") : null;
+        UnsupportedGamesFilterButton.Background = _libraryFilter == "unsupported" ? (Brush)FindResource("ActionGradient") : null;
     }
 
     private async void OnConnectGame(object sender, RoutedEventArgs e)
