@@ -253,6 +253,9 @@ public partial class MainWindow : Window
             }
 
             GameSelector.ItemsSource = games;
+            InstalledGameLibraryList.ItemsSource = games.Where(game => game.IsInstalled).ToArray();
+            LibraryCountBadge.Text = games.Count(game => game.IsInstalled).ToString();
+            LibraryHeroSummaryText.Text = $"已发现 {games.Count(game => game.IsInstalled)} 款本机游戏";
             GameLibrarySummaryText.Text = $"已发现 {games.Count(game => game.IsInstalled)} 个已安装游戏";
             GameSelector.SelectedItem = games.FirstOrDefault(game => previousGame is not null &&
                                                                      game.AppId == previousGame.AppId &&
@@ -296,8 +299,11 @@ public partial class MainWindow : Window
 
         _selectedGame = game;
         ConnectButton.IsEnabled = !_isConnecting && game.IsSupported;
-        OperationSurface.Visibility = game.IsSupported ? Visibility.Visible : Visibility.Collapsed;
-        UnsupportedGamePanel.Visibility = game.IsSupported ? Visibility.Collapsed : Visibility.Visible;
+        if (ModifierNavButton.IsChecked == true)
+        {
+            OperationSurface.Visibility = game.IsSupported ? Visibility.Visible : Visibility.Collapsed;
+            UnsupportedGamePanel.Visibility = game.IsSupported ? Visibility.Collapsed : Visibility.Visible;
+        }
 
         if (game.IsSupported)
         {
@@ -1221,18 +1227,6 @@ public partial class MainWindow : Window
             return;
         }
 
-        var navigationButtons = new[]
-        {
-            GeneralNavButton,
-            ItemEditNavButton,
-            CapturedCatalogNavButton,
-            IconCatalogNavButton
-        };
-        if (MainFeatureTabs.SelectedIndex >= 0 && MainFeatureTabs.SelectedIndex < navigationButtons.Length)
-        {
-            navigationButtons[MainFeatureTabs.SelectedIndex].IsChecked = true;
-        }
-
         if (MainFeatureTabs.SelectedItem != IconCatalogTab)
         {
             return;
@@ -1244,20 +1238,62 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnSidebarNavigation(object sender, RoutedEventArgs e)
+    private void OnGlobalNavigation(object sender, RoutedEventArgs e)
     {
-        if (MainFeatureTabs is null ||
-            sender is not RadioButton { IsChecked: true, Tag: string tabIndexText } ||
-            !int.TryParse(tabIndexText, out var tabIndex) ||
-            tabIndex < 0 || tabIndex >= MainFeatureTabs.Items.Count)
+        if (sender is not RadioButton { IsChecked: true, Tag: string destination })
         {
             return;
         }
 
-        if (MainFeatureTabs.Items[tabIndex] is TabItem { IsEnabled: true })
+        if (destination == "library")
         {
-            MainFeatureTabs.SelectedIndex = tabIndex;
+            ShowGameLibrary();
         }
+        else if (destination == "modifier")
+        {
+            ShowModifierCenter();
+        }
+    }
+
+    private void OnLibraryGameClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: InstalledGame game })
+        {
+            return;
+        }
+
+        GameSelector.SelectedItem = game;
+        ModifierNavButton.IsChecked = true;
+        ShowModifierCenter();
+    }
+
+    private void ShowGameLibrary()
+    {
+        if (GameLibraryPanel is null)
+        {
+            return;
+        }
+
+        GameLibraryPanel.Visibility = Visibility.Visible;
+        GameHeroPanel.Visibility = Visibility.Collapsed;
+        ModifierBodyPanel.Visibility = Visibility.Collapsed;
+        UnsupportedGamePanel.Visibility = Visibility.Collapsed;
+        ConnectionOverlay.Visibility = Visibility.Collapsed;
+    }
+
+    private void ShowModifierCenter()
+    {
+        if (GameLibraryPanel is null)
+        {
+            return;
+        }
+
+        GameLibraryPanel.Visibility = Visibility.Collapsed;
+        GameHeroPanel.Visibility = Visibility.Visible;
+        ModifierBodyPanel.Visibility = Visibility.Visible;
+        var supported = _selectedGame?.IsSupported == true;
+        OperationSurface.Visibility = supported ? Visibility.Visible : Visibility.Collapsed;
+        UnsupportedGamePanel.Visibility = supported ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private void RefreshCapturedItemList()

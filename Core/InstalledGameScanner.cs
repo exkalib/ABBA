@@ -19,6 +19,7 @@ internal sealed class InstalledGame
     public bool IsInstalled { get; init; } = true;
     public bool IsSupported => AppId == "1371980" ||
                                Name.Contains("No Rest for the Wicked", StringComparison.OrdinalIgnoreCase);
+    public string SupportLabel => IsSupported ? "已支持" : "已发现";
     public string DisplayName => $"{Name}  ·  {Platform}";
 
     public override string ToString() => DisplayName;

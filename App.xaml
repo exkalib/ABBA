@@ -59,6 +59,22 @@
       <GradientStop Color="#07111F" Offset="1" />
     </LinearGradientBrush>
 
+    <DrawingBrush x:Key="TechGridBrush" TileMode="Tile" Viewport="0,0,34,34" ViewportUnits="Absolute" Opacity="0.2">
+      <DrawingBrush.Drawing>
+        <GeometryDrawing Brush="Transparent">
+          <GeometryDrawing.Pen><Pen Brush="#1B4D80" Thickness="0.55" /></GeometryDrawing.Pen>
+          <GeometryDrawing.Geometry><GeometryGroup><LineGeometry StartPoint="0,0" EndPoint="34,0" /><LineGeometry StartPoint="0,0" EndPoint="0,34" /></GeometryGroup></GeometryDrawing.Geometry>
+        </GeometryDrawing>
+      </DrawingBrush.Drawing>
+    </DrawingBrush>
+
+    <LinearGradientBrush x:Key="HeroShadeBrush" StartPoint="0,0" EndPoint="1,0">
+      <GradientStop Color="#F2030812" Offset="0" />
+      <GradientStop Color="#91030A18" Offset="0.4" />
+      <GradientStop Color="#4A09051A" Offset="0.72" />
+      <GradientStop Color="#E9030812" Offset="1" />
+    </LinearGradientBrush>
+
     <Style TargetType="TextBlock">
       <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI" />
       <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
@@ -227,6 +243,7 @@
       <Setter Property="CornerRadius" Value="6" />
       <Setter Property="Padding" Value="24" />
       <Setter Property="SnapsToDevicePixels" Value="True" />
+      <Setter Property="Effect"><Setter.Value><DropShadowEffect Color="#154F9A" BlurRadius="12" ShadowDepth="0" Opacity="0.2" /></Setter.Value></Setter>
     </Style>
 
     <Style x:Key="TelemetryCard" TargetType="Border" BasedOn="{StaticResource Card}">
@@ -341,7 +358,7 @@
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="NavShell" Property="Background" Value="#0A1930" /><Setter Property="Foreground" Value="#FFFFFF" /></Trigger>
-              <Trigger Property="IsChecked" Value="True"><Setter TargetName="NavShell" Property="Background" Value="#251044" /><Setter TargetName="NavShell" Property="BorderBrush" Value="#6E35BC" /><Setter TargetName="ActiveLine" Property="Visibility" Value="Visible" /><Setter Property="Foreground" Value="#FFFFFF" /></Trigger>
+              <Trigger Property="IsChecked" Value="True"><Setter TargetName="NavShell" Property="Background" Value="#251044" /><Setter TargetName="NavShell" Property="BorderBrush" Value="#8A42F4" /><Setter TargetName="NavShell" Property="Effect"><Setter.Value><DropShadowEffect Color="#7B39FF" BlurRadius="14" ShadowDepth="0" Opacity="0.42" /></Setter.Value></Setter><Setter TargetName="ActiveLine" Property="Visibility" Value="Visible" /><Setter Property="Foreground" Value="#FFFFFF" /></Trigger>
               <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.38" /><Setter Property="Cursor" Value="Arrow" /></Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
