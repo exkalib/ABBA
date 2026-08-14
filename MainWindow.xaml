@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:NRftWManagerUI"
         Title="RIFT//CTRL" Icon="Assets/riftctrl.ico" Height="820" Width="1220" MinHeight="640" MinWidth="960"
-        WindowStartupLocation="CenterScreen" WindowState="Normal" WindowStyle="None" ResizeMode="NoResize" Background="#020610">
+        WindowStartupLocation="CenterScreen" WindowState="Maximized" WindowStyle="None" ResizeMode="CanResize" Background="#020610">
   <Border Background="{StaticResource SciFiGridBrush}" BorderBrush="#174379" BorderThickness="1" CornerRadius="8">
       <Grid>
       <Grid.ColumnDefinitions>
@@ -779,7 +779,6 @@
           <TextBlock Grid.Column="1" x:Name="ActionStatusText" Text="尚未连接游戏" Foreground="#9DA6B6" FontSize="11" Margin="2,0,0,0" VerticalAlignment="Center" />
         </Grid>
       </Border>
-      <Image Grid.RowSpan="4" Grid.ColumnSpan="3" Source="Assets/riftctrl-library-page.png" Stretch="Fill" IsHitTestVisible="False" Panel.ZIndex="999" />
       </Grid>
   </Border>
 </Window>
