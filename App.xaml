@@ -267,19 +267,28 @@
           <ControlTemplate TargetType="local:CutCornerPanel">
             <Grid SnapsToDevicePixels="True">
               <Border x:Name="Surface" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" />
-              <Border Margin="7" BorderBrush="#2B6AB054" BorderThickness="1" IsHitTestVisible="False" />
+              <Border Margin="8" BorderBrush="#276AB04F" BorderThickness="1" IsHitTestVisible="False" />
               <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Margin="{TemplateBinding Padding}" />
               <Canvas IsHitTestVisible="False">
-                <Path Data="M0,17 L17,0 L48,0" Stroke="#54C7FF" StrokeThickness="1.4" />
-                <Path Data="M0,17 L17,0" Stroke="#B058FF" StrokeThickness="3" Opacity="0.65" />
-                <Path Data="M0,17 L0,48" Stroke="#54C7FF" StrokeThickness="1.4" />
-                <Path Data="M0,0 L0,17 L17,0" Fill="#050B18" />
+                <Polygon Points="0,0 24,0 0,24" Fill="#020711" />
+                <Path Data="M0,24 L24,0 L62,0" Stroke="#54C7FF" StrokeThickness="1.3" />
+                <Path Data="M0,24 L24,0" Stroke="#B058FF" StrokeThickness="3" Opacity="0.72" />
+                <Path Data="M0,24 L0,62" Stroke="#54C7FF" StrokeThickness="1.3" />
+              </Canvas>
+              <Canvas IsHitTestVisible="False" HorizontalAlignment="Right">
+                <Polygon Points="0,0 24,0 24,24" Fill="#020711" />
+                <Path Data="M0,0 L24,24 L24,62" Stroke="#54C7FF" StrokeThickness="1.3" />
+                <Path Data="M0,0 L24,24" Stroke="#B058FF" StrokeThickness="3" Opacity="0.72" />
+              </Canvas>
+              <Canvas IsHitTestVisible="False" VerticalAlignment="Bottom">
+                <Polygon Points="0,24 24,0 0,0" Fill="#020711" />
+                <Path Data="M0,0 L24,24 L62,24" Stroke="#54C7FF" StrokeThickness="1.3" />
+                <Path Data="M0,0 L24,24" Stroke="#B058FF" StrokeThickness="3" Opacity="0.72" />
               </Canvas>
               <Canvas IsHitTestVisible="False" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-                <Path Data="M48,17 L17,17 L0,0" Stroke="#54C7FF" StrokeThickness="1.4" />
-                <Path Data="M17,17 L0,0" Stroke="#B058FF" StrokeThickness="3" Opacity="0.65" />
-                <Path Data="M48,17 L17,17 L17,48" Stroke="#54C7FF" StrokeThickness="1.4" />
-                <Path Data="M48,17 L17,17 L17,48" Fill="Transparent" />
+                <Polygon Points="24,24 0,24 24,0" Fill="#020711" />
+                <Path Data="M0,24 L24,0 L24,-38" Stroke="#54C7FF" StrokeThickness="1.3" />
+                <Path Data="M0,24 L24,0" Stroke="#B058FF" StrokeThickness="3" Opacity="0.72" />
               </Canvas>
             </Grid>
           </ControlTemplate>
@@ -321,9 +330,12 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <Border x:Name="CardHost" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="6">
+            <Grid>
+              <Border x:Name="CardHost" Background="#0A1322" BorderBrush="#24568F" BorderThickness="1" />
               <ContentPresenter />
-            </Border>
+              <Canvas IsHitTestVisible="False"><Polygon Points="0,0 14,0 0,14" Fill="#020711" /><Path Data="M0,14 L14,0 L34,0" Stroke="#52D7FF" StrokeThickness="1" /></Canvas>
+              <Canvas IsHitTestVisible="False" HorizontalAlignment="Right" VerticalAlignment="Bottom"><Polygon Points="14,14 0,14 14,0" Fill="#020711" /><Path Data="M0,14 L14,0" Stroke="#9B53FF" StrokeThickness="1" /></Canvas>
+            </Grid>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="CardHost" Property="BorderBrush" Value="#A259FF" /><Setter TargetName="CardHost" Property="Effect"><Setter.Value><DropShadowEffect Color="#7430E8" BlurRadius="20" ShadowDepth="0" Opacity="0.52" /></Setter.Value></Setter></Trigger>
               <Trigger Property="IsPressed" Value="True"><Setter TargetName="CardHost" Property="Opacity" Value="0.78" /></Trigger>
@@ -472,12 +484,15 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="RadioButton">
-            <Border x:Name="NavShell" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Padding="{TemplateBinding Padding}">
-              <Grid><Border x:Name="ActiveLine" Width="2" Background="#8D45FF" HorizontalAlignment="Left" Margin="-14,-6,0,-6" Visibility="Collapsed" /><ContentPresenter TextElement.Foreground="{TemplateBinding Foreground}" /></Grid>
-            </Border>
+            <Grid>
+              <Border x:Name="NavShell" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}">
+                <Grid><Border x:Name="ActiveLine" Width="2" Background="#8D45FF" HorizontalAlignment="Left" Margin="-14,-6,0,-6" Visibility="Collapsed" /><ContentPresenter TextElement.Foreground="{TemplateBinding Foreground}" /></Grid>
+              </Border>
+              <Canvas IsHitTestVisible="False" HorizontalAlignment="Right" VerticalAlignment="Top" Visibility="Collapsed" x:Name="NavCorner"><Path Data="M0,0 L12,12 L12,30" Stroke="#B05AFF" StrokeThickness="1" /></Canvas>
+            </Grid>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="NavShell" Property="Background" Value="#0A1930" /><Setter Property="Foreground" Value="#FFFFFF" /></Trigger>
-              <Trigger Property="IsChecked" Value="True"><Setter TargetName="NavShell" Property="Background" Value="#251044" /><Setter TargetName="NavShell" Property="BorderBrush" Value="#8A42F4" /><Setter TargetName="NavShell" Property="Effect"><Setter.Value><DropShadowEffect Color="#7B39FF" BlurRadius="14" ShadowDepth="0" Opacity="0.42" /></Setter.Value></Setter><Setter TargetName="ActiveLine" Property="Visibility" Value="Visible" /><Setter Property="Foreground" Value="#FFFFFF" /></Trigger>
+              <Trigger Property="IsChecked" Value="True"><Setter TargetName="NavShell" Property="Background" Value="#251044" /><Setter TargetName="NavShell" Property="BorderBrush" Value="#8A42F4" /><Setter TargetName="NavShell" Property="Effect"><Setter.Value><DropShadowEffect Color="#7B39FF" BlurRadius="14" ShadowDepth="0" Opacity="0.42" /></Setter.Value></Setter><Setter TargetName="ActiveLine" Property="Visibility" Value="Visible" /><Setter TargetName="NavCorner" Property="Visibility" Value="Visible" /><Setter Property="Foreground" Value="#FFFFFF" /></Trigger>
               <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.38" /><Setter Property="Cursor" Value="Arrow" /></Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
